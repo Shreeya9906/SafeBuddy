@@ -30,142 +30,152 @@ import type { SOSAlert, Guardian } from "@shared/schema";
 
 function ChildDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSToggle, handleFlashlightToggle, isFlashlightOn }: any) {
   return (
-    <div className="space-y-4 p-6">
-      <div className="text-center mb-6">
-        <h1 className="text-4xl font-bold text-primary mb-3">Hi {user?.name}! 🛡️</h1>
-        <p className="text-lg text-muted-foreground">Stay Safe - Help Is One Tap Away</p>
+    <div className="space-y-4 p-4 bg-gradient-to-b from-purple-100/50 dark:from-purple-900/20 to-pink-100/50 dark:to-pink-900/20 min-h-screen">
+      <div className="text-center mb-4">
+        <div className="text-6xl mb-2 animate-bounce">👋✨</div>
+        <h1 className="text-5xl font-black bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 bg-clip-text text-transparent mb-2">
+          Hi {user?.name}!
+        </h1>
+        <p className="text-xl font-bold text-purple-700 dark:text-purple-300">🛡️ You Are Safe! 🛡️</p>
+        <p className="text-sm text-muted-foreground">One tap = help is on the way!</p>
       </div>
 
       {isSOSActive && (
-        <Card className="border-4 border-red-500 bg-red-50 dark:bg-red-950/30 shadow-lg">
-          <CardContent className="p-6 text-center">
-            <div className="flex items-center justify-center gap-3 mb-2">
-              <div className="w-4 h-4 bg-red-500 rounded-full animate-pulse"></div>
-              <span className="text-red-700 dark:text-red-300 font-bold text-xl">🚨 SIREN IS PLAYING!</span>
+        <Card className="border-4 border-red-500 bg-gradient-to-r from-red-400 to-orange-400 shadow-2xl animate-pulse">
+          <CardContent className="p-4 text-center">
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <span className="text-4xl animate-bounce">🚨</span>
+              <span className="text-white font-black text-2xl">SIREN IS PLAYING!</span>
+              <span className="text-4xl animate-bounce" style={{animationDelay: '0.2s'}}>🚨</span>
             </div>
-            <p className="text-sm text-red-600">Your guardians have been notified</p>
+            <p className="text-white font-bold text-base">✅ Your guardians know you need help!</p>
           </CardContent>
         </Card>
       )}
       
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         <Button
           onClick={handleSOSToggle}
-          className={`h-40 rounded-xl text-xl font-bold flex flex-col items-center justify-center gap-3 ${isSOSActive ? 'bg-red-600 hover:bg-red-700' : 'bg-red-500 hover:bg-red-600'} shadow-lg`}
+          className={`h-48 rounded-3xl text-2xl font-black flex flex-col items-center justify-center gap-3 shadow-2xl transform transition hover:scale-105 ${
+            isSOSActive 
+              ? 'bg-gradient-to-br from-red-600 to-red-700 hover:from-red-700 hover:to-red-800' 
+              : 'bg-gradient-to-br from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600'
+          }`}
           data-testid="button-sos-emergency"
         >
-          <Shield className="w-10 h-10" />
-          {isSOSActive ? 'STOP\nSOS' : 'CALL\nSOS'}
+          <span className="text-5xl">{isSOSActive ? '🛑' : '🆘'}</span>
+          <span>{isSOSActive ? 'STOP\nSOS' : 'CALL\nSOS'}</span>
         </Button>
         
         <Button
           onClick={handleFlashlightToggle}
-          variant={isFlashlightOn ? "default" : "outline"}
-          className="h-40 rounded-xl text-lg font-bold flex flex-col items-center justify-center gap-3 shadow-lg"
+          className={`h-48 rounded-3xl text-2xl font-black flex flex-col items-center justify-center gap-3 shadow-2xl transform transition hover:scale-105 ${
+            isFlashlightOn 
+              ? 'bg-gradient-to-br from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600' 
+              : 'bg-gradient-to-br from-yellow-300 to-yellow-400 hover:from-yellow-400 hover:to-yellow-500'
+          }`}
           data-testid="button-flashlight-toggle"
         >
-          <Lightbulb className="w-10 h-10" />
-          Flashlight
+          <span className="text-5xl">{isFlashlightOn ? '💡' : '🔦'}</span>
+          Light
         </Button>
       </div>
 
       {isSOSActive && (
-        <Card className="border-2 border-red-500 bg-red-50 dark:bg-red-950/20">
+        <Card className="border-4 border-green-500 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/50 dark:to-emerald-900/50">
           <CardContent className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-              <span className="text-red-700 dark:text-red-300 font-semibold">🚨 SIREN ACTIVE</span>
+              <span className="text-3xl animate-pulse">✅</span>
+              <span className="text-green-700 dark:text-green-300 font-black text-lg">✨ HELP IS COMING! ✨</span>
             </div>
             <Button
               onClick={handleSOSToggle}
-              variant="destructive"
+              className="bg-green-600 hover:bg-green-700 font-black"
               size="sm"
             >
-              Turn Off
+              Stop
             </Button>
           </CardContent>
         </Card>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Phone className="w-5 h-5 text-blue-600" />
-            Emergency Contacts
+      <Card className="border-4 border-blue-400 bg-gradient-to-br from-blue-100/80 to-cyan-100/80 dark:from-blue-900/40 dark:to-cyan-900/40">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-2xl font-black flex items-center gap-3">
+            <span className="text-3xl">👥</span>
+            My Guardians
           </CardTitle>
-          <CardDescription>People to reach out to</CardDescription>
+          <CardDescription className="text-base font-bold text-blue-700 dark:text-blue-300">People who love & protect you!</CardDescription>
         </CardHeader>
         <CardContent>
           {guardians.length > 0 ? (
             <div className="space-y-3">
               {guardians.map((g: Guardian) => (
-                <div key={g.id} className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <p className="font-bold text-base">{g.name}</p>
-                  <p className="text-sm text-muted-foreground">{g.phone}</p>
+                <div key={g.id} className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/50 dark:to-cyan-900/50 rounded-2xl border-3 border-blue-300 dark:border-blue-600 shadow-md transform hover:scale-105 transition">
+                  <p className="font-black text-lg text-blue-900 dark:text-blue-100">💙 {g.name}</p>
+                  <p className="text-sm font-bold text-blue-700 dark:text-blue-300">📱 {g.phone}</p>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No contacts added yet</p>
+            <div className="text-center py-6">
+              <div className="text-4xl mb-2">🤔</div>
+              <p className="text-sm font-bold text-blue-700 dark:text-blue-300">Ask an adult to add your guardians!</p>
+            </div>
           )}
         </CardContent>
       </Card>
 
-      <Card className="border-2 border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/20">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-red-700 dark:text-red-300">
-            <HelpCircle className="w-5 h-5" />
-            Need Help? Child Abuse Support
+      <Card className="border-4 border-purple-400 bg-gradient-to-br from-purple-100/80 to-pink-100/80 dark:from-purple-900/40 dark:to-pink-900/40">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-2xl font-black flex items-center gap-3 text-purple-700 dark:text-purple-300">
+            <span className="text-3xl">💜</span>
+            Need Help?
           </CardTitle>
-          <CardDescription className="text-red-600 dark:text-red-400">You're not alone. Get help now.</CardDescription>
+          <CardDescription className="text-base font-bold text-purple-700 dark:text-purple-300">You're never alone. We're here for you!</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-foreground">If you're experiencing abuse, neglect, or unsafe situations:</p>
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border-3 border-purple-300 dark:border-purple-600">
+            <p className="text-sm font-bold text-foreground mb-3">If something feels wrong or unsafe:</p>
+            <ul className="text-sm space-y-2 font-bold">
+              <li className="flex items-center gap-2"><span className="text-xl">😊</span> You can talk to someone</li>
+              <li className="flex items-center gap-2"><span className="text-xl">🙏</span> You can ask for help</li>
+              <li className="flex items-center gap-2"><span className="text-xl">🤐</span> Your secret is safe with them</li>
+              <li className="flex items-center gap-2"><span className="text-xl">⭐</span> It's 100% FREE</li>
+            </ul>
+          </div>
           
           <div className="grid gap-3">
             <Button
               onClick={() => window.open('tel:1098')}
-              className="w-full h-16 bg-red-600 hover:bg-red-700 text-white font-bold text-base gap-2"
+              className="w-full h-16 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-black text-base gap-3 shadow-lg transform hover:scale-105 transition"
               data-testid="button-childline-1098"
             >
-              <Phone className="w-5 h-5" />
-              Call Childline India: 1098
+              <span className="text-2xl">📞</span>
+              Childline India: 1098
             </Button>
 
             <Button
               onClick={() => window.open('tel:1091')}
-              variant="outline"
-              className="w-full h-16 font-bold text-base gap-2 border-red-300 dark:border-red-700"
+              className="w-full h-16 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-black text-base gap-3 shadow-lg transform hover:scale-105 transition"
               data-testid="button-womens-helpline"
             >
-              <Phone className="w-5 h-5" />
+              <span className="text-2xl">💪</span>
               Women's Helpline: 1091
             </Button>
 
             <Button
               onClick={() => window.open('tel:112')}
-              variant="outline"
-              className="w-full h-16 font-bold text-base gap-2 border-red-300 dark:border-red-700"
+              className="w-full h-16 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-black text-base gap-3 shadow-lg transform hover:scale-105 transition"
               data-testid="button-emergency-112"
             >
-              <Phone className="w-5 h-5" />
+              <span className="text-2xl">🚓</span>
               Emergency: 112
             </Button>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 p-4 rounded-lg border border-red-200 dark:border-red-800">
-            <h4 className="font-bold text-sm mb-2">What you should know:</h4>
-            <ul className="text-xs space-y-1 text-foreground">
-              <li>✓ All calls are FREE and CONFIDENTIAL</li>
-              <li>✓ You can call 24 hours a day, 7 days a week</li>
-              <li>✓ They won't judge you - they're here to help</li>
-              <li>✓ You can report anonymously if you want</li>
-              <li>✓ It's okay to ask for help</li>
-            </ul>
-          </div>
-
-          <p className="text-xs text-muted-foreground text-center italic">
-            💙 Your safety and well-being matter. You deserve to be safe and happy.
+          <p className="text-base text-center font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+            ✨ You are brave & strong! ✨
           </p>
         </CardContent>
       </Card>
