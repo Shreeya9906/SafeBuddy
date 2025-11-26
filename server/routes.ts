@@ -170,10 +170,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/sos/:id", requireAuth, async (req, res, next) => {
     try {
-      const updatedAlert = await storage.updateSOSAlert(req.params.id, req.body);
-      if (!updatedAlert) {
+      const sosAlert = await storage.getSOSById(req.params.id);
+      if (!sosAlert || sosAlert.userId !== req.user!.id) {
         return res.status(404).json({ message: "SOS alert not found" });
       }
+
+      // Handle resolvedAt as a proper date
+      const updateData: any = { ...req.body };
+      if (req.body.resolvedAt && typeof req.body.resolvedAt === 'string') {
+        updateData.resolvedAt = new Date(req.body.resolvedAt);
+      }
+
+      const updatedAlert = await storage.updateSOSAlert(req.params.id, updateData);
       res.json(updatedAlert);
     } catch (error) {
       next(error);
