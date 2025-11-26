@@ -3,6 +3,7 @@ import { useAuth } from "@/lib/auth-context";
 import { userAPI, guardianAPI } from "@/lib/api";
 import { INDIAN_LANGUAGES } from "@/lib/languages";
 import { applyLanguageStyles, LANGUAGE_STYLES } from "@/lib/language-styles";
+import { useTranslation } from "@/lib/useTranslation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +20,7 @@ import type { Guardian } from "@shared/schema";
 export default function SettingsPage() {
   const { user, refreshUser } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
   const [guardians, setGuardians] = useState<Guardian[]>([]);
   const [isAddGuardianOpen, setIsAddGuardianOpen] = useState(false);
@@ -162,21 +164,21 @@ export default function SettingsPage() {
       <div>
         <h2 className="text-3xl font-bold tracking-tight flex items-center gap-2">
           <Settings className="w-8 h-8" />
-          Settings
+          {t("settings")}
         </h2>
-        <p className="text-muted-foreground">Manage your SafeBuddy preferences</p>
+        <p className="text-muted-foreground">{t("managePreferences")}</p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <User className="w-5 h-5" />
-            Profile Settings
+            {t("profileSettings")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-2">
-            <Label htmlFor="language">Language</Label>
+            <Label htmlFor="language">{t("language")}</Label>
             <Select
               value={settings.language}
               onValueChange={handleLanguageChange}
@@ -219,14 +221,14 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Volume2 className="w-5 h-5" />
-            Voice & Audio
+            {t("voiceAudio")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>Voice Commands</Label>
-              <p className="text-sm text-muted-foreground">Enable voice recognition</p>
+              <Label>{t("voiceCommands")}</Label>
+              <p className="text-sm text-muted-foreground">{t("enableVoiceRecognition")}</p>
             </div>
             <Switch
               checked={settings.voiceEnabled}
@@ -237,8 +239,8 @@ export default function SettingsPage() {
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>Text-to-Speech</Label>
-              <p className="text-sm text-muted-foreground">Enable voice responses</p>
+              <Label>{t("textToSpeech")}</Label>
+              <p className="text-sm text-muted-foreground">{t("enableVoiceResponses")}</p>
             </div>
             <Switch
               checked={settings.ttsEnabled}
@@ -249,8 +251,8 @@ export default function SettingsPage() {
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>MyBuddy Assistant</Label>
-              <p className="text-sm text-muted-foreground">Enable AI safety assistant</p>
+              <Label>{t("mybuddyAssistant")}</Label>
+              <p className="text-sm text-muted-foreground">{t("enableAISafetyAssistant")}</p>
             </div>
             <Switch
               checked={settings.mybuddyEnabled}
@@ -265,7 +267,7 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Palette className="w-5 h-5" />
-            Theme
+            {t("theme")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -280,7 +282,7 @@ export default function SettingsPage() {
               data-testid="button-theme-light"
             >
               <div className="text-2xl mb-2">☀️</div>
-              <p className="font-medium">Light Mode</p>
+              <p className="font-medium">{t("lightMode")}</p>
             </button>
             <button
               onClick={() => setSettings({ ...settings, theme: "dark" })}
@@ -292,7 +294,7 @@ export default function SettingsPage() {
               data-testid="button-theme-dark"
             >
               <div className="text-2xl mb-2">🌙</div>
-              <p className="font-medium text-white">Dark Mode</p>
+              <p className="font-medium text-white">{t("darkMode")}</p>
             </button>
           </div>
         </CardContent>
@@ -302,7 +304,7 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Type className="w-5 h-5" />
-            Font Size
+            {t("fontSize")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -314,10 +316,10 @@ export default function SettingsPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="small">Small (12px)</SelectItem>
-              <SelectItem value="medium">Medium (16px)</SelectItem>
-              <SelectItem value="large">Large (18px)</SelectItem>
-              <SelectItem value="xlarge">Extra Large (20px)</SelectItem>
+              <SelectItem value="small">{t("fontSizeSmall")} (12px)</SelectItem>
+              <SelectItem value="medium">{t("fontSizeMedium")} (16px)</SelectItem>
+              <SelectItem value="large">{t("fontSizeLarge")} (18px)</SelectItem>
+              <SelectItem value="xlarge">{t("fontSizeXLarge")} (20px)</SelectItem>
             </SelectContent>
           </Select>
         </CardContent>
@@ -365,37 +367,37 @@ export default function SettingsPage() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Users className="w-5 h-5" />
-                Emergency Guardians
+                {t("emergencyGuardians")}
               </CardTitle>
-              <CardDescription>People who will be notified during emergencies</CardDescription>
+              <CardDescription>{t("peopleNotifiedEmergencies")}</CardDescription>
             </div>
             <Dialog open={isAddGuardianOpen} onOpenChange={setIsAddGuardianOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" data-testid="button-add-guardian">
                   <Plus className="mr-2 w-4 h-4" />
-                  Add Guardian
+                  {t("addGuardian")}
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Add Emergency Guardian</DialogTitle>
+                  <DialogTitle>{t("addEmergencyGuardian")}</DialogTitle>
                   <DialogDescription>
-                    Add someone who will be notified when you activate SOS.
+                    {t("addWhoNotified")}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 mt-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="guardianName">Name *</Label>
+                    <Label htmlFor="guardianName">{t("name")} *</Label>
                     <Input
                       id="guardianName"
-                      placeholder="Full name"
+                      placeholder={t("name")}
                       value={newGuardian.name}
                       onChange={(e) => setNewGuardian({ ...newGuardian, name: e.target.value })}
                       data-testid="input-guardian-name"
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="guardianPhone">Phone *</Label>
+                    <Label htmlFor="guardianPhone">{t("phone")} *</Label>
                     <Input
                       id="guardianPhone"
                       placeholder="+91 1234567890"
@@ -405,7 +407,7 @@ export default function SettingsPage() {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="guardianEmail">Email (optional)</Label>
+                    <Label htmlFor="guardianEmail">{t("email")} (optional)</Label>
                     <Input
                       id="guardianEmail"
                       type="email"
@@ -416,7 +418,7 @@ export default function SettingsPage() {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="guardianRelationship">Relationship</Label>
+                    <Label htmlFor="guardianRelationship">{t("relationship")}</Label>
                     <Input
                       id="guardianRelationship"
                       placeholder="e.g., Parent, Spouse, Friend"
@@ -426,7 +428,7 @@ export default function SettingsPage() {
                     />
                   </div>
                   <Button onClick={handleAddGuardian} className="w-full" data-testid="button-save-guardian">
-                    Add Guardian
+                    {t("addGuardian")}
                   </Button>
                 </div>
               </DialogContent>
@@ -436,7 +438,7 @@ export default function SettingsPage() {
         <CardContent>
           {guardians.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">
-              No guardians added yet. Add your first emergency contact above.
+              {t("noGuardiansAdded")}
             </p>
           ) : (
             <div className="space-y-3">
@@ -514,10 +516,10 @@ export default function SettingsPage() {
           {isLoading ? (
             <>
               <Loader2 className="mr-2 w-4 h-4 animate-spin" />
-              Saving...
+              {t("saving")}
             </>
           ) : (
-            "Save Settings"
+            t("save")
           )}
         </Button>
       </div>
