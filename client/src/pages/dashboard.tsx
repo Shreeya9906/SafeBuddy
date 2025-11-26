@@ -894,6 +894,15 @@ export default function DashboardPage() {
               <AlertCircle className="mr-2 w-4 h-4" />
               File Police Complaint
             </Button>
+            <Button
+              variant="outline"
+              className="w-full justify-start"
+              onClick={() => navigate("/track-people")}
+              data-testid="button-track-people"
+            >
+              <MapPin className="mr-2 w-4 h-4" />
+              Track People by Phone
+            </Button>
           </CardContent>
         </Card>
       </div>
