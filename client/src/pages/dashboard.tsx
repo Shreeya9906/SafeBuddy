@@ -30,17 +30,20 @@ import type { SOSAlert, Guardian } from "@shared/schema";
 
 function ChildDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSToggle, handleFlashlightToggle, isFlashlightOn }: any) {
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-primary mb-2">Hi {user?.name}! Stay Safe 🛡️</h1>
-        <p className="text-muted-foreground">Emergency help is just one tap away</p>
+    <div className="space-y-4 p-6">
+      <div className="text-center mb-6">
+        <h1 className="text-4xl font-bold text-primary mb-3">Hi {user?.name}! 🛡️</h1>
+        <p className="text-lg text-muted-foreground">Stay Safe - Help Is One Tap Away</p>
       </div>
 
       {isSOSActive && (
-        <Card className="border-2 border-red-500 bg-red-50 dark:bg-red-950/20">
-          <CardContent className="p-4 text-center">
-            <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse inline-block mr-2"></div>
-            <span className="text-red-700 dark:text-red-300 font-bold">🚨 SIREN IS PLAYING!</span>
+        <Card className="border-4 border-red-500 bg-red-50 dark:bg-red-950/30 shadow-lg">
+          <CardContent className="p-6 text-center">
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <div className="w-4 h-4 bg-red-500 rounded-full animate-pulse"></div>
+              <span className="text-red-700 dark:text-red-300 font-bold text-xl">🚨 SIREN IS PLAYING!</span>
+            </div>
+            <p className="text-sm text-red-600">Your guardians have been notified</p>
           </CardContent>
         </Card>
       )}
@@ -48,22 +51,21 @@ function ChildDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSTo
       <div className="grid grid-cols-2 gap-4">
         <Button
           onClick={handleSOSToggle}
-          size="lg"
-          className={`h-32 text-lg font-bold ${isSOSActive ? 'bg-red-600 hover:bg-red-700' : 'bg-red-500 hover:bg-red-600'}`}
+          className={`h-40 rounded-xl text-xl font-bold flex flex-col items-center justify-center gap-3 ${isSOSActive ? 'bg-red-600 hover:bg-red-700' : 'bg-red-500 hover:bg-red-600'} shadow-lg`}
           data-testid="button-sos-emergency"
         >
-          <Shield className="mr-2 w-6 h-6" />
-          {isSOSActive ? 'STOP SOS' : 'SOS'}
+          <Shield className="w-10 h-10" />
+          {isSOSActive ? 'STOP\nSOS' : 'CALL\nSOS'}
         </Button>
         
         <Button
           onClick={handleFlashlightToggle}
-          size="lg"
           variant={isFlashlightOn ? "default" : "outline"}
-          className="h-32 text-lg font-bold"
+          className="h-40 rounded-xl text-lg font-bold flex flex-col items-center justify-center gap-3 shadow-lg"
           data-testid="button-flashlight-toggle"
         >
-          <Lightbulb className="w-6 h-6" />
+          <Lightbulb className="w-10 h-10" />
+          Flashlight
         </Button>
       </div>
 
@@ -72,14 +74,14 @@ function ChildDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSTo
           <CardContent className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-              <span className="text-red-700 dark:text-red-300 font-semibold">🚨 SIREN ACTIVE - Emergency Alert Sent</span>
+              <span className="text-red-700 dark:text-red-300 font-semibold">🚨 SIREN ACTIVE</span>
             </div>
             <Button
               onClick={handleSOSToggle}
               variant="destructive"
               size="sm"
             >
-              Turn Off SOS
+              Turn Off
             </Button>
           </CardContent>
         </Card>
@@ -87,23 +89,24 @@ function ChildDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSTo
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5" />
-            My Guardians
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Phone className="w-5 h-5 text-blue-600" />
+            Emergency Contacts
           </CardTitle>
+          <CardDescription>People to reach out to</CardDescription>
         </CardHeader>
         <CardContent>
           {guardians.length > 0 ? (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {guardians.map((g: Guardian) => (
-                <div key={g.id} className="p-2 bg-blue-50 dark:bg-blue-900 rounded text-sm">
-                  <p className="font-medium">{g.name}</p>
-                  <p className="text-xs text-muted-foreground">{g.phone}</p>
+                <div key={g.id} className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <p className="font-bold text-base">{g.name}</p>
+                  <p className="text-sm text-muted-foreground">{g.phone}</p>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No guardians added yet</p>
+            <p className="text-sm text-muted-foreground">No contacts added yet</p>
           )}
         </CardContent>
       </Card>
