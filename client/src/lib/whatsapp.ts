@@ -27,6 +27,16 @@ export function openWhatsAppCall(phoneNumber: string) {
   window.open(link, '_blank');
 }
 
+export function openWhatsAppVoiceCall(phoneNumber: string) {
+  const link = generateWhatsAppLink(phoneNumber, "📞 Starting voice call...");
+  window.open(link, '_blank');
+}
+
+export function openWhatsAppVideoCall(phoneNumber: string) {
+  const link = generateWhatsAppLink(phoneNumber, "📹 Starting video call...");
+  window.open(link, '_blank');
+}
+
 export function openPhoneCall(phoneNumber: string) {
   window.location.href = `tel:${phoneNumber}`;
 }

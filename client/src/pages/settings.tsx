@@ -12,8 +12,8 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Settings, User, Bell, Palette, Volume2, Users, Plus, Trash2, Loader2, MessageCircle, Phone, Type, Palette as PaletteIcon } from "lucide-react";
-import { openWhatsAppCall, openPhoneCall } from "@/lib/whatsapp";
+import { Settings, User, Bell, Palette, Volume2, Users, Plus, Trash2, Loader2, MessageCircle, Phone, Type, Palette as PaletteIcon, PhoneCall, Video } from "lucide-react";
+import { openWhatsAppCall, openPhoneCall, openWhatsAppVoiceCall, openWhatsAppVideoCall } from "@/lib/whatsapp";
 import type { Guardian } from "@shared/schema";
 
 export default function SettingsPage() {
@@ -458,18 +458,36 @@ export default function SettingsPage() {
                     size="sm"
                     onClick={() => openPhoneCall(guardian.phone)}
                     data-testid={`button-call-${guardian.id}`}
-                    title="Call"
+                    title="Phone Call"
                   >
                     <Phone className="w-4 h-4 text-blue-500" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => openWhatsAppCall(guardian.phone)}
-                    data-testid={`button-whatsapp-${guardian.id}`}
-                    title="WhatsApp"
+                    onClick={() => openWhatsAppVoiceCall(guardian.phone)}
+                    data-testid={`button-whatsapp-call-${guardian.id}`}
+                    title="WhatsApp Voice Call"
                   >
-                    <MessageCircle className="w-4 h-4 text-green-500" />
+                    <PhoneCall className="w-4 h-4 text-green-500" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => openWhatsAppVideoCall(guardian.phone)}
+                    data-testid={`button-whatsapp-video-${guardian.id}`}
+                    title="WhatsApp Video Call"
+                  >
+                    <Video className="w-4 h-4 text-purple-500" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => openWhatsAppCall(guardian.phone)}
+                    data-testid={`button-whatsapp-message-${guardian.id}`}
+                    title="WhatsApp Message"
+                  >
+                    <MessageCircle className="w-4 h-4 text-green-600" />
                   </Button>
                   <Button
                     variant="ghost"
