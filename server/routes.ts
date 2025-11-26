@@ -615,31 +615,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Find user by phone number
-      const targetUser = await db
-        .select()
-        .from(users)
-        .where(eq(users.phone, phone))
-        .limit(1);
+      const user = await storage.getUserByPhone(phone);
 
-      if (!targetUser || targetUser.length === 0) {
+      if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
 
-      const user = targetUser[0];
-
-      // Get latest location from SOS alerts
-      const latestSOS = await db
-        .select()
-        .from(sosAlerts)
-        .where(eq(sosAlerts.userId, user.id))
-        .orderBy(sql`created_at DESC`)
-        .limit(1);
-
-      if (latestSOS.length === 0) {
+      // Get latest SOS alert with location
+      const sos = await storage.getActiveSOSByUserId(user.id);
+      
+      if (!sos) {
         return res.status(404).json({ message: "No location data available" });
       }
-
-      const sos = latestSOS[0];
 
       res.json({
         id: user.id,
