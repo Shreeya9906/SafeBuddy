@@ -2,6 +2,7 @@ let audioContext: AudioContext | null = null;
 let oscillators: OscillatorNode[] = [];
 let gains: GainNode[] = [];
 let isPlaying = false;
+let sirenIntervals: NodeJS.Timeout[] = [];
 
 export function playSOSSiren() {
   if (isPlaying) return;
@@ -11,21 +12,38 @@ export function playSOSSiren() {
       audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
 
-    isPlaying = true;
-    const now = audioContext.currentTime;
-    const duration = 3; // 3 seconds per cycle
-    const cycles = 99; // Play for ~5 minutes (99 cycles of 3 seconds)
-
-    for (let cycle = 0; cycle < cycles; cycle++) {
-      const cycleStart = now + cycle * duration;
-
-      // Siren pattern: high frequency, then low frequency
-      createSirenTone(cycleStart, cycleStart + 0.5, 1000); // High beep
-      createSirenTone(cycleStart + 0.5, cycleStart + 1.0, 600); // Low beep
-      createSirenTone(cycleStart + 1.0, cycleStart + 1.5, 1000); // High beep
-      createSirenTone(cycleStart + 1.5, cycleStart + 2.0, 600); // Low beep
-      createSirenTone(cycleStart + 2.0, cycleStart + 3.0, 800); // Medium tone
+    // Resume audio context if suspended (required by browsers)
+    if (audioContext.state === 'suspended') {
+      audioContext.resume();
     }
+
+    isPlaying = true;
+
+    // Create repeating siren pattern every 3 seconds
+    const sirenPattern = () => {
+      if (!isPlaying || !audioContext) return;
+
+      const now = audioContext.currentTime;
+
+      // Siren pattern: alternating high and low tones
+      createSirenTone(now, now + 0.4, 1000); // High beep
+      createSirenTone(now + 0.5, now + 0.9, 600); // Low beep
+      createSirenTone(now + 1.0, now + 1.4, 1000); // High beep
+      createSirenTone(now + 1.5, now + 1.9, 600); // Low beep
+      createSirenTone(now + 2.0, now + 2.5, 800); // Medium tone
+    };
+
+    // Play siren immediately
+    sirenPattern();
+
+    // Repeat every 3 seconds
+    const interval = setInterval(() => {
+      if (isPlaying) {
+        sirenPattern();
+      }
+    }, 3000);
+
+    sirenIntervals.push(interval);
 
     // Vibrate phone if supported
     if ('vibrate' in navigator) {
@@ -39,32 +57,40 @@ export function playSOSSiren() {
 function createSirenTone(startTime: number, endTime: number, frequency: number) {
   if (!audioContext) return;
 
-  const osc = audioContext.createOscillator();
-  const gain = audioContext.createGain();
+  try {
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
 
-  osc.type = "sine";
-  osc.frequency.setValueAtTime(frequency, startTime);
-  osc.frequency.exponentialRampToValueAtTime(frequency * 1.2, startTime + 0.1);
-  osc.frequency.exponentialRampToValueAtTime(frequency * 0.8, endTime - 0.1);
-  osc.frequency.setValueAtTime(frequency, endTime);
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(frequency, startTime);
+    osc.frequency.exponentialRampToValueAtTime(frequency * 1.2, startTime + 0.1);
+    osc.frequency.exponentialRampToValueAtTime(frequency * 0.8, endTime - 0.1);
+    osc.frequency.setValueAtTime(frequency, endTime);
 
-  gain.gain.setValueAtTime(0, startTime);
-  gain.gain.linearRampToValueAtTime(0.3, startTime + 0.05);
-  gain.gain.linearRampToValueAtTime(0.3, endTime - 0.05);
-  gain.gain.linearRampToValueAtTime(0, endTime);
+    gain.gain.setValueAtTime(0, startTime);
+    gain.gain.linearRampToValueAtTime(0.3, startTime + 0.05);
+    gain.gain.linearRampToValueAtTime(0.3, endTime - 0.05);
+    gain.gain.linearRampToValueAtTime(0, endTime);
 
-  osc.connect(gain);
-  gain.connect(audioContext.destination);
+    osc.connect(gain);
+    gain.connect(audioContext.destination);
 
-  osc.start(startTime);
-  osc.stop(endTime);
+    osc.start(startTime);
+    osc.stop(endTime);
 
-  oscillators.push(osc);
-  gains.push(gain);
+    oscillators.push(osc);
+    gains.push(gain);
+  } catch (e) {
+    console.error("Error creating siren tone:", e);
+  }
 }
 
 export function stopSOSSiren() {
   isPlaying = false;
+  
+  // Clear all intervals
+  sirenIntervals.forEach(interval => clearInterval(interval));
+  sirenIntervals = [];
   
   // Stop all active oscillators
   oscillators.forEach(osc => {

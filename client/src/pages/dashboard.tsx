@@ -30,6 +30,15 @@ function ChildDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSTo
         <h1 className="text-3xl font-bold text-primary mb-2">Hi {user?.name}! Stay Safe 🛡️</h1>
         <p className="text-muted-foreground">Emergency help is just one tap away</p>
       </div>
+
+      {isSOSActive && (
+        <Card className="border-2 border-red-500 bg-red-50 dark:bg-red-950/20">
+          <CardContent className="p-4 text-center">
+            <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse inline-block mr-2"></div>
+            <span className="text-red-700 dark:text-red-300 font-bold">🚨 SIREN IS PLAYING!</span>
+          </CardContent>
+        </Card>
+      )}
       
       <div className="grid grid-cols-2 gap-4">
         <Button
@@ -53,6 +62,24 @@ function ChildDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSTo
         </Button>
       </div>
 
+      {isSOSActive && (
+        <Card className="border-2 border-red-500 bg-red-50 dark:bg-red-950/20">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+              <span className="text-red-700 dark:text-red-300 font-semibold">🚨 SIREN ACTIVE - Emergency Alert Sent</span>
+            </div>
+            <Button
+              onClick={handleSOSToggle}
+              variant="destructive"
+              size="sm"
+            >
+              Turn Off SOS
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -63,7 +90,7 @@ function ChildDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSTo
         <CardContent>
           {guardians.length > 0 ? (
             <div className="space-y-2">
-              {guardians.map((g) => (
+              {guardians.map((g: Guardian) => (
                 <div key={g.id} className="p-2 bg-blue-50 dark:bg-blue-900 rounded text-sm">
                   <p className="font-medium">{g.name}</p>
                   <p className="text-xs text-muted-foreground">{g.phone}</p>
