@@ -176,61 +176,83 @@ function ChildDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSTo
         </CardContent>
       </Card>
 
-      {/* Support Section */}
-      <Card className="border-4 border-purple-400 bg-gradient-to-br from-purple-200/60 to-pink-200/60 dark:from-purple-900/50 dark:to-pink-900/50 shadow-xl relative overflow-hidden">
-        <div className="absolute -bottom-10 -left-10 text-8xl opacity-10 animate-pulse">💜</div>
-        <CardHeader className="pb-3 relative z-10">
-          <CardTitle className="text-3xl font-black flex items-center gap-2 text-purple-700 dark:text-purple-300">
-            <span className="text-4xl animate-pulse">💜</span>
+      {/* Support Section - ULTRA COLORFUL */}
+      <Card className="border-8 border-purple-600 bg-gradient-to-br from-purple-300/70 via-pink-300/70 to-blue-300/70 dark:from-purple-900/70 dark:via-pink-900/70 dark:to-blue-900/70 shadow-2xl relative overflow-hidden z-10">
+        <div className="absolute -bottom-16 -left-16 text-screen opacity-10 animate-pulse" style={{fontSize: '220px'}}>💜</div>
+        <div className="absolute -top-12 -right-12 text-screen opacity-10 animate-float" style={{fontSize: '180px'}}>🌈</div>
+        <CardHeader className="pb-4 relative z-10">
+          <CardTitle className="text-5xl font-black flex items-center gap-3 bg-gradient-to-r from-purple-700 via-pink-600 to-blue-700 bg-clip-text text-transparent">
+            <span className="text-screen animate-pulse" style={{fontSize: '80px'}}>💜</span>
             Need Help?
           </CardTitle>
-          <CardDescription className="text-lg font-bold text-purple-700 dark:text-purple-300">🌟 You're never alone! We care about you!</CardDescription>
+          <CardDescription className="text-3xl font-black text-yellow-600 dark:text-yellow-300 drop-shadow-lg">🌟 YOU ARE NEVER ALONE! 🌟</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4 relative z-10">
-          <div className="bg-gradient-to-r from-white to-purple-50 dark:from-slate-900 dark:to-purple-900/50 p-5 rounded-3xl border-3 border-purple-300 dark:border-purple-600 shadow-md">
-            <p className="text-base font-black text-purple-900 dark:text-purple-100 mb-3">✨ If something feels wrong:</p>
-            <div className="grid grid-cols-2 gap-2 text-sm font-bold">
-              <div className="flex items-center gap-2"><span className="text-2xl">😊</span> <span>Talk & Share</span></div>
-              <div className="flex items-center gap-2"><span className="text-2xl">🙏</span> <span>Ask for Help</span></div>
-              <div className="flex items-center gap-2"><span className="text-2xl">🤐</span> <span>Secrets Safe</span></div>
-              <div className="flex items-center gap-2"><span className="text-2xl">⭐</span> <span>100% Free</span></div>
+        <CardContent className="space-y-5 relative z-10">
+          {/* Colorful tips boxes */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-gradient-to-br from-pink-300 to-red-300 dark:from-pink-800/90 dark:to-red-800/90 p-4 rounded-3xl border-4 border-pink-500 shadow-lg">
+              <div className="text-4xl mb-2">😊</div>
+              <p className="font-black text-lg text-pink-900 dark:text-pink-100">Talk & Share</p>
+            </div>
+            <div className="bg-gradient-to-br from-blue-300 to-cyan-300 dark:from-blue-800/90 dark:to-cyan-800/90 p-4 rounded-3xl border-4 border-blue-500 shadow-lg">
+              <div className="text-4xl mb-2">🙏</div>
+              <p className="font-black text-lg text-blue-900 dark:text-blue-100">Ask for Help</p>
+            </div>
+            <div className="bg-gradient-to-br from-green-300 to-emerald-300 dark:from-green-800/90 dark:to-emerald-800/90 p-4 rounded-3xl border-4 border-green-500 shadow-lg">
+              <div className="text-4xl mb-2">🤐</div>
+              <p className="font-black text-lg text-green-900 dark:text-green-100">Secrets Safe</p>
+            </div>
+            <div className="bg-gradient-to-br from-yellow-300 to-orange-300 dark:from-yellow-800/90 dark:to-orange-800/90 p-4 rounded-3xl border-4 border-yellow-500 shadow-lg">
+              <div className="text-4xl mb-2">⭐</div>
+              <p className="font-black text-lg text-yellow-900 dark:text-yellow-100">100% Free</p>
             </div>
           </div>
           
-          <div className="grid gap-3">
+          {/* Colorful help buttons */}
+          <div className="grid gap-4">
             <Button
               onClick={() => window.open('tel:1098')}
-              className="w-full h-20 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-black text-lg gap-3 shadow-xl transform hover:scale-105 active:scale-95 transition rounded-2xl"
+              className="w-full h-24 bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 hover:from-purple-700 hover:via-pink-700 hover:to-red-700 text-white font-black text-2xl gap-4 shadow-2xl transform hover:scale-110 active:scale-95 transition rounded-3xl border-4 border-purple-800"
               data-testid="button-childline-1098"
             >
-              <span className="text-4xl animate-bounce">📞</span>
-              <span>Childline: 1098</span>
+              <span className="text-screen animate-bounce" style={{fontSize: '60px'}}>📞</span>
+              <div className="text-left">
+                <p className="text-2xl font-black">Childline</p>
+                <p className="text-xl">1098</p>
+              </div>
             </Button>
 
             <Button
               onClick={() => window.open('tel:1091')}
-              className="w-full h-20 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-black text-lg gap-3 shadow-xl transform hover:scale-105 active:scale-95 transition rounded-2xl"
+              className="w-full h-24 bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 hover:from-orange-600 hover:via-red-600 hover:to-pink-600 text-white font-black text-2xl gap-4 shadow-2xl transform hover:scale-110 active:scale-95 transition rounded-3xl border-4 border-red-700"
               data-testid="button-womens-helpline"
             >
-              <span className="text-4xl animate-bounce" style={{animationDelay: '0.2s'}}>💪</span>
-              <span>Women's Help: 1091</span>
+              <span className="text-screen animate-bounce" style={{animationDelay: '0.2s', fontSize: '60px'}}>💪</span>
+              <div className="text-left">
+                <p className="text-2xl font-black">Women's Help</p>
+                <p className="text-xl">1091</p>
+              </div>
             </Button>
 
             <Button
               onClick={() => window.open('tel:112')}
-              className="w-full h-20 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-black text-lg gap-3 shadow-xl transform hover:scale-105 active:scale-95 transition rounded-2xl"
+              className="w-full h-24 bg-gradient-to-r from-blue-600 via-cyan-500 to-teal-500 hover:from-blue-700 hover:via-cyan-600 hover:to-teal-600 text-white font-black text-2xl gap-4 shadow-2xl transform hover:scale-110 active:scale-95 transition rounded-3xl border-4 border-blue-800"
               data-testid="button-emergency-112"
             >
-              <span className="text-4xl animate-bounce" style={{animationDelay: '0.4s'}}>🚓</span>
-              <span>Emergency: 112</span>
+              <span className="text-screen animate-bounce" style={{animationDelay: '0.4s', fontSize: '60px'}}>🚓</span>
+              <div className="text-left">
+                <p className="text-2xl font-black">Emergency</p>
+                <p className="text-xl">112</p>
+              </div>
             </Button>
           </div>
 
-          <div className="text-center py-4 bg-gradient-to-r from-purple-400 to-pink-400 rounded-2xl border-2 border-purple-500">
-            <p className="text-2xl font-black text-white drop-shadow-md">
-              ✨ You Are Brave & Strong! ✨
+          <div className="text-center py-6 bg-gradient-to-r from-red-400 via-yellow-400 via-green-400 via-blue-400 to-purple-400 rounded-3xl border-4 border-yellow-500 shadow-lg">
+            <p className="text-4xl font-black text-white drop-shadow-lg">
+              ✨ YOU ARE BRAVE! ✨
             </p>
-            <p className="text-sm font-bold text-purple-100 mt-1">🌟 Your safety matters! 🌟</p>
+            <p className="text-3xl font-black text-yellow-100 mt-2">🌟 YOUR SAFETY MATTERS! 🌟</p>
+            <p className="text-2xl mt-3">💙 WE LOVE YOU! 💙</p>
           </div>
         </CardContent>
       </Card>
