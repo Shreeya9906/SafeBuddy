@@ -811,7 +811,7 @@ function generateMyBuddyResponse(message: string, context?: string): {
   const lowerMessage = message.toLowerCase();
   
   const emergencyKeywords = ["emergency", "help", "danger", "scared", "hurt", "pain", "bleeding", "attack", "follow", "lost"];
-  const medicalKeywords = ["sick", "fever", "headache", "dizzy", "breathing", "chest", "allergy", "medicine", "doctor", "nausea", "vomit", "cough", "cold", "flu", "constipation", "diarrhea", "stomach", "belly", "digestion", "bowel", "poop", "pee", "urine", "anaphylaxis", "choking", "frostbite", "heat exhaustion", "heat stroke", "nosebleed", "nose bleed", "seizure", "shock", "unconscious", "unconsciousness"];
+  const medicalKeywords = ["sick", "fever", "headache", "dizzy", "breathing", "chest", "allergy", "medicine", "doctor", "nausea", "vomit", "cough", "cold", "flu", "constipation", "diarrhea", "stomach", "belly", "digestion", "bowel", "poop", "pee", "urine", "anaphylaxis", "choking", "frostbite", "heat exhaustion", "heat stroke", "nosebleed", "nose bleed", "seizure", "shock", "unconscious", "unconsciousness", "hypovolemic", "laceration", "poisoning", "scrape", "abdominal thrust", "bleeding", "cardiogenic", "infant choking", "unconscious choking", "sling", "drug", "ear emergency"];
   const emotionalKeywords = ["sad", "anxious", "worried", "afraid", "lonely", "stress", "panic", "depressed", "angry", "frustrated", "upset"];
   const contactKeywords = ["contact", "call", "reach", "phone", "guardian", "parent", "mom", "dad"];
 
@@ -947,6 +947,188 @@ function generateMyBuddyResponse(message: string, context?: string): {
           "🚫 Don't give food or water",
           "👁️ Monitor breathing continuously",
           "🚑 Wait for emergency services"
+        ];
+      } else if (lowerMessage.includes("hypovolemic")) {
+        medicalAdvice = "🚨 HYPOVOLEMIC SHOCK - Severe blood loss - EMERGENCY!";
+        response = medicalAdvice;
+        firstAidSteps = [
+          "📞 CALL 112 IMMEDIATELY",
+          "🛏️ Lay person flat with legs elevated 12 inches",
+          "🩸 Control bleeding - apply direct pressure with clean cloth",
+          "🧥 Keep person warm with blankets",
+          "🚫 Don't give food or water",
+          "💉 If trained, consider tourniquets for severe limb bleeding",
+          "👁️ Monitor pulse and breathing",
+          "🚑 Keep calm and wait for ambulance"
+        ];
+      } else if (lowerMessage.includes("laceration") && lowerMessage.includes("bandage")) {
+        medicalAdvice = "🩹 LACERATION - Liquid bandage treatment:";
+        response = medicalAdvice;
+        firstAidSteps = [
+          "🧼 Wash wound with clean water and mild soap",
+          "🧽 Pat dry with sterile cloth",
+          "🩸 If bleeding, apply pressure for 2-3 minutes",
+          "💊 Apply antibiotic ointment if available",
+          "💧 Apply liquid bandage in thin layers",
+          "⏱️ Let dry completely (usually 1-2 minutes)",
+          "👁️ Watch for signs of infection (redness, warmth, pus)",
+          "📞 Seek doctor if deep or gaping"
+        ];
+      } else if (lowerMessage.includes("poisoning")) {
+        medicalAdvice = "☠️ POISONING - Emergency treatment:";
+        response = medicalAdvice;
+        firstAidSteps = [
+          "📞 CALL 112 OR POISON CONTROL IMMEDIATELY",
+          "🆔 Identify the poison if possible (keep container/label)",
+          "🤢 If conscious, don't induce vomiting unless advised",
+          "💧 For swallowed poison: give water (200ml for adults, 100ml for children)",
+          "🌬️ For inhalation: move to fresh air immediately",
+          "👁️ For eye contact: rinse with water for 15 minutes",
+          "🧼 For skin contact: wash with soap and water",
+          "🚑 Provide all info to paramedics"
+        ];
+      } else if (lowerMessage.includes("scrape")) {
+        medicalAdvice = "🩹 SCRAPE - Minor wound care:";
+        response = medicalAdvice;
+        firstAidSteps = [
+          "🚰 Rinse with clean, running water",
+          "🧼 Gently wash with mild soap around the wound",
+          "🧽 Pat dry with clean cloth",
+          "🧴 Apply antibiotic ointment (optional)",
+          "🩹 Cover with sterile bandage if needed",
+          "💊 Take pain reliever if needed (paracetamol/ibuprofen)",
+          "👁️ Change dressing daily until healed",
+          "📞 See doctor if signs of infection"
+        ];
+      } else if (lowerMessage.includes("abdominal thrust")) {
+        medicalAdvice = "🚨 ABDOMINAL THRUSTS - For choking relief:";
+        response = medicalAdvice;
+        firstAidSteps = [
+          "🫁 First encourage coughing if able",
+          "👥 Stand behind the person",
+          "✊ Place fist above navel, below ribcage",
+          "🤝 Grasp fist with other hand",
+          "💪 Quick, upward thrusts into abdomen",
+          "🔄 Repeat 5 times, then check mouth",
+          "🔁 Alternate between back blows and thrusts if needed",
+          "📞 Call 112 if object not removed"
+        ];
+      } else if (lowerMessage.includes("bleeding")) {
+        medicalAdvice = "🩸 BLEEDING - Emergency control:";
+        response = medicalAdvice;
+        firstAidSteps = [
+          "💪 Apply direct pressure with clean cloth",
+          "⏱️ Hold pressure for 10-15 minutes continuously",
+          "🙅 Don't remove cloth - layer new one on top if needed",
+          "🙌 Elevate bleeding area above heart if possible",
+          "🧊 Apply ice pack if available (wrapped in cloth)",
+          "🩹 Once stopped, wrap with sterile bandage",
+          "👁️ Watch for excessive bleeding or shock signs",
+          "📞 Call 112 if heavy bleeding or won't stop"
+        ];
+      } else if ((lowerMessage.includes("breathing") || lowerMessage.includes("difficulty")) && !lowerMessage.includes("chest")) {
+        medicalAdvice = "💨 BREATHING DIFFICULTIES - First aid steps:";
+        response = medicalAdvice;
+        firstAidSteps = [
+          "🧘 Sit upright to help breathing",
+          "🌬️ Breathe slowly and deeply - in through nose, out through mouth",
+          "🏠 Move to fresh air if in smoky/enclosed area",
+          "👕 Loosen tight clothing",
+          "❌ Remove anything blocking mouth/throat",
+          "🧥 Keep warm to prevent shock",
+          "📞 Call 112 if breathing doesn't improve in 5 minutes",
+          "👁️ Watch for wheezing, chest pain, or blue lips"
+        ];
+      } else if (lowerMessage.includes("capillary")) {
+        medicalAdvice = "💉 CAPILLARY NAIL REFILL TEST - Circulation check:";
+        response = medicalAdvice;
+        firstAidSteps = [
+          "🏥 Press thumbnail firmly (blanch the nail)",
+          "⏱️ Release and count how fast color returns",
+          "✅ NORMAL: Color returns in <2 seconds = Good circulation",
+          "⚠️ WARNING: Takes 2-3 seconds = Possible shock or poor circulation",
+          "🚨 CRITICAL: Takes >3 seconds = Severe circulation problem",
+          "📞 Call 112 if refill time is abnormal",
+          "🔄 Test multiple fingers for accuracy",
+          "👁️ Compare with uninjured limb if possible"
+        ];
+      } else if (lowerMessage.includes("cardiogenic")) {
+        medicalAdvice = "❤️ CARDIOGENIC SHOCK - Heart-related emergency!";
+        response = medicalAdvice;
+        firstAidSteps = [
+          "📞 CALL 112 IMMEDIATELY",
+          "🛏️ Lay person flat with legs elevated",
+          "❌ STOP all exertion immediately",
+          "🫁 Check for breathing and pulse",
+          "💊 If person has chest medication (nitroglycerine), help them take it",
+          "🧥 Keep warm with blankets",
+          "👁️ Monitor vital signs continuously",
+          "🚑 Start CPR if no pulse/breathing"
+        ];
+      } else if (lowerMessage.includes("infant") && lowerMessage.includes("choking")) {
+        medicalAdvice = "👶 INFANT CHOKING (under 1 year) - Different technique!";
+        response = medicalAdvice;
+        firstAidSteps = [
+          "👥 Hold infant face-down on your forearm",
+          "🤚 Support infant's jaw and cheek",
+          "✋ Give 5 quick back blows between shoulder blades",
+          "🔄 Flip infant face-up, supporting head/neck",
+          "👉 Give 5 chest thrusts with 2 fingers on breastbone",
+          "👁️ Check mouth - remove object if visible",
+          "🔁 Repeat back blows and chest thrusts until cleared",
+          "📞 Call 112 if object not removed"
+        ];
+      } else if (lowerMessage.includes("unconscious") && lowerMessage.includes("choking")) {
+        medicalAdvice = "🚨 UNCONSCIOUS CHOKING - Special handling:";
+        response = medicalAdvice;
+        firstAidSteps = [
+          "📞 CALL 112 IMMEDIATELY",
+          "🛏️ Place person on back",
+          "👁️ Open mouth - tilt head back gently",
+          "👉 Sweep mouth with finger to remove object",
+          "🫁 Try to give rescue breaths",
+          "👥 If no success, start CPR",
+          "🔄 Continue CPR with periodic mouth checks",
+          "💪 If object comes out, continue rescue breathing"
+        ];
+      } else if (lowerMessage.includes("sling")) {
+        medicalAdvice = "🏥 CREATING A SLING - Arm support:";
+        response = medicalAdvice;
+        firstAidSteps = [
+          "📏 Use triangular bandage or scarf",
+          "🫴 Bend arm at 90-degree angle at elbow",
+          "🎀 Tie one end around neck",
+          "🎀 Tie other end around waist",
+          "👉 Tuck lower arm point at elbow",
+          "⚖️ Ensure arm is supported equally",
+          "👁️ Check circulation - fingers should be warm and pink",
+          "🧊 Apply ice for first 48 hours for swelling"
+        ];
+      } else if (lowerMessage.includes("drug")) {
+        medicalAdvice = "💊 DRUG USE EMERGENCY - First aid response:";
+        response = medicalAdvice;
+        firstAidSteps = [
+          "📞 CALL 112 IMMEDIATELY (medical help, not police)",
+          "🫁 Check breathing and consciousness",
+          "🛏️ Place in recovery position if breathing",
+          "💨 Keep airway clear",
+          "🌬️ If no breathing, start CPR",
+          "❄️ If overdose suspected: have naloxone (antidote) ready",
+          "🆔 Tell paramedics what drug was taken",
+          "👁️ Stay with person until help arrives"
+        ];
+      } else if (lowerMessage.includes("ear")) {
+        medicalAdvice = "👂 EAR EMERGENCY - First aid:";
+        response = medicalAdvice;
+        firstAidSteps = [
+          "🚫 Don't insert anything in the ear",
+          "👂 If object stuck: keep calm, don't try removing it yourself",
+          "📞 Call 112 for embedded objects",
+          "💧 For water in ear: tilt head and hop on one leg",
+          "🔥 For chemical burn: rinse gently with water for 15 mins",
+          "🩸 For bleeding from ear: cover loosely, don't plug",
+          "🧊 For ear pain: apply warm compress",
+          "🏥 See doctor for severe pain, bleeding, or hearing loss"
         ];
       } else if (lowerMessage.includes("fever")) {
         medicalAdvice += "For fever, rest well and stay hydrated. Monitor your temperature. If it exceeds 103°F (39.4°C), please consult a doctor immediately.";
