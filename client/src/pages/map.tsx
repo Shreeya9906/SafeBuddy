@@ -73,10 +73,17 @@ export default function MapPage() {
       const loc = await getCurrentLocation();
       setLocation(loc);
     } catch (error: any) {
+      // Fallback to Chennai, India if location fails
+      const fallbackLocation = {
+        latitude: 13.0827,
+        longitude: 80.2707,
+        accuracy: undefined,
+      };
+      setLocation(fallbackLocation);
       toast({
-        title: "Location Error",
-        description: "Could not get your location. Please enable location services.",
-        variant: "destructive",
+        title: "Using Default Location",
+        description: "Showing Chennai on map. Enable location services for real-time tracking.",
+        variant: "default",
       });
     } finally {
       setIsLoading(false);
@@ -99,19 +106,29 @@ export default function MapPage() {
     if (watchIdRef.current !== null) return;
 
     setIsTracking(true);
-    watchIdRef.current = watchLocation(async (loc) => {
-      setLocation(loc);
-      
-      try {
-        await sosAPI.addLocation(sosId, {
-          latitude: loc.latitude,
-          longitude: loc.longitude,
-          accuracy: loc.accuracy,
-        });
-      } catch (error) {
-        console.error("Error updating location:", error);
-      }
-    });
+    try {
+      watchIdRef.current = watchLocation(async (loc) => {
+        setLocation(loc);
+        
+        try {
+          await sosAPI.addLocation(sosId, {
+            latitude: loc.latitude,
+            longitude: loc.longitude,
+            accuracy: loc.accuracy,
+          });
+        } catch (error) {
+          console.error("Error updating location:", error);
+        }
+      });
+    } catch (error) {
+      console.error("Error starting location watch:", error);
+      setIsTracking(false);
+      toast({
+        title: "Tracking Error",
+        description: "Could not start live tracking. Please enable location services.",
+        variant: "destructive",
+      });
+    }
   };
 
   const stopTracking = () => {
@@ -151,11 +168,21 @@ export default function MapPage() {
         description: `Accuracy: ${loc.accuracy?.toFixed(0)}m`,
       });
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      // Fallback to current location or default if refresh fails
+      if (location) {
+        toast({
+          title: "Using Cached Location",
+          description: "Could not refresh. Showing last known location.",
+          variant: "default",
+        });
+      } else {
+        const fallbackLocation = {
+          latitude: 13.0827,
+          longitude: 80.2707,
+          accuracy: undefined,
+        };
+        setLocation(fallbackLocation);
+      }
     }
   };
 
@@ -168,22 +195,14 @@ export default function MapPage() {
   }
 
   if (!location) {
-    return (
-      <div className="container mx-auto p-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Location Not Available</CardTitle>
-            <CardDescription>Please enable location services to use the map.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={loadInitialLocation}>
-              <Navigation className="mr-2 w-4 h-4" />
-              Try Again
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    // This shouldn't happen now due to fallback, but keep as safety net
+    const fallbackLocation = {
+      latitude: 13.0827,
+      longitude: 80.2707,
+      accuracy: undefined,
+    };
+    setLocation(fallbackLocation);
+    return null; // Will re-render with fallback location
   }
 
   return (
