@@ -26,6 +26,33 @@ export default function FallDetectionPage() {
   const confirmationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const recognitionRef = useRef<any>(null);
+  const handlerRef = useRef<any>(null);
+
+  // Store current handler in ref to avoid stale closure
+  const handleYesAccidentalWrapper = async () => {
+    if (confirmationTimeoutRef.current) clearTimeout(confirmationTimeoutRef.current);
+    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+
+    // Stop voice recognition
+    if (recognitionRef.current) {
+      recognitionRef.current.abort();
+    }
+    window.speechSynthesis.cancel();
+
+    stopSOSSiren();
+    disableFlashlight();
+    setShowConfirmation(false);
+    setFallDetected(false);
+    setIsListening(false);
+    setVoiceRecognized("");
+
+    toast({
+      title: "✅ False Alarm Dismissed",
+      description: "🎤 Voice/Tap confirmed. Fall detection canceled. No emergency services contacted.",
+    });
+  };
+
+  handlerRef.current = handleYesAccidentalWrapper;
 
   useEffect(() => {
     const checkDeviceOrientation = () => {
@@ -44,16 +71,18 @@ export default function FallDetectionPage() {
       recognitionRef.current.lang = 'en-US';
 
       recognitionRef.current.onresult = (event: any) => {
-        let interimTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const transcript = event.results[i][0].transcript.toLowerCase().trim();
           if (event.results[i].isFinal) {
+            console.log('Voice recognized:', transcript);
             setVoiceRecognized(transcript);
+            // Use ref to call current handler - avoids stale closure
             if (transcript.includes('yes') || transcript.includes('yeah') || transcript.includes('ok')) {
-              handleYesAccidental();
+              console.log('YES detected - calling handler');
+              if (handlerRef.current) {
+                handlerRef.current();
+              }
             }
-          } else {
-            interimTranscript += transcript;
           }
         }
       };
@@ -191,27 +220,10 @@ export default function FallDetectionPage() {
     }
   };
 
-  const handleYesAccidental = async () => {
-    if (confirmationTimeoutRef.current) clearTimeout(confirmationTimeoutRef.current);
-    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
-
-    // Stop voice recognition
-    if (recognitionRef.current) {
-      recognitionRef.current.abort();
+  const handleYesAccidental = () => {
+    if (handlerRef.current) {
+      handlerRef.current();
     }
-    window.speechSynthesis.cancel();
-
-    stopSOSSiren();
-    disableFlashlight();
-    setShowConfirmation(false);
-    setFallDetected(false);
-    setIsListening(false);
-    setVoiceRecognized("");
-
-    toast({
-      title: "✅ False Alarm Dismissed",
-      description: "🎤 Voice confirmed. Fall detection canceled. No emergency services contacted.",
-    });
   };
 
   const handleNoResponse = async () => {
