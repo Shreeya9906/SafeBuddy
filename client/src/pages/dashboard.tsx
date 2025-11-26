@@ -469,6 +469,8 @@ export default function DashboardPage() {
     if (isSOSActive && activeAlert) {
       try {
         stopSOSSiren();
+        disableFlashlight();
+        setIsFlashlightOn(false);
         await sosAPI.update(activeAlert.id, { status: "resolved", resolvedAt: new Date() });
         setIsSOSActive(false);
         setActiveAlert(null);
@@ -498,6 +500,8 @@ export default function DashboardPage() {
         setActiveAlert(alert);
         setIsSOSActive(true);
         playSOSSiren();
+        enableFlashlight();
+        setIsFlashlightOn(true);
 
         // Notify guardians via SMS and emergency services
         const emergencyNumbers = ["100", "108", "112", "1091"];
@@ -508,18 +512,19 @@ export default function DashboardPage() {
           ]);
           toast({
             title: "SOS Activated!",
-            description: "SMS sent to guardians & emergency services called. Siren playing.",
+            description: "💡 Flashlight ON 🚨 Siren playing. SMS sent to guardians & emergency services called.",
             variant: "destructive",
           });
         } catch (callError) {
           toast({
             title: "SOS Activated!",
-            description: "Emergency alert sent to guardians. Siren is playing.",
+            description: "💡 Flashlight ON 🚨 Siren playing. Emergency alert sent to guardians.",
             variant: "destructive",
           });
         }
       } catch (error: any) {
         stopSOSSiren();
+        disableFlashlight();
         toast({
           title: "SOS Error",
           description: error.message,
