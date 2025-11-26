@@ -288,6 +288,139 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/weather/live", async (req, res, next) => {
+    try {
+      const { lat, lon, city } = req.query;
+      
+      if (!lat || !lon) {
+        return res.status(400).json({ message: "Latitude and longitude required" });
+      }
+
+      const apiKey = process.env.OPENWEATHER_API_KEY;
+      if (!apiKey) {
+        return res.status(500).json({ message: "Weather API key not configured" });
+      }
+
+      const response = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch weather data");
+      }
+
+      const weatherData = await response.json();
+
+      // Convert to our alert format
+      const condition = weatherData.weather?.[0]?.main || "Clear";
+      const description = weatherData.weather?.[0]?.description || "";
+      const temp = weatherData.main?.temp;
+      const feelsLike = weatherData.main?.feels_like;
+      const humidity = weatherData.main?.humidity;
+      const windSpeed = weatherData.wind?.speed;
+      const pressure = weatherData.main?.pressure;
+
+      // Determine severity based on weather conditions
+      let severity = "moderate";
+      let alertType = "clear";
+      let title = `Current Weather in ${city}`;
+      let instructions: string[] = [];
+
+      if (condition.includes("Thunderstorm")) {
+        severity = "critical";
+        alertType = "storm";
+        title = `⚡ Thunderstorm Warning - ${city}`;
+        instructions = [
+          "Stay indoors",
+          "Avoid using electronic devices",
+          "Stay away from windows",
+          "Avoid outdoor activities",
+          "Listen for weather updates"
+        ];
+      } else if (condition.includes("Rain") || condition.includes("Drizzle")) {
+        severity = "moderate";
+        alertType = "heavy_rain";
+        title = `🌧️ Heavy Rainfall - ${city}`;
+        instructions = [
+          "Carry an umbrella",
+          "Drive carefully on wet roads",
+          "Avoid flooded areas",
+          "Keep emergency contacts ready"
+        ];
+      } else if (condition.includes("Snow")) {
+        severity = "severe";
+        alertType = "snow";
+        title = `❄️ Snow Warning - ${city}`;
+        instructions = [
+          "Avoid travel if possible",
+          "Wear warm clothing",
+          "Check road conditions",
+          "Keep emergency supplies"
+        ];
+      } else if (condition.includes("Fog") || condition.includes("Mist")) {
+        severity = "moderate";
+        alertType = "fog";
+        title = `🌫️ Low Visibility - ${city}`;
+        instructions = [
+          "Use headlights while driving",
+          "Reduce speed",
+          "Maintain distance from other vehicles",
+          "Be cautious of pedestrians"
+        ];
+      } else if (temp && temp > 40) {
+        severity = "severe";
+        alertType = "heat_wave";
+        title = `🔥 Extreme Heat - ${city}`;
+        instructions = [
+          "Stay hydrated",
+          "Avoid outdoor activities 12-4 PM",
+          "Wear light colored clothing",
+          "Check on elderly neighbors"
+        ];
+      } else if (temp && temp < 0) {
+        severity = "severe";
+        alertType = "cold_wave";
+        title = `❄️ Cold Wave - ${city}`;
+        instructions = [
+          "Wear warm clothing",
+          "Stay indoors during extreme cold",
+          "Keep heating systems working",
+          "Check on elderly"
+        ];
+      } else if (windSpeed && windSpeed > 40) {
+        severity = "moderate";
+        alertType = "wind";
+        title = `💨 Strong Winds - ${city}`;
+        instructions = [
+          "Secure loose objects",
+          "Avoid tall structures",
+          "Be cautious while driving",
+          "Stay indoors if possible"
+        ];
+      }
+
+      res.json({
+        id: `live-${Date.now()}`,
+        city,
+        alertType,
+        severity,
+        title,
+        description: `${condition} - ${description}. Temperature: ${temp}°C (feels like ${feelsLike}°C). Humidity: ${humidity}%. Wind Speed: ${windSpeed} m/s. Pressure: ${pressure} hPa.`,
+        instructions,
+        affectedAreas: [city],
+        temperature: temp,
+        feelsLike,
+        humidity,
+        windSpeed,
+        pressure,
+        condition,
+        timestamp: new Date()
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.get("/api/mybuddy/logs", requireAuth, async (req, res, next) => {
     try {
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;

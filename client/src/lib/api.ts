@@ -81,6 +81,9 @@ export const complaintAPI = {
 
 export const weatherAPI = {
   getAlerts: (): Promise<WeatherAlert[]> => fetchAPI("/weather/alerts"),
+  
+  getLiveWeather: (lat: number, lon: number, city: string): Promise<any> =>
+    fetchAPI(`/weather/live?lat=${lat}&lon=${lon}&city=${encodeURIComponent(city)}`),
 };
 
 export const mybuddyAPI = {

@@ -77,10 +77,7 @@ function InnerRouter() {
       <Route path="/weather">
         <ProtectedRoute>
           <AppLayout>
-            <div className="p-6">
-              <h2 className="text-2xl font-bold">Weather Alerts</h2>
-              <p className="text-muted-foreground">Weather alerts coming soon...</p>
-            </div>
+            <WeatherPage />
           </AppLayout>
         </ProtectedRoute>
       </Route>
@@ -116,13 +113,6 @@ function InnerRouter() {
           </AppLayout>
         </ProtectedRoute>
       </Route>
-
-      <Route path="/weather">
-        <ProtectedRoute>
-          <AppLayout>
-            <WeatherPage />
-          </AppLayout>
-        </ProtectedRoute>
       </Route>
 
       <Route path="/settings">

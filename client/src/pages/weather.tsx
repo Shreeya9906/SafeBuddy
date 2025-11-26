@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { AlertTriangle, CloudDrizzle, Wind, Eye, RefreshCw, Search } from "lucide-react";
+import { AlertTriangle, CloudDrizzle, Wind, Eye, RefreshCw, Search, Droplets, Gauge, Thermometer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { WeatherAlert } from "@shared/schema";
 import { indianCities, searchCities } from "@/data/indian-cities";
@@ -15,12 +15,16 @@ const weatherIcons: Record<string, React.ReactNode> = {
   "storm": <AlertTriangle className="w-8 h-8 text-purple-500" />,
   "fog": <Eye className="w-8 h-8 text-gray-500" />,
   "wind": <Wind className="w-8 h-8 text-cyan-500" />,
+  "heat_wave": <Thermometer className="w-8 h-8 text-red-500" />,
+  "cold_wave": <AlertTriangle className="w-8 h-8 text-blue-600" />,
+  "snow": <CloudDrizzle className="w-8 h-8 text-white" />,
   "default": <CloudDrizzle className="w-8 h-8 text-blue-400" />,
 };
 
 export default function WeatherPage() {
   const { toast } = useToast();
   const [alerts, setAlerts] = useState<WeatherAlert[]>([]);
+  const [liveWeather, setLiveWeather] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<typeof indianCities>([]);
@@ -54,6 +58,22 @@ export default function WeatherPage() {
         });
       }
     } catch (error: any) {
+      console.error("Error loading alerts:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadLiveWeather = async (city: typeof indianCities[0]) => {
+    setIsLoading(true);
+    try {
+      const data = await weatherAPI.getLiveWeather(city.lat, city.lon, city.name);
+      setLiveWeather(data);
+      toast({
+        title: "Weather Updated",
+        description: `Live weather for ${city.name} loaded`,
+      });
+    } catch (error: any) {
       toast({
         title: "Error",
         description: error.message,
@@ -64,14 +84,11 @@ export default function WeatherPage() {
     }
   };
 
-  const handleCitySelect = (city: typeof indianCities[0]) => {
+  const handleCitySelect = async (city: typeof indianCities[0]) => {
     setSelectedCity(city);
     setSearchQuery(city.name);
     setShowSearchResults(false);
-    toast({
-      title: "Location Selected",
-      description: `Viewing weather alerts for ${city.name}, ${city.state}`,
-    });
+    await loadLiveWeather(city);
   };
 
   const getSeverityColor = (severity?: string) => {
@@ -172,7 +189,80 @@ export default function WeatherPage() {
         </CardContent>
       </Card>
 
-      {alerts.length === 0 ? (
+      {liveWeather && (
+        <Card className="border-2 border-blue-300 dark:border-blue-700 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950 dark:to-cyan-950">
+          <CardHeader>
+            <div className="flex items-start justify-between">
+              <div className="flex items-start gap-4">
+                {getWeatherIcon(liveWeather.alertType)}
+                <div className="flex-1">
+                  <CardTitle className="text-2xl">{liveWeather.title}</CardTitle>
+                  <CardDescription className="mt-1">Last updated: {new Date(liveWeather.timestamp).toLocaleTimeString()}</CardDescription>
+                </div>
+              </div>
+              <Badge className={getSeverityColor(liveWeather.severity)}>
+                {liveWeather.severity?.toUpperCase()}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm leading-relaxed">{liveWeather.description}</p>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-white dark:bg-slate-800 p-3 rounded-lg">
+                <div className="flex items-center gap-2 mb-1">
+                  <Thermometer className="w-4 h-4 text-red-500" />
+                  <span className="text-xs font-semibold text-muted-foreground">Temperature</span>
+                </div>
+                <p className="text-2xl font-bold">{liveWeather.temperature}°C</p>
+                <p className="text-xs text-muted-foreground">Feels like {liveWeather.feelsLike}°C</p>
+              </div>
+
+              <div className="bg-white dark:bg-slate-800 p-3 rounded-lg">
+                <div className="flex items-center gap-2 mb-1">
+                  <Droplets className="w-4 h-4 text-blue-500" />
+                  <span className="text-xs font-semibold text-muted-foreground">Humidity</span>
+                </div>
+                <p className="text-2xl font-bold">{liveWeather.humidity}%</p>
+              </div>
+
+              <div className="bg-white dark:bg-slate-800 p-3 rounded-lg">
+                <div className="flex items-center gap-2 mb-1">
+                  <Wind className="w-4 h-4 text-cyan-500" />
+                  <span className="text-xs font-semibold text-muted-foreground">Wind Speed</span>
+                </div>
+                <p className="text-2xl font-bold">{liveWeather.windSpeed}</p>
+                <p className="text-xs text-muted-foreground">m/s</p>
+              </div>
+
+              <div className="bg-white dark:bg-slate-800 p-3 rounded-lg">
+                <div className="flex items-center gap-2 mb-1">
+                  <Gauge className="w-4 h-4 text-gray-500" />
+                  <span className="text-xs font-semibold text-muted-foreground">Pressure</span>
+                </div>
+                <p className="text-2xl font-bold">{liveWeather.pressure}</p>
+                <p className="text-xs text-muted-foreground">hPa</p>
+              </div>
+            </div>
+
+            {liveWeather.instructions && liveWeather.instructions.length > 0 && (
+              <Alert>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Safety Recommendations:</strong>
+                  <ul className="mt-2 space-y-1">
+                    {liveWeather.instructions.map((instruction: string, i: number) => (
+                      <li key={i} className="text-sm">• {instruction}</li>
+                    ))}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {alerts.length === 0 && !liveWeather ? (
         <Card className="bg-green-50 dark:bg-green-950/20">
           <CardContent className="p-8 text-center">
             <CloudDrizzle className="mx-auto mb-4 w-12 h-12 text-green-600" />
@@ -184,8 +274,10 @@ export default function WeatherPage() {
             </p>
           </CardContent>
         </Card>
-      ) : (
-        <div className="grid gap-4">
+      ) : liveWeather ? (
+        <div>
+          <h3 className="text-xl font-bold mb-4">Active Weather Alerts in Your Area</h3>
+          <div className="grid gap-4">
           {alerts.map((alert, index) => (
             <Card key={alert.id || index} className="border-2 border-orange-200 dark:border-orange-900">
               <CardHeader className="pb-3">
@@ -237,6 +329,49 @@ export default function WeatherPage() {
                     </div>
                   )}
                 </div>
+              </CardContent>
+            </Card>
+          ))}
+          </div>
+        </div>
+      ) : (
+        <div className="grid gap-4">
+          {alerts.map((alert, index) => (
+            <Card key={alert.id || index} className="border-2 border-orange-200 dark:border-orange-900">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-4">
+                    {getWeatherIcon(alert.alertType)}
+                    <div className="flex-1">
+                      <CardTitle className="text-xl">{alert.title}</CardTitle>
+                      <CardDescription className="mt-1">
+                        {alert.affectedAreas?.join(", ") || "Your area"}
+                      </CardDescription>
+                    </div>
+                  </div>
+                  <Badge className={getSeverityColor(alert.severity)}>
+                    {alert.severity?.toUpperCase() || "ALERT"}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-sm leading-relaxed text-foreground">
+                  {alert.description}
+                </p>
+
+                {alert.instructions && alert.instructions.length > 0 && (
+                  <Alert>
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      <strong>What to do:</strong>
+                      <ul className="mt-2 space-y-1">
+                        {alert.instructions.map((instruction, i) => (
+                          <li key={i} className="text-sm">• {instruction}</li>
+                        ))}
+                      </ul>
+                    </AlertDescription>
+                  </Alert>
+                )}
               </CardContent>
             </Card>
           ))}
