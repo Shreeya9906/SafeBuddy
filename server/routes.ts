@@ -806,11 +806,12 @@ function generateMyBuddyResponse(message: string, context?: string): {
   keywords: string[];
   action: string | null;
   suggestions: string[];
+  firstAidSteps?: string[];
 } {
   const lowerMessage = message.toLowerCase();
   
   const emergencyKeywords = ["emergency", "help", "danger", "scared", "hurt", "pain", "bleeding", "attack", "follow", "lost"];
-  const medicalKeywords = ["sick", "fever", "headache", "dizzy", "breathing", "chest", "allergy", "medicine", "doctor", "nausea", "vomit", "cough", "cold", "flu", "constipation", "diarrhea", "stomach", "belly", "digestion", "bowel", "poop", "pee", "urine"];
+  const medicalKeywords = ["sick", "fever", "headache", "dizzy", "breathing", "chest", "allergy", "medicine", "doctor", "nausea", "vomit", "cough", "cold", "flu", "constipation", "diarrhea", "stomach", "belly", "digestion", "bowel", "poop", "pee", "urine", "anaphylaxis", "choking", "frostbite", "heat exhaustion", "heat stroke", "nosebleed", "nose bleed", "seizure", "shock", "unconscious", "unconsciousness"];
   const emotionalKeywords = ["sad", "anxious", "worried", "afraid", "lonely", "stress", "panic", "depressed", "angry", "frustrated", "upset"];
   const contactKeywords = ["contact", "call", "reach", "phone", "guardian", "parent", "mom", "dad"];
 
@@ -824,6 +825,7 @@ function generateMyBuddyResponse(message: string, context?: string): {
   let keywords: string[] = [];
   let action: string | null = null;
   let suggestions: string[] = [];
+  let firstAidSteps: string[] = [];
 
   if (isContactRequest) {
     sentiment = "neutral";
@@ -850,7 +852,103 @@ function generateMyBuddyResponse(message: string, context?: string): {
     } else {
       let medicalAdvice = "I'm not a doctor, but I'm concerned about what you're experiencing. ";
       
-      if (lowerMessage.includes("fever")) {
+      if (lowerMessage.includes("anaphylaxis") || (lowerMessage.includes("allergy") && lowerMessage.includes("severe"))) {
+        medicalAdvice = "🚨 SEVERE ALLERGIC REACTION - THIS IS A MEDICAL EMERGENCY!";
+        response = medicalAdvice;
+        firstAidSteps = [
+          "✋ CALL 112 IMMEDIATELY - This is life-threatening",
+          "💊 If person has EpiPen, inject into outer thigh through clothing if needed",
+          "👥 Lie person flat with legs elevated (unless vomiting/breathing issues)",
+          "⏱️ Give second EpiPen after 5-15 minutes if symptoms don't improve",
+          "🚑 Keep person lying down until ambulance arrives",
+          "📋 Tell paramedics what triggered the reaction"
+        ];
+      } else if (lowerMessage.includes("choking")) {
+        medicalAdvice = "🚨 CHOKING - ACT IMMEDIATELY!";
+        response = medicalAdvice;
+        firstAidSteps = [
+          "🫁 Encourage coughing if they can cough",
+          "👥 Stand behind the person",
+          "✊ Place thumb side of fist above navel, below ribcage",
+          "🤝 Grasp fist with other hand",
+          "💪 Perform quick, upward thrusts (Heimlich maneuver)",
+          "🔄 Repeat until object is dislodged",
+          "📞 Call 112 if object doesn't come out"
+        ];
+      } else if (lowerMessage.includes("frostbite")) {
+        medicalAdvice = "❄️ FROSTBITE - Severe cold injury requiring immediate care!";
+        response = medicalAdvice;
+        firstAidSteps = [
+          "🏠 Move to warm area immediately",
+          "🌡️ Gradually warm affected area with body heat or lukewarm water (NOT hot)",
+          "🙅 Don't rub or massage the frostbitten area",
+          "🧦 Remove wet clothing, dry thoroughly",
+          "💧 Give warm non-alcoholic drinks if conscious",
+          "📞 Call 108 (medical helpline) or 112",
+          "🏥 Seek immediate medical attention"
+        ];
+      } else if (lowerMessage.includes("heat exhaustion") || lowerMessage.includes("heat stroke")) {
+        medicalAdvice = "🔥 HEAT-RELATED ILLNESS - Cool immediately!";
+        response = medicalAdvice;
+        firstAidSteps = [
+          "🏠 Move to cool/shaded area immediately",
+          "💧 Drink cool water slowly (not ice water)",
+          "🧊 Cool skin with wet cloths, ice packs, or cool bath",
+          "👕 Remove excess clothing",
+          "🧠 For heat stroke (confusion, seizures): Call 112 immediately",
+          "🛏️ Lie down with legs elevated",
+          "⏰ Monitor temperature - seek medical help if not improving"
+        ];
+      } else if (lowerMessage.includes("nosebleed") || lowerMessage.includes("nose bleed")) {
+        medicalAdvice = "🩸 NOSEBLEED - Usually not serious, but follow these steps:";
+        response = medicalAdvice;
+        firstAidSteps = [
+          "🧬 Sit upright, lean slightly forward",
+          "🙅 Don't tilt head back - can cause choking",
+          "👃 Pinch nose below the bridge for 10 minutes continuously",
+          "🧊 Apply ice pack to bridge of nose",
+          "🧴 Use saline nasal drops if available",
+          "📞 Call doctor if bleeding lasts >20 minutes",
+          "🚫 Avoid blowing nose for 24 hours after"
+        ];
+      } else if (lowerMessage.includes("seizure")) {
+        medicalAdvice = "⚡ SEIZURE - Keep person safe!";
+        response = medicalAdvice;
+        firstAidSteps = [
+          "👥 Stay calm and stay with the person",
+          "🧴 Remove nearby objects that could cause injury",
+          "🛏️ Gently lay person on side if possible",
+          "🙅 NEVER restrain the person or put anything in mouth",
+          "⏱️ Note the time seizure started and duration",
+          "📞 Call 112 if seizure lasts >5 minutes",
+          "👁️ Stay with person until fully conscious"
+        ];
+      } else if (lowerMessage.includes("shock")) {
+        medicalAdvice = "⚠️ SHOCK - Medical emergency! Call 112 immediately!";
+        response = medicalAdvice;
+        firstAidSteps = [
+          "📞 CALL 112 IMMEDIATELY",
+          "🛏️ Lay person flat with legs elevated 12 inches",
+          "🧥 Keep person warm with blankets",
+          "🚫 Don't give food or water",
+          "📋 Note vital signs if possible (breathing, pulse)",
+          "👁️ Monitor consciousness",
+          "🚑 Keep person lying down until ambulance arrives"
+        ];
+      } else if (lowerMessage.includes("unconscious") || lowerMessage.includes("unconsciousness")) {
+        medicalAdvice = "🚨 UNCONSCIOUSNESS - Emergency response needed!";
+        response = medicalAdvice;
+        firstAidSteps = [
+          "📞 CALL 112 IMMEDIATELY",
+          "👥 Check responsiveness - tap shoulders, speak loudly",
+          "🫁 Check airway - clear mouth if debris present",
+          "💨 Check breathing - look for chest movement",
+          "🛏️ Place in recovery position (on side) if breathing",
+          "🚫 Don't give food or water",
+          "👁️ Monitor breathing continuously",
+          "🚑 Wait for emergency services"
+        ];
+      } else if (lowerMessage.includes("fever")) {
         medicalAdvice += "For fever, rest well and stay hydrated. Monitor your temperature. If it exceeds 103°F (39.4°C), please consult a doctor immediately.";
       } else if (lowerMessage.includes("headache")) {
         medicalAdvice += "Try resting in a quiet, dark room. Drink plenty of water and avoid screens. If it persists or worsens, please see a healthcare provider.";
@@ -868,7 +966,9 @@ function generateMyBuddyResponse(message: string, context?: string): {
         medicalAdvice += "It's important to speak with a healthcare professional about your symptoms.";
       }
       
-      medicalAdvice += " Would you like me to help you contact your guardian or call the medical helpline (108)?";
+      if (!firstAidSteps.length) {
+        medicalAdvice += " Would you like me to help you contact your guardian or call the medical helpline (108)?";
+      }
       response = medicalAdvice;
     }
     
@@ -900,5 +1000,5 @@ function generateMyBuddyResponse(message: string, context?: string): {
     suggestions = ["Check Weather", "View Safety Tips", "Talk to Guardian", "I'm doing well"];
   }
 
-  return { text: response, sentiment, keywords, action, suggestions };
+  return { text: response, sentiment, keywords, action, suggestions, firstAidSteps };
 }

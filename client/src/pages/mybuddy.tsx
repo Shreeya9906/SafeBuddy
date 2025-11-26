@@ -18,6 +18,7 @@ import type { MyBuddyLog } from "@shared/schema";
 
 interface Message extends Omit<MyBuddyLog, 'userId'> {
   suggestions?: string[];
+  firstAidSteps?: string[];
 }
 
 export default function MyBuddyPage() {
@@ -272,6 +273,18 @@ export default function MyBuddyPage() {
                               <AlertCircle className="w-4 h-4 mr-2" />
                               {sosActive ? "SOS ACTIVATED!" : "Activate SOS NOW"}
                             </Button>
+                          )}
+                          {msg.firstAidSteps && msg.firstAidSteps.length > 0 && (
+                            <div className="bg-red-50 dark:bg-red-950/30 border-l-4 border-red-500 p-3 rounded mt-2">
+                              <p className="font-bold text-red-700 dark:text-red-300 mb-2">🚨 FIRST AID STEPS:</p>
+                              <ol className="space-y-1">
+                                {msg.firstAidSteps.map((step, i) => (
+                                  <li key={i} className="text-sm text-red-700 dark:text-red-300 list-decimal list-inside">
+                                    {step}
+                                  </li>
+                                ))}
+                              </ol>
+                            </div>
                           )}
                           {msg.suggestions && msg.suggestions.length > 0 && (
                             <div className="flex flex-wrap gap-2">
