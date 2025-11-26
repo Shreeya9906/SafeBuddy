@@ -19,19 +19,17 @@ export function playSOSSiren() {
 
     isPlaying = true;
 
-    // Create repeating siren pattern - classic continuous beeping
+    // Create repeating siren pattern - rapid high-pitched wailing
     const sirenPattern = () => {
       if (!isPlaying || !audioContext) return;
 
       const now = audioContext.currentTime;
 
-      // Classic emergency beeping pattern - rapid pulses
-      createSirenTone(now, now + 0.15, 1000); // Quick beep
-      createSirenTone(now + 0.2, now + 0.35, 1000); // Quick beep
-      createSirenTone(now + 0.4, now + 0.55, 1200); // Quick beep (slightly higher)
-      createSirenTone(now + 0.6, now + 0.75, 1000); // Quick beep
-      createSirenTone(now + 0.8, now + 0.95, 1000); // Quick beep
-      createSirenTone(now + 1.0, now + 1.15, 1200); // Quick beep (higher)
+      // Rapid high-pitched wailing siren - piercing and urgent
+      createWailingSirenTone(now, now + 0.3, 1600, 2200); // Rapid wail up
+      createWailingSirenTone(now + 0.3, now + 0.6, 2200, 1600); // Rapid wail down
+      createWailingSirenTone(now + 0.6, now + 0.9, 1600, 2200); // Rapid wail up
+      createWailingSirenTone(now + 0.9, now + 1.2, 2200, 1600); // Rapid wail down
     };
 
     // Play siren immediately
@@ -102,8 +100,8 @@ function createWailingSirenTone(startTime: number, endTime: number, startFreq: n
     osc.frequency.linearRampToValueAtTime(endFreq, endTime);
 
     gain.gain.setValueAtTime(0, startTime);
-    gain.gain.linearRampToValueAtTime(0.35, startTime + 0.05);
-    gain.gain.linearRampToValueAtTime(0.35, endTime - 0.05);
+    gain.gain.linearRampToValueAtTime(0.85, startTime + 0.02);
+    gain.gain.linearRampToValueAtTime(0.85, endTime - 0.02);
     gain.gain.linearRampToValueAtTime(0, endTime);
 
     osc.connect(gain);
