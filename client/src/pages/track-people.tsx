@@ -85,7 +85,8 @@ export default function TrackPeoplePage() {
 
     // Stop any existing live tracking
     if (liveTrackingInterval.current) {
-      stopLiveTracking();
+      clearInterval(liveTrackingInterval.current);
+      liveTrackingInterval.current = null;
     }
 
     setIsSearching(true);
@@ -102,10 +103,18 @@ export default function TrackPeoplePage() {
         trackedPhoneRef.current = phoneNumber; // Store for live tracking
         setTrackedPeople([person]);
         setMapCenter([person.latitude, person.longitude]);
+        
+        // Automatically start live tracking
+        setIsLiveTracking(true);
         toast({
-          title: "✅ Person Found!",
-          description: `📍 ${person.name} - Click "Enable Live Tracking" to see updates`,
+          title: "🔴 LIVE TRACKING STARTED!",
+          description: `📍 ${person.name} - Location updating every 3 seconds`,
         });
+        
+        // Start the tracking interval
+        liveTrackingInterval.current = setInterval(() => {
+          refreshLocation(phoneNumber);
+        }, 3000);
       } else {
         toast({
           title: "No Location",
@@ -153,40 +162,30 @@ export default function TrackPeoplePage() {
               placeholder="Enter phone number (e.g., 9876543210)"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
-              disabled={isSearching}
+              disabled={isSearching || isLiveTracking}
               data-testid="input-phone-search"
             />
             <Button
               type="submit"
-              disabled={isSearching}
+              disabled={isSearching || isLiveTracking}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold"
               data-testid="button-search-person"
             >
-              {isSearching ? "Searching..." : "Search"}
+              {isSearching ? "Searching..." : isLiveTracking ? "Tracking..." : "Start Tracking"}
             </Button>
           </form>
           
-          {/* Live Tracking Controls */}
-          {trackedPeople.length > 0 && (
+          {/* Stop Tracking Button */}
+          {isLiveTracking && (
             <div className="flex gap-2">
               <Button
-                onClick={startLiveTracking}
-                disabled={isLiveTracking}
+                onClick={stopLiveTracking}
                 className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold gap-2"
-                data-testid="button-enable-live-tracking"
+                data-testid="button-stop-live-tracking"
               >
-                <Zap className="w-4 h-4" />
-                {isLiveTracking ? "🔴 LIVE TRACKING ACTIVE" : "🔵 Enable Live Tracking"}
+                <AlertCircle className="w-4 h-4" />
+                🛑 Stop Tracking
               </Button>
-              
-              {isLiveTracking && (
-                <Button
-                  onClick={stopLiveTracking}
-                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold"
-                  data-testid="button-stop-live-tracking"
-                >
-                  Stop Live Tracking
-                </Button>
-              )}
             </div>
           )}
           
@@ -194,7 +193,7 @@ export default function TrackPeoplePage() {
           {isLiveTracking && (
             <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-3">
               <div className="flex items-center gap-2">
-                <Badge className="bg-red-600 animate-pulse">LIVE</Badge>
+                <Badge className="bg-red-600 animate-pulse">🔴 LIVE</Badge>
                 <span className="text-sm font-semibold text-red-700 dark:text-red-300">
                   Updating location every 3 seconds
                 </span>
