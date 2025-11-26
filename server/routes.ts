@@ -557,10 +557,12 @@ function generateMyBuddyResponse(message: string, context?: string): {
   const emergencyKeywords = ["emergency", "help", "danger", "scared", "hurt", "pain", "bleeding", "attack", "follow", "lost"];
   const medicalKeywords = ["sick", "fever", "headache", "dizzy", "breathing", "chest", "allergy", "medicine", "doctor", "nausea", "vomit", "cough", "cold", "flu"];
   const emotionalKeywords = ["sad", "anxious", "worried", "afraid", "lonely", "stress", "panic", "depressed", "angry", "frustrated", "upset"];
+  const contactKeywords = ["contact", "call", "reach", "phone", "guardian", "parent", "mom", "dad"];
 
   const isEmergency = emergencyKeywords.some(k => lowerMessage.includes(k));
   const isMedical = medicalKeywords.some(k => lowerMessage.includes(k));
   const isEmotional = emotionalKeywords.some(k => lowerMessage.includes(k));
+  const isContactRequest = contactKeywords.some(k => lowerMessage.includes(k)) && (lowerMessage.includes("guardian") || lowerMessage.includes("parent") || lowerMessage.includes("mom") || lowerMessage.includes("dad"));
 
   let response = "";
   let sentiment = "neutral";
@@ -568,7 +570,13 @@ function generateMyBuddyResponse(message: string, context?: string): {
   let action: string | null = null;
   let suggestions: string[] = [];
 
-  if (isEmergency) {
+  if (isContactRequest) {
+    sentiment = "neutral";
+    keywords = contactKeywords.filter(k => lowerMessage.includes(k));
+    action = "contact_guardian";
+    response = "I can help you contact your guardian right away. Your emergency contacts are stored in your contacts section. You can:\n\n1. **Call directly** - Tap on their phone number to call\n2. **Send message** - I can help relay an important message\n3. **Activate SOS** - If you need urgent help, I can activate your SOS alert which will notify all your guardians\n\nWhat would you like to do?";
+    suggestions = ["Call Guardian", "Send Message", "Activate SOS", "View Contacts"];
+  } else if (isEmergency) {
     sentiment = "urgent";
     keywords = emergencyKeywords.filter(k => lowerMessage.includes(k));
     action = "suggest_sos";
