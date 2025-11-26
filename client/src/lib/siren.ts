@@ -25,12 +25,11 @@ export function playSOSSiren() {
 
       const now = audioContext.currentTime;
 
-      // Siren pattern: alternating high and low tones
-      createSirenTone(now, now + 0.4, 1000); // High beep
-      createSirenTone(now + 0.5, now + 0.9, 600); // Low beep
-      createSirenTone(now + 1.0, now + 1.4, 1000); // High beep
-      createSirenTone(now + 1.5, now + 1.9, 600); // Low beep
-      createSirenTone(now + 2.0, now + 2.5, 800); // Medium tone
+      // Emergency wailing siren pattern - sweeping frequencies
+      createWailingSirenTone(now, now + 0.6, 800, 1200); // Sweep up
+      createWailingSirenTone(now + 0.7, now + 1.3, 1200, 800); // Sweep down
+      createWailingSirenTone(now + 1.4, now + 2.0, 800, 1200); // Sweep up
+      createWailingSirenTone(now + 2.1, now + 2.5, 1200, 900); // Sweep down fast
     };
 
     // Play siren immediately
@@ -82,6 +81,35 @@ function createSirenTone(startTime: number, endTime: number, frequency: number) 
     gains.push(gain);
   } catch (e) {
     console.error("Error creating siren tone:", e);
+  }
+}
+
+function createWailingSirenTone(startTime: number, endTime: number, startFreq: number, endFreq: number) {
+  if (!audioContext) return;
+
+  try {
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+
+    osc.type = "triangle"; // Using triangle wave for more emergency siren feel
+    osc.frequency.setValueAtTime(startFreq, startTime);
+    osc.frequency.linearRampToValueAtTime(endFreq, endTime);
+
+    gain.gain.setValueAtTime(0, startTime);
+    gain.gain.linearRampToValueAtTime(0.35, startTime + 0.05);
+    gain.gain.linearRampToValueAtTime(0.35, endTime - 0.05);
+    gain.gain.linearRampToValueAtTime(0, endTime);
+
+    osc.connect(gain);
+    gain.connect(audioContext.destination);
+
+    osc.start(startTime);
+    osc.stop(endTime);
+
+    oscillators.push(osc);
+    gains.push(gain);
+  } catch (e) {
+    console.error("Error creating wailing siren tone:", e);
   }
 }
 
