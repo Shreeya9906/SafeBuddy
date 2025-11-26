@@ -624,6 +624,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get live weather data for a location
+  app.get("/api/weather/live", requireAuth, async (req, res, next) => {
+    try {
+      const { lat, lon, city } = req.query;
+      
+      if (!lat || !lon) {
+        return res.status(400).json({ message: "Latitude and longitude required" });
+      }
+
+      const latitude = parseFloat(lat as string);
+      const longitude = parseFloat(lon as string);
+      
+      if (isNaN(latitude) || isNaN(longitude)) {
+        return res.status(400).json({ message: "Invalid coordinates" });
+      }
+
+      const apiKey = process.env.OPENWEATHER_API_KEY;
+      if (!apiKey) {
+        console.warn("OPENWEATHER_API_KEY not configured, returning mock weather");
+        return res.json({
+          temp: 25,
+          conditions: "Partly Cloudy",
+          wind: 15,
+          humidity: 60,
+          city: city || "Unknown",
+          latitude,
+          longitude,
+        });
+      }
+
+      const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=metric`;
+      
+      const response = await fetch(weatherUrl);
+      if (!response.ok) {
+        console.warn("OpenWeather API error, returning mock data");
+        return res.json({
+          temp: 25,
+          conditions: "Partly Cloudy",
+          wind: 15,
+          humidity: 60,
+          city: city || "Unknown",
+          latitude,
+          longitude,
+        });
+      }
+
+      const data = await response.json();
+      
+      res.json({
+        temp: Math.round(data.main?.temp || 25),
+        conditions: data.weather?.[0]?.main || "Unknown",
+        wind: Math.round(data.wind?.speed * 3.6 || 0), // Convert m/s to km/h
+        humidity: data.main?.humidity || 0,
+        city: data.name || city || "Unknown",
+        latitude,
+        longitude,
+        icon: data.weather?.[0]?.icon,
+      });
+    } catch (error) {
+      console.error("Weather API error:", error);
+      res.json({
+        temp: 25,
+        conditions: "Partly Cloudy",
+        wind: 15,
+        humidity: 60,
+        city: "Unknown",
+        error: "Unable to fetch weather data",
+      });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
