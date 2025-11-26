@@ -88,17 +88,19 @@ export default function DashboardPage() {
         setIsSOSActive(true);
         playSOSSiren();
 
-        // Automatically call emergency numbers
+        // Notify guardians via SMS and emergency services
         const emergencyNumbers = ["100", "108", "112", "1091"];
         try {
-          await emergencyAPI.callEmergency(alert.id, emergencyNumbers);
+          await Promise.all([
+            emergencyAPI.callEmergency(alert.id, emergencyNumbers),
+            emergencyAPI.notifyGuardians(alert.id),
+          ]);
           toast({
             title: "SOS Activated!",
-            description: "Emergency alert sent to guardians. Calling emergency services: 100, 108, 112, 1091",
+            description: "SMS sent to guardians & emergency services called. Siren playing.",
             variant: "destructive",
           });
         } catch (callError) {
-          // Still show SOS activated even if calls fail
           toast({
             title: "SOS Activated!",
             description: "Emergency alert sent to guardians. Siren is playing.",

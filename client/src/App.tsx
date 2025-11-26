@@ -19,7 +19,7 @@ import ComplaintPage from "@/pages/complaint";
 import WeatherPage from "@/pages/weather";
 import NotFound from "@/pages/not-found";
 
-function PublicRoute({ children }: { children: React.ReactNode }) {
+function PublicRouteWrapper({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
@@ -37,15 +37,15 @@ function Router() {
   return (
     <Switch>
       <Route path="/login">
-        <PublicRoute>
+        <PublicRouteWrapper>
           <LoginPage />
-        </PublicRoute>
+        </PublicRouteWrapper>
       </Route>
       
       <Route path="/register">
-        <PublicRoute>
+        <PublicRouteWrapper>
           <RegisterPage />
-        </PublicRoute>
+        </PublicRouteWrapper>
       </Route>
 
       <Route path="/dashboard">

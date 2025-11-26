@@ -101,4 +101,7 @@ export const emergencyAPI = {
       method: "POST", 
       body: JSON.stringify({ phoneNumbers }) 
     }),
+  
+  notifyGuardians: (sosId: string) =>
+    fetchAPI(`/sos/${sosId}/notify-guardians`, { method: "POST" }),
 };

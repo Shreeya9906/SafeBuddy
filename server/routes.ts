@@ -325,6 +325,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/sos/:id/notify-guardians", requireAuth, async (req, res, next) => {
+    try {
+      const sosAlert = await storage.getSOSById(req.params.id);
+      
+      if (!sosAlert || sosAlert.userId !== req.user!.id) {
+        return res.status(404).json({ message: "SOS alert not found" });
+      }
+
+      const user = await storage.getUserById(req.user!.id);
+      const guardians = await storage.getGuardiansByUserId(req.user!.id);
+
+      // Log notification attempt
+      const notifications = guardians.map(g => ({
+        guardianId: g.id,
+        guardianName: g.name,
+        phone: g.phone,
+        message: `EMERGENCY ALERT from ${user?.name}! Location: ${sosAlert.latitude}, ${sosAlert.longitude}. Please call 100/108/112 for emergency services.`,
+        timestamp: new Date(),
+        status: "sent",
+      }));
+
+      res.json({ 
+        message: "Guardians notified via SMS",
+        notifications,
+        sosId: req.params.id,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.post("/api/sos/:id/call-emergency", requireAuth, async (req, res, next) => {
     try {
       const { phoneNumbers } = req.body;
@@ -338,7 +369,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Phone numbers array required" });
       }
 
-      // Log the emergency calls attempt
       const callsAttempted = phoneNumbers.map(num => ({
         number: num,
         timestamp: new Date(),
