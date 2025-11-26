@@ -19,17 +19,19 @@ export function playSOSSiren() {
 
     isPlaying = true;
 
-    // Create repeating siren pattern every 3 seconds
+    // Create repeating siren pattern - classic continuous beeping
     const sirenPattern = () => {
       if (!isPlaying || !audioContext) return;
 
       const now = audioContext.currentTime;
 
-      // Emergency wailing siren pattern - sweeping frequencies
-      createWailingSirenTone(now, now + 0.6, 800, 1200); // Sweep up
-      createWailingSirenTone(now + 0.7, now + 1.3, 1200, 800); // Sweep down
-      createWailingSirenTone(now + 1.4, now + 2.0, 800, 1200); // Sweep up
-      createWailingSirenTone(now + 2.1, now + 2.5, 1200, 900); // Sweep down fast
+      // Classic emergency beeping pattern - rapid pulses
+      createSirenTone(now, now + 0.15, 1000); // Quick beep
+      createSirenTone(now + 0.2, now + 0.35, 1000); // Quick beep
+      createSirenTone(now + 0.4, now + 0.55, 1200); // Quick beep (slightly higher)
+      createSirenTone(now + 0.6, now + 0.75, 1000); // Quick beep
+      createSirenTone(now + 0.8, now + 0.95, 1000); // Quick beep
+      createSirenTone(now + 1.0, now + 1.15, 1200); // Quick beep (higher)
     };
 
     // Play siren immediately
