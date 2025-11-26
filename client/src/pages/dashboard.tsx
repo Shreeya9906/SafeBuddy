@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { sosAPI, guardianAPI } from "@/lib/api";
 import { getCurrentLocation, getBatteryLevel } from "@/lib/geolocation";
 import { useToast } from "@/hooks/use-toast";
+import { WeatherWidget } from "@/components/weather-widget";
 import {
   Shield,
   MapPin,
@@ -166,6 +167,8 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      <WeatherWidget />
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card className="border-2 border-destructive">
