@@ -103,6 +103,15 @@ export default function HealthPage() {
               <DialogTitle>Record Vital Signs</DialogTitle>
               <DialogDescription>Enter your current health measurements</DialogDescription>
             </DialogHeader>
+            <div className="space-y-2 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg text-xs">
+              <p className="font-semibold text-blue-900 dark:text-blue-100">📋 Normal Ranges (Reference):</p>
+              <div className="grid grid-cols-2 gap-2 text-blue-800 dark:text-blue-200">
+                <div>• Heart Rate: 60-100 bpm</div>
+                <div>• BP: 120/80 mmHg</div>
+                <div>• SpO2: 95-100%</div>
+                <div>• Temp: 36.5-37.5°C</div>
+              </div>
+            </div>
             <div className="space-y-4 mt-4">
               <div className="grid gap-2">
                 <Label htmlFor="heartRate">Heart Rate (bpm)</Label>
@@ -170,6 +179,7 @@ export default function HealthPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Heart Rate</CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">Normal: 60-100</p>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{latestVital?.heartRate || "--"}</div>
@@ -180,6 +190,7 @@ export default function HealthPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Blood Pressure</CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">Normal: 120/80</p>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -192,6 +203,7 @@ export default function HealthPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">SpO2</CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">Normal: 95-100</p>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{latestVital?.oxygenSaturation || "--"}</div>
@@ -202,6 +214,7 @@ export default function HealthPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Temperature</CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">Normal: 36.5-37.5</p>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{latestVital?.temperature?.toFixed(1) || "--"}</div>
@@ -209,6 +222,33 @@ export default function HealthPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900">
+        <CardHeader>
+          <CardTitle className="text-sm">📚 Understanding Your Vital Signs</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm">
+          <div>
+            <p className="font-semibold text-amber-900 dark:text-amber-100">Heart Rate (60-100 bpm)</p>
+            <p className="text-amber-800 dark:text-amber-200 text-xs">Measure: Count pulse for 60 seconds or check pulse on wrist/neck</p>
+          </div>
+          <div>
+            <p className="font-semibold text-amber-900 dark:text-amber-100">Blood Pressure (120/80 mmHg)</p>
+            <p className="text-amber-800 dark:text-amber-200 text-xs">Measure: Use a digital BP cuff or monitor. Top number is Systolic, bottom is Diastolic</p>
+          </div>
+          <div>
+            <p className="font-semibold text-amber-900 dark:text-amber-100">Oxygen Saturation (95-100%)</p>
+            <p className="text-amber-800 dark:text-amber-200 text-xs">Measure: Use a pulse oximeter on your finger - shows blood oxygen level</p>
+          </div>
+          <div>
+            <p className="font-semibold text-amber-900 dark:text-amber-100">Temperature (36.5-37.5°C)</p>
+            <p className="text-amber-800 dark:text-amber-200 text-xs">Measure: Use a digital thermometer under tongue, armpit, or forehead</p>
+          </div>
+          <div className="pt-2 border-t border-amber-200 dark:border-amber-900">
+            <p className="text-amber-900 dark:text-amber-100"><strong>⚠️ Alert:</strong> If any value is significantly outside normal range, consult MyBuddy or contact your doctor.</p>
+          </div>
+        </CardContent>
+      </Card>
 
       {vitals.length > 0 && (
         <Card>
