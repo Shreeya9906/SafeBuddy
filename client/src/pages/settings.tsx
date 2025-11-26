@@ -40,6 +40,15 @@ export default function SettingsPage() {
   });
 
   useEffect(() => {
+    const root = document.documentElement;
+    if (settings.theme === "dark") {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+  }, [settings.theme]);
+
+  useEffect(() => {
     loadGuardians();
   }, []);
 
@@ -227,6 +236,43 @@ export default function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
+            <Palette className="w-5 h-5" />
+            Theme
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              onClick={() => setSettings({ ...settings, theme: "light" })}
+              className={`p-4 rounded-lg border-2 transition-all ${
+                settings.theme === "light"
+                  ? "border-primary bg-white"
+                  : "border-gray-300"
+              }`}
+              data-testid="button-theme-light"
+            >
+              <div className="text-2xl mb-2">☀️</div>
+              <p className="font-medium">Light Mode</p>
+            </button>
+            <button
+              onClick={() => setSettings({ ...settings, theme: "dark" })}
+              className={`p-4 rounded-lg border-2 transition-all ${
+                settings.theme === "dark"
+                  ? "border-primary bg-gray-900"
+                  : "border-gray-300"
+              }`}
+              data-testid="button-theme-dark"
+            >
+              <div className="text-2xl mb-2">🌙</div>
+              <p className="font-medium text-white">Dark Mode</p>
+            </button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
             <Type className="w-5 h-5" />
             Font Size
           </CardTitle>
@@ -246,9 +292,6 @@ export default function SettingsPage() {
               <SelectItem value="xlarge">Extra Large (20px)</SelectItem>
             </SelectContent>
           </Select>
-          <div className={`p-4 rounded border text-${settings.fontSize === 'small' ? 'sm' : settings.fontSize === 'large' ? 'lg' : settings.fontSize === 'xlarge' ? 'xl' : 'base'}`}>
-            Preview text with current font size
-          </div>
         </CardContent>
       </Card>
 

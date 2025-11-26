@@ -17,6 +17,8 @@ import HealthPage from "@/pages/health";
 import WomenSafetyPage from "@/pages/women-safety";
 import ComplaintPage from "@/pages/complaint";
 import WeatherPage from "@/pages/weather";
+import FallDetectionPage from "@/pages/fall-detection";
+import AdultMonitoringPage from "@/pages/adult-monitoring";
 import NotFound from "@/pages/not-found";
 
 function InnerRouter() {
@@ -129,6 +131,22 @@ function InnerRouter() {
         <ProtectedRoute>
           <AppLayout>
             <SettingsPage />
+          </AppLayout>
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/fall-detection">
+        <ProtectedRoute>
+          <AppLayout>
+            <FallDetectionPage />
+          </AppLayout>
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/monitoring">
+        <ProtectedRoute>
+          <AppLayout>
+            <AdultMonitoringPage />
           </AppLayout>
         </ProtectedRoute>
       </Route>
