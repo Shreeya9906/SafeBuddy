@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin, Navigation, AlertCircle, Loader2 } from "lucide-react";
+import { MapPin, Navigation, AlertCircle, Loader2, Cloud, Droplets, Wind } from "lucide-react";
 import type { SOSAlert } from "@shared/schema";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -25,6 +25,14 @@ interface LocationState {
   accuracy?: number;
 }
 
+interface WeatherData {
+  temperature: number;
+  description: string;
+  humidity: number;
+  windSpeed: number;
+  city: string;
+}
+
 function MapUpdater({ center }: { center: [number, number] }) {
   const map = useMap();
   useEffect(() => {
@@ -40,6 +48,7 @@ export default function MapPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isTracking, setIsTracking] = useState(false);
   const [activeAlert, setActiveAlert] = useState<SOSAlert | null>(null);
+  const [weather, setWeather] = useState<WeatherData | null>(null);
   const watchIdRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -52,6 +61,12 @@ export default function MapPage() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (location) {
+      fetchWeather(location.latitude, location.longitude);
+    }
+  }, [location]);
 
   const loadInitialLocation = async () => {
     try {
@@ -105,6 +120,26 @@ export default function MapPage() {
       watchIdRef.current = null;
     }
     setIsTracking(false);
+  };
+
+  const fetchWeather = async (lat: number, lon: number) => {
+    try {
+      const response = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${import.meta.env.VITE_OPENWEATHER_API_KEY}&units=metric`
+      );
+      const data = await response.json();
+      if (data.main) {
+        setWeather({
+          temperature: Math.round(data.main.temp),
+          description: data.weather[0].main,
+          humidity: data.main.humidity,
+          windSpeed: Math.round(data.wind.speed * 3.6), // Convert m/s to km/h
+          city: data.name,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching weather:", error);
+    }
   };
 
   const refreshLocation = async () => {
@@ -168,6 +203,38 @@ export default function MapPage() {
             </Badge>
           )}
         </div>
+
+        {weather && (
+          <Card className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 flex-1">
+                  <Cloud className="w-6 h-6 text-blue-600" />
+                  <div>
+                    <p className="font-semibold text-sm">{weather.city}</p>
+                    <p className="text-xs text-muted-foreground">{weather.description}</p>
+                  </div>
+                </div>
+                <div className="flex gap-4 text-sm">
+                  <div className="text-right">
+                    <p className="font-bold text-lg">{weather.temperature}°C</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="flex items-center gap-1">
+                      <Droplets className="w-4 h-4 text-blue-600" />
+                      <span className="text-xs font-medium">{weather.humidity}%</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Wind className="w-4 h-4 text-blue-600" />
+                      <span className="text-xs font-medium">{weather.windSpeed}km/h</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={refreshLocation} data-testid="button-refresh-location">
             <Navigation className="mr-2 w-4 h-4" />
