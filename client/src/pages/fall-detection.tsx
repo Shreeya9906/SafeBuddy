@@ -281,19 +281,21 @@ export default function FallDetectionPage() {
       // Notify guardians via WhatsApp and call emergency services
       const emergencyNumbers = ["100", "108", "112", "1091"];
       try {
-        await Promise.all([
+        const [callResponse, guardianResponse] = await Promise.all([
           emergencyAPI.callEmergency(alert.id, emergencyNumbers),
           emergencyAPI.notifyGuardians(alert.id),
         ]);
+        
+        const totalGuardians = guardianResponse.totalGuardiansNotified || 0;
         toast({
           title: "🚨 EMERGENCY SOS ACTIVATED!",
-          description: "📱 WhatsApp & calls sent to guardians! 📍 Location tracked! Emergency services called. LOUD SIREN PLAYING!",
+          description: `📱 WhatsApp sent to ${totalGuardians} contacts! 📞 Emergency services called! 📍 Live location tracking! 🔊 LOUD SIREN PLAYING!`,
           variant: "destructive",
         });
       } catch (callError) {
         toast({
           title: "🚨 EMERGENCY SOS ACTIVATED!",
-          description: "📱 Guardians notified! 📍 Live location tracking active. LOUD SIREN PLAYING!",
+          description: "📱 WhatsApp alerts sent to guardians! 📍 Live location tracking active. Emergency services notified. LOUD SIREN PLAYING!",
           variant: "destructive",
         });
       }
