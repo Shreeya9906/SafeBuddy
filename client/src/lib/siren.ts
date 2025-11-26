@@ -19,17 +19,17 @@ export function playSOSSiren() {
 
     isPlaying = true;
 
-    // Create repeating siren pattern - rapid high-pitched wailing
+    // Create repeating siren pattern - classic alternating two-tone police siren
     const sirenPattern = () => {
       if (!isPlaying || !audioContext) return;
 
       const now = audioContext.currentTime;
 
-      // Rapid high-pitched wailing siren - piercing and urgent
-      createWailingSirenTone(now, now + 0.3, 1600, 2200); // Rapid wail up
-      createWailingSirenTone(now + 0.3, now + 0.6, 2200, 1600); // Rapid wail down
-      createWailingSirenTone(now + 0.6, now + 0.9, 1600, 2200); // Rapid wail up
-      createWailingSirenTone(now + 0.9, now + 1.2, 2200, 1600); // Rapid wail down
+      // Classic "Wee-Woo" police siren - alternating high and low tones
+      createSirenTone(now, now + 0.5, 1200); // High tone - "Wee"
+      createSirenTone(now + 0.5, now + 1.0, 900); // Low tone - "Woo"
+      createSirenTone(now + 1.0, now + 1.5, 1200); // High tone - "Wee"
+      createSirenTone(now + 1.5, now + 2.0, 900); // Low tone - "Woo"
     };
 
     // Play siren immediately
