@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AlertCircle, Activity, TrendingUp, Power } from "lucide-react";
 import { sosAPI, emergencyAPI } from "@/lib/api";
 import { playSOSSiren, stopSOSSiren } from "@/lib/siren";
-import { getCurrentLocation, getBatteryLevel } from "@/lib/location";
+import { getCurrentLocation, getBatteryLevel } from "@/lib/geolocation";
 
 export default function FallDetectionPage() {
   const [isActive, setIsActive] = useState(false);
