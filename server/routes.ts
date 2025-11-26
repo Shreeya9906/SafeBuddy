@@ -573,6 +573,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Track nearby people by phone number
+  app.get("/api/track/search", requireAuth, async (req, res, next) => {
+    try {
+      const { phone } = req.query;
+      
+      if (!phone || typeof phone !== "string") {
+        return res.status(400).json({ message: "Phone number required" });
+      }
+
+      // Find user by phone number
+      const targetUser = await db
+        .select()
+        .from(users)
+        .where(eq(users.phone, phone))
+        .limit(1);
+
+      if (!targetUser || targetUser.length === 0) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const user = targetUser[0];
+
+      // Get latest location from SOS alerts
+      const latestSOS = await db
+        .select()
+        .from(sosAlerts)
+        .where(eq(sosAlerts.userId, user.id))
+        .orderBy(sql`created_at DESC`)
+        .limit(1);
+
+      if (latestSOS.length === 0) {
+        return res.status(404).json({ message: "No location data available" });
+      }
+
+      const sos = latestSOS[0];
+
+      res.json({
+        id: user.id,
+        name: user.name,
+        phone: user.phone,
+        latitude: sos.latitude,
+        longitude: sos.longitude,
+        address: sos.address,
+        timestamp: sos.createdAt,
+        accuracy: 50, // Default accuracy in meters
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

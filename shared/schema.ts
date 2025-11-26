@@ -214,3 +214,21 @@ export const insertParentChildLinkSchema = createInsertSchema(parentChildLinks).
 
 export type InsertParentChildLink = z.infer<typeof insertParentChildLinkSchema>;
 export type ParentChildLink = typeof parentChildLinks.$inferSelect;
+
+export const locationHistory = pgTable("location_history", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  latitude: real("latitude").notNull(),
+  longitude: real("longitude").notNull(),
+  accuracy: real("accuracy"),
+  address: text("address"),
+  batteryLevel: integer("battery_level"),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+
+export const insertLocationHistorySchema = createInsertSchema(locationHistory).omit({
+  id: true,
+});
+
+export type InsertLocationHistory = z.infer<typeof insertLocationHistorySchema>;
+export type LocationHistory = typeof locationHistory.$inferSelect;
