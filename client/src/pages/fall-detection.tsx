@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { AlertCircle, Activity, TrendingUp, Power } from "lucide-react";
+import { AlertCircle, Activity, TrendingUp, Power, CheckCircle, X } from "lucide-react";
 import { sosAPI, emergencyAPI } from "@/lib/api";
 import { playSOSSiren, stopSOSSiren } from "@/lib/siren";
 import { enableFlashlight, disableFlashlight } from "@/lib/flashlight";
@@ -16,9 +16,13 @@ export default function FallDetectionPage() {
   const [fallDetected, setFallDetected] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
   const [activeAlert, setActiveAlert] = useState<any>(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [confirmationCountdown, setConfirmationCountdown] = useState(10);
   const { toast } = useToast();
   const lastAccelerationRef = useRef(0);
   const watchIdRef = useRef<number | null>(null);
+  const confirmationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const checkDeviceOrientation = () => {
@@ -99,7 +103,64 @@ export default function FallDetectionPage() {
   const triggerFallAlert = async () => {
     try {
       setFallDetected(true);
-      
+      setShowConfirmation(true);
+      setConfirmationCountdown(10);
+
+      // Play loud beeping sound (not full siren yet)
+      playSOSSiren();
+      enableFlashlight();
+
+      // Show confirmation dialog and wait for response
+      // If no response in 10 seconds, automatically activate full SOS
+      confirmationTimeoutRef.current = setTimeout(() => {
+        handleNoResponse();
+      }, 10000);
+
+      // Start countdown display
+      let countdown = 10;
+      countdownIntervalRef.current = setInterval(() => {
+        countdown--;
+        setConfirmationCountdown(countdown);
+        if (countdown <= 0) {
+          if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+        }
+      }, 1000);
+
+      toast({
+        title: "⚠️ FALL DETECTED!",
+        description: "Confirm: Was this fall accidental? Respond within 10 seconds or SOS will activate automatically.",
+        variant: "destructive",
+      });
+    } catch (error: any) {
+      toast({
+        title: "⚠️ FALL DETECTED",
+        description: "Emergency services notified. Help is on the way!",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleYesAccidental = async () => {
+    if (confirmationTimeoutRef.current) clearTimeout(confirmationTimeoutRef.current);
+    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+
+    stopSOSSiren();
+    disableFlashlight();
+    setShowConfirmation(false);
+    setFallDetected(false);
+
+    toast({
+      title: "✅ False Alarm Dismissed",
+      description: "Fall detection canceled. No emergency services contacted.",
+    });
+  };
+
+  const handleNoResponse = async () => {
+    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+
+    setShowConfirmation(false);
+    
+    try {
       // Get current location and battery level
       const location = await getCurrentLocation();
       const battery = await getBatteryLevel();
@@ -113,10 +174,6 @@ export default function FallDetectionPage() {
       });
       
       setActiveAlert(alert);
-      
-      // PLAY LOUD SOS SIREN AND TURN ON FLASHLIGHT
-      playSOSSiren();
-      enableFlashlight();
 
       // Notify guardians and emergency services
       const emergencyNumbers = ["100", "108", "112", "1091"];
@@ -126,20 +183,20 @@ export default function FallDetectionPage() {
           emergencyAPI.notifyGuardians(alert.id),
         ]);
         toast({
-          title: "⚠️ FALL DETECTED!",
-          description: "SOS ACTIVATED! Flashlight ON. SMS sent to guardians & emergency services. LOUD SIREN PLAYING!",
+          title: "🚨 EMERGENCY SOS ACTIVATED!",
+          description: "SMS sent to guardians & emergency services. LOUD SIREN PLAYING! Help is on the way!",
           variant: "destructive",
         });
       } catch (callError) {
         toast({
-          title: "⚠️ FALL DETECTED!",
-          description: "SOS ACTIVATED! Flashlight ON. Emergency alert sent to guardians. LOUD SIREN PLAYING!",
+          title: "🚨 EMERGENCY SOS ACTIVATED!",
+          description: "Emergency alert sent to guardians. LOUD SIREN PLAYING! Help is on the way!",
           variant: "destructive",
         });
       }
     } catch (error: any) {
       toast({
-        title: "⚠️ FALL DETECTED",
+        title: "🚨 FALL DETECTED",
         description: "Emergency services notified. Help is on the way!",
         variant: "destructive",
       });
@@ -155,6 +212,9 @@ export default function FallDetectionPage() {
         setActiveAlert(null);
       }
       setFallDetected(false);
+      setShowConfirmation(false);
+      if (confirmationTimeoutRef.current) clearTimeout(confirmationTimeoutRef.current);
+      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
       toast({
         title: "False Alarm Dismissed",
         description: "Emergency alert cancelled.",
@@ -175,7 +235,46 @@ export default function FallDetectionPage() {
         <p className="text-muted-foreground">Advanced safety monitoring for elders</p>
       </div>
 
-      {fallDetected && (
+      {showConfirmation && (
+        <Card className="border-4 border-yellow-500 bg-yellow-50 dark:bg-yellow-950/40 animate-pulse">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-yellow-700 dark:text-yellow-300 text-2xl">
+              <AlertCircle className="w-8 h-8 animate-bounce" />
+              🚨 FALL DETECTED! 🚨
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border-2 border-yellow-300 space-y-4">
+              <p className="text-lg font-bold text-center">Was this fall accidental?</p>
+              <p className="text-sm text-center text-muted-foreground">
+                If you don't respond in <span className="font-bold text-lg text-red-600">{confirmationCountdown}</span> seconds, 
+                emergency services will be automatically contacted
+              </p>
+              <div className="flex gap-4">
+                <Button
+                  onClick={handleYesAccidental}
+                  className="flex-1 h-14 text-lg font-bold bg-green-600 hover:bg-green-700"
+                  data-testid="button-fall-yes-accidental"
+                >
+                  <CheckCircle className="w-5 h-5 mr-2" />
+                  YES - Cancel SOS
+                </Button>
+                <Button
+                  onClick={handleNoResponse}
+                  variant="destructive"
+                  className="flex-1 h-14 text-lg font-bold"
+                  data-testid="button-fall-no-accidental"
+                >
+                  <X className="w-5 h-5 mr-2" />
+                  NO - Activate SOS
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {fallDetected && !showConfirmation && (
         <Card className="border-2 border-destructive bg-destructive/5">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-destructive">
