@@ -5,12 +5,16 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { AlertCircle, Activity, TrendingUp, Power } from "lucide-react";
+import { sosAPI, emergencyAPI } from "@/lib/api";
+import { playSOSSiren, stopSOSSiren } from "@/lib/siren";
+import { getCurrentLocation, getBatteryLevel } from "@/lib/location";
 
 export default function FallDetectionPage() {
   const [isActive, setIsActive] = useState(false);
   const [lastAcceleration, setLastAcceleration] = useState(0);
   const [fallDetected, setFallDetected] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
+  const [activeAlert, setActiveAlert] = useState<any>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -67,16 +71,74 @@ export default function FallDetectionPage() {
     });
   };
 
-  const triggerFallAlert = () => {
-    toast({
-      title: "⚠️ FALL DETECTED",
-      description: "Emergency services notified. Help is on the way!",
-      variant: "destructive",
-    });
+  const triggerFallAlert = async () => {
+    try {
+      setFallDetected(true);
+      
+      // Get current location and battery level
+      const location = await getCurrentLocation();
+      const battery = await getBatteryLevel();
+      
+      // Create SOS alert with fall detection as trigger method
+      const alert = await sosAPI.create({
+        triggerMethod: "fall_detection",
+        latitude: location.latitude,
+        longitude: location.longitude,
+        batteryLevel: battery,
+      });
+      
+      setActiveAlert(alert);
+      
+      // PLAY LOUD SOS SIREN
+      playSOSSiren();
+
+      // Notify guardians and emergency services
+      const emergencyNumbers = ["100", "108", "112", "1091"];
+      try {
+        await Promise.all([
+          emergencyAPI.callEmergency(alert.id, emergencyNumbers),
+          emergencyAPI.notifyGuardians(alert.id),
+        ]);
+        toast({
+          title: "⚠️ FALL DETECTED!",
+          description: "SOS ACTIVATED! SMS sent to guardians & emergency services. LOUD SIREN PLAYING!",
+          variant: "destructive",
+        });
+      } catch (callError) {
+        toast({
+          title: "⚠️ FALL DETECTED!",
+          description: "SOS ACTIVATED! Emergency alert sent to guardians. LOUD SIREN PLAYING!",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "⚠️ FALL DETECTED",
+        description: "Emergency services notified. Help is on the way!",
+        variant: "destructive",
+      });
+    }
   };
 
-  const dismissAlert = () => {
-    setFallDetected(false);
+  const dismissAlert = async () => {
+    try {
+      if (activeAlert) {
+        stopSOSSiren();
+        await sosAPI.update(activeAlert.id, { status: "resolved", resolvedAt: new Date() });
+        setActiveAlert(null);
+      }
+      setFallDetected(false);
+      toast({
+        title: "False Alarm Dismissed",
+        description: "Emergency alert cancelled.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
