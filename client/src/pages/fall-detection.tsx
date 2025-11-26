@@ -17,12 +17,15 @@ export default function FallDetectionPage() {
   const [isSupported, setIsSupported] = useState(false);
   const [activeAlert, setActiveAlert] = useState<any>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [confirmationCountdown, setConfirmationCountdown] = useState(10);
+  const [confirmationCountdown, setConfirmationCountdown] = useState(30);
+  const [isListening, setIsListening] = useState(false);
+  const [voiceRecognized, setVoiceRecognized] = useState<string>("");
   const { toast } = useToast();
   const lastAccelerationRef = useRef(0);
   const watchIdRef = useRef<number | null>(null);
   const confirmationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
     const checkDeviceOrientation = () => {
@@ -31,6 +34,40 @@ export default function FallDetectionPage() {
       }
     };
     checkDeviceOrientation();
+
+    // Initialize Web Speech API
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = true;
+      recognitionRef.current.interimResults = true;
+      recognitionRef.current.lang = 'en-US';
+
+      recognitionRef.current.onresult = (event: any) => {
+        let interimTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript.toLowerCase().trim();
+          if (event.results[i].isFinal) {
+            setVoiceRecognized(transcript);
+            if (transcript.includes('yes') || transcript.includes('yeah') || transcript.includes('ok')) {
+              handleYesAccidental();
+            }
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+      };
+
+      recognitionRef.current.onerror = (event: any) => {
+        console.log('Voice recognition error:', event.error);
+      };
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+      }
+    };
   }, []);
 
   const startFallDetection = () => {
@@ -105,10 +142,24 @@ export default function FallDetectionPage() {
       setFallDetected(true);
       setShowConfirmation(true);
       setConfirmationCountdown(30);
+      setIsListening(true);
 
       // Play loud beeping sound (not full siren yet)
       playSOSSiren();
       enableFlashlight();
+
+      // Start voice recognition to listen for "yes"
+      if (recognitionRef.current) {
+        recognitionRef.current.start();
+      }
+
+      // Use voice to ask the question
+      const synth = window.speechSynthesis;
+      const utterance = new SpeechSynthesisUtterance("Did you fall? Say yes to cancel the alarm.");
+      utterance.rate = 0.9;
+      utterance.pitch = 1;
+      utterance.volume = 1;
+      synth.speak(utterance);
 
       // Show confirmation dialog and wait for response
       // If no response in 30 seconds, automatically activate full SOS
@@ -128,7 +179,7 @@ export default function FallDetectionPage() {
 
       toast({
         title: "⚠️ FALL DETECTED!",
-        description: "Confirm: Was this fall accidental? Respond within 30 seconds or SOS will activate automatically.",
+        description: "🎤 Listening for your voice... Say 'YES' to cancel or respond within 30 seconds.",
         variant: "destructive",
       });
     } catch (error: any) {
@@ -144,21 +195,36 @@ export default function FallDetectionPage() {
     if (confirmationTimeoutRef.current) clearTimeout(confirmationTimeoutRef.current);
     if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
 
+    // Stop voice recognition
+    if (recognitionRef.current) {
+      recognitionRef.current.abort();
+    }
+    window.speechSynthesis.cancel();
+
     stopSOSSiren();
     disableFlashlight();
     setShowConfirmation(false);
     setFallDetected(false);
+    setIsListening(false);
+    setVoiceRecognized("");
 
     toast({
       title: "✅ False Alarm Dismissed",
-      description: "Fall detection canceled. No emergency services contacted.",
+      description: "🎤 Voice confirmed. Fall detection canceled. No emergency services contacted.",
     });
   };
 
   const handleNoResponse = async () => {
     if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
 
+    // Stop voice recognition
+    if (recognitionRef.current) {
+      recognitionRef.current.abort();
+    }
+    window.speechSynthesis.cancel();
+
     setShowConfirmation(false);
+    setIsListening(false);
     
     try {
       // Get current location and battery level
@@ -283,6 +349,21 @@ export default function FallDetectionPage() {
           <CardContent className="space-y-4">
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border-2 border-yellow-300 space-y-4">
               <p className="text-lg font-bold text-center">Was this fall accidental?</p>
+              
+              {isListening && (
+                <div className="text-center py-4 bg-blue-100 dark:bg-blue-900/30 rounded-lg border-2 border-blue-400">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <span className="text-2xl animate-pulse">🎤</span>
+                    <span className="font-bold text-blue-700 dark:text-blue-300">Listening...</span>
+                    <span className="text-2xl animate-pulse">🎤</span>
+                  </div>
+                  <p className="text-sm text-blue-600 dark:text-blue-400">Say "YES" to cancel SOS</p>
+                  {voiceRecognized && (
+                    <p className="text-xs mt-2 text-blue-600 dark:text-blue-400 font-mono">Heard: "{voiceRecognized}"</p>
+                  )}
+                </div>
+              )}
+
               <p className="text-sm text-center text-muted-foreground">
                 If you don't respond in <span className="font-bold text-lg text-red-600">{confirmationCountdown}</span> seconds, 
                 emergency services will be automatically contacted
