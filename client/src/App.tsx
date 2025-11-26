@@ -19,6 +19,7 @@ import ComplaintPage from "@/pages/complaint";
 import WeatherPage from "@/pages/weather";
 import FallDetectionPage from "@/pages/fall-detection";
 import AdultMonitoringPage from "@/pages/adult-monitoring";
+import DisasterAlertsPage from "@/pages/disaster-alerts";
 import NotFound from "@/pages/not-found";
 
 function InnerRouter() {
@@ -87,10 +88,7 @@ function InnerRouter() {
       <Route path="/disasters">
         <ProtectedRoute>
           <AppLayout>
-            <div className="p-6">
-              <h2 className="text-2xl font-bold">Disaster Alerts</h2>
-              <p className="text-muted-foreground">Disaster alerts coming soon...</p>
-            </div>
+            <DisasterAlertsPage />
           </AppLayout>
         </ProtectedRoute>
       </Route>
