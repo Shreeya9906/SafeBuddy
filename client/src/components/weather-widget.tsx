@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, CloudDrizzle, AlertTriangle, Wind, Droplets, Thermometer, Smog } from "lucide-react";
+import { Loader2, CloudDrizzle, AlertTriangle, Wind, Droplets, Thermometer, Activity } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getCurrentLocation } from "@/lib/geolocation";
 
@@ -243,7 +243,7 @@ export function WeatherWidget() {
           {weather.aqi !== undefined && (
             <div className={`p-3 rounded-lg border ${getAQIStatus(weather.aqi).color}`}>
               <div className="flex items-center gap-2 mb-1">
-                <Smog className="w-4 h-4" />
+                <Activity className="w-4 h-4" />
                 <p className="text-xs font-medium">Air Quality</p>
               </div>
               <p className="text-2xl font-bold">{weather.aqi}</p>

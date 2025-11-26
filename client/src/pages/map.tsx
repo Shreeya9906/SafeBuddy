@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin, Navigation, AlertCircle, Loader2, Cloud, Droplets, Wind } from "lucide-react";
+import { MapPin, Navigation, AlertCircle, Loader2, Cloud, Droplets, Wind, Sun, CloudRain, CloudSnow, CloudLightning } from "lucide-react";
 import type { SOSAlert } from "@shared/schema";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -139,6 +139,16 @@ export default function MapPage() {
     setIsTracking(false);
   };
 
+  const getWeatherIcon = (description: string): React.ReactNode => {
+    const desc = description.toLowerCase();
+    if (desc.includes("rain")) return <CloudRain className="w-12 h-12 text-blue-600" />;
+    if (desc.includes("thunderstorm")) return <CloudLightning className="w-12 h-12 text-purple-600" />;
+    if (desc.includes("snow")) return <CloudSnow className="w-12 h-12 text-cyan-400" />;
+    if (desc.includes("cloud")) return <Cloud className="w-12 h-12 text-gray-500" />;
+    if (desc.includes("clear") || desc.includes("sunny")) return <Sun className="w-12 h-12 text-yellow-500" />;
+    return <Cloud className="w-12 h-12 text-blue-600" />;
+  };
+
   const fetchWeather = async (lat: number, lon: number) => {
     try {
       const response = await fetch(
@@ -224,28 +234,30 @@ export default function MapPage() {
         </div>
 
         {weather && (
-          <Card className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
-            <CardContent className="p-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 flex-1">
-                  <Cloud className="w-6 h-6 text-blue-600" />
+          <Card className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/40 dark:to-cyan-950/40 border-blue-300 dark:border-blue-700">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4 flex-1">
+                  <div className="flex-shrink-0">
+                    {getWeatherIcon(weather.description)}
+                  </div>
                   <div>
-                    <p className="font-semibold text-sm">{weather.city}</p>
-                    <p className="text-xs text-muted-foreground">{weather.description}</p>
+                    <p className="font-semibold text-lg">{weather.city}</p>
+                    <p className="text-sm font-medium text-blue-700 dark:text-blue-300">{weather.description}</p>
                   </div>
                 </div>
-                <div className="flex gap-4 text-sm">
+                <div className="flex flex-col items-end gap-3">
                   <div className="text-right">
-                    <p className="font-bold text-lg">{weather.temperature}°C</p>
+                    <p className="font-bold text-3xl text-blue-600">{weather.temperature}°C</p>
                   </div>
-                  <div className="flex gap-3">
-                    <div className="flex items-center gap-1">
+                  <div className="flex gap-4 text-xs font-semibold">
+                    <div className="flex items-center gap-1 bg-blue-200/50 dark:bg-blue-800/50 px-2 py-1 rounded">
                       <Droplets className="w-4 h-4 text-blue-600" />
-                      <span className="text-xs font-medium">{weather.humidity}%</span>
+                      <span>{weather.humidity}%</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Wind className="w-4 h-4 text-blue-600" />
-                      <span className="text-xs font-medium">{weather.windSpeed}km/h</span>
+                    <div className="flex items-center gap-1 bg-cyan-200/50 dark:bg-cyan-800/50 px-2 py-1 rounded">
+                      <Wind className="w-4 h-4 text-cyan-600" />
+                      <span>{weather.windSpeed}km/h</span>
                     </div>
                   </div>
                 </div>
