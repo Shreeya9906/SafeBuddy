@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { mybuddyAPI } from "@/lib/api";
+import { mybuddyAPI, sosAPI, emergencyAPI } from "@/lib/api";
 import { speechService } from "@/lib/speech";
 import { getSpeechCode } from "@/lib/languages";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { MessageCircle, Mic, MicOff, Send, Volume2, VolumeX, Loader2 } from "lucide-react";
+import { MessageCircle, Mic, MicOff, Send, Volume2, VolumeX, Loader2, AlertCircle } from "lucide-react";
+import { playSOSSiren, stopSOSSiren } from "@/lib/siren";
+import { enableFlashlight, disableFlashlight } from "@/lib/flashlight";
+import { getCurrentLocation, getBatteryLevel } from "@/lib/geolocation";
 import myBuddyAvatar from "@assets/generated_images/friendly_robot_helper_avatar_for_mybuddy_ai_assistant.png";
 import type { MyBuddyLog } from "@shared/schema";
 
@@ -25,6 +28,7 @@ export default function MyBuddyPage() {
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [sosActive, setSOSActive] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const speechCode = getSpeechCode(user?.language || "en_IN");
@@ -144,6 +148,50 @@ export default function MyBuddyPage() {
     }
   };
 
+  const activateSOSFromMyBuddy = async () => {
+    try {
+      setSOSActive(true);
+      const location = await getCurrentLocation();
+      const battery = await getBatteryLevel();
+      
+      const alert = await sosAPI.create({
+        triggerMethod: "mybuddy_emergency",
+        latitude: location.latitude,
+        longitude: location.longitude,
+        batteryLevel: battery,
+      });
+      
+      playSOSSiren();
+      enableFlashlight();
+      
+      const emergencyNumbers = ["100", "108", "112", "1091"];
+      try {
+        await Promise.all([
+          emergencyAPI.callEmergency(alert.id, emergencyNumbers),
+          emergencyAPI.notifyGuardians(alert.id),
+        ]);
+        toast({
+          title: "🚨 SOS ACTIVATED!",
+          description: "Emergency services and guardians notified. SIREN PLAYING!",
+          variant: "destructive",
+        });
+      } catch (callError) {
+        toast({
+          title: "🚨 SOS ACTIVATED!",
+          description: "Emergency alert sent to guardians. SIREN PLAYING!",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Could not activate SOS. Try manual activation.",
+        variant: "destructive",
+      });
+      setSOSActive(false);
+    }
+  };
+
   return (
     <div className="h-full flex flex-col">
       <div className="p-4 bg-card border-b">
@@ -213,6 +261,17 @@ export default function MyBuddyPage() {
                             <Badge className={getSentimentColor(msg.sentiment)}>
                               {msg.sentiment}
                             </Badge>
+                          )}
+                          {msg.sentiment === "urgent" && (
+                            <Button 
+                              onClick={activateSOSFromMyBuddy}
+                              disabled={sosActive}
+                              className="w-full bg-destructive hover:bg-destructive/90 text-white"
+                              data-testid="button-activate-sos-mybuddy"
+                            >
+                              <AlertCircle className="w-4 h-4 mr-2" />
+                              {sosActive ? "SOS ACTIVATED!" : "Activate SOS NOW"}
+                            </Button>
                           )}
                           {msg.suggestions && msg.suggestions.length > 0 && (
                             <div className="flex flex-wrap gap-2">
