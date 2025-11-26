@@ -174,6 +174,7 @@ function ChildDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSTo
 }
 
 function AdultDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSToggle, handleFlashlightToggle, isFlashlightOn }: any) {
+  const [, navigate] = useLocation();
   const [children, setChildren] = useState<any[]>([]);
   const [elders, setElders] = useState<any[]>([]);
 
@@ -348,18 +349,25 @@ function AdultDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSTo
             <Activity className="w-5 h-5 text-orange-600" />
             Fall Detection System
           </CardTitle>
-          <CardDescription>Automatic monitoring for elderly & health-at-risk users</CardDescription>
+          <CardDescription>⚠️ MUST BE ENABLED ON FALL DETECTION PAGE</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">Continuously monitors device motion sensors to detect sudden falls and automatically alert emergency services.</p>
+          <p className="text-sm font-medium text-orange-700 dark:text-orange-300">🔔 Fall detection requires device motion sensors and must be explicitly enabled to work. When a fall is detected, it automatically:</p>
+          <ul className="text-sm space-y-1 text-muted-foreground list-disc list-inside">
+            <li>Plays emergency siren at maximum volume</li>
+            <li>Turns on flashlight</li>
+            <li>Calls emergency services (100, 108, 112, 1091)</li>
+            <li>Notifies all guardians via SMS</li>
+          </ul>
           <Button 
-            className="w-full h-12 text-base font-bold gap-2"
+            onClick={() => navigate("/fall-detection")}
+            className="w-full h-12 text-base font-bold gap-2 bg-orange-600 hover:bg-orange-700"
             data-testid="button-enable-fall-detection"
           >
             <Activity className="w-5 h-5" />
-            Enable Fall Detection
+            Go to Fall Detection Page
           </Button>
-          <p className="text-xs text-muted-foreground text-center">💡 Pro Tip: Keep your phone in your pocket while moving for accurate detection</p>
+          <p className="text-xs text-center text-orange-600 dark:text-orange-400 font-semibold">👉 Toggle switch ON to start monitoring</p>
         </CardContent>
       </Card>
     </div>
@@ -367,12 +375,41 @@ function AdultDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSTo
 }
 
 function ElderDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSToggle, handleFlashlightToggle, isFlashlightOn }: any) {
+  const [, navigate] = useLocation();
+  
   return (
     <div className="space-y-6">
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold mb-2">Welcome {user?.name}!</h1>
         <p className="text-lg text-muted-foreground">Your safety is our priority</p>
       </div>
+
+      <Card className="border-orange-500 border-4 bg-orange-50 dark:bg-orange-950/30">
+        <CardHeader>
+          <CardTitle className="text-2xl flex items-center gap-2 text-orange-700">
+            <AlertCircle className="w-6 h-6" />
+            🚨 ENABLE FALL DETECTION
+          </CardTitle>
+          <CardDescription className="text-base">Automatic protection during falls</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm font-medium">When enabled, your phone automatically detects if you fall and:</p>
+          <ul className="text-sm space-y-1 list-disc list-inside">
+            <li>Plays loud emergency siren</li>
+            <li>Turns on flashlight</li>
+            <li>Calls emergency services</li>
+            <li>Notifies caregivers</li>
+          </ul>
+          <Button 
+            onClick={() => navigate("/fall-detection")}
+            className="w-full h-14 text-lg font-bold bg-orange-600 hover:bg-orange-700"
+            data-testid="button-elder-fall-detection"
+          >
+            <Activity className="w-5 h-5 mr-2" />
+            Enable Fall Detection NOW
+          </Button>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 gap-6">
         <Button
