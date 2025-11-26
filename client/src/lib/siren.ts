@@ -37,18 +37,22 @@ export function playSOSSiren() {
     // Play siren immediately
     sirenPattern();
 
-    // Repeat every 3 seconds
+    // Repeat every 2 seconds for continuous loud alert
     const interval = setInterval(() => {
       if (isPlaying) {
         sirenPattern();
+        // Repeat vibration every siren cycle
+        if ('vibrate' in navigator) {
+          navigator.vibrate([200, 100, 200, 100, 200, 100, 200]);
+        }
       }
-    }, 3000);
+    }, 2000);
 
     sirenIntervals.push(interval);
 
-    // Vibrate phone if supported
+    // Intense vibration pattern for long-distance alerting
     if ('vibrate' in navigator) {
-      navigator.vibrate([100, 50, 100, 50, 100]);
+      navigator.vibrate([200, 100, 200, 100, 200, 100, 200]);
     }
   } catch (error) {
     console.error("Error playing siren:", error);
@@ -69,8 +73,8 @@ function createSirenTone(startTime: number, endTime: number, frequency: number) 
     osc.frequency.setValueAtTime(frequency, endTime);
 
     gain.gain.setValueAtTime(0, startTime);
-    gain.gain.linearRampToValueAtTime(0.3, startTime + 0.05);
-    gain.gain.linearRampToValueAtTime(0.3, endTime - 0.05);
+    gain.gain.linearRampToValueAtTime(0.8, startTime + 0.05);
+    gain.gain.linearRampToValueAtTime(0.8, endTime - 0.05);
     gain.gain.linearRampToValueAtTime(0, endTime);
 
     osc.connect(gain);
