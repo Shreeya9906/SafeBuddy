@@ -8,6 +8,7 @@ import { sosAPI, guardianAPI } from "@/lib/api";
 import { getCurrentLocation, getBatteryLevel } from "@/lib/geolocation";
 import { useToast } from "@/hooks/use-toast";
 import { WeatherWidget } from "@/components/weather-widget";
+import { playSOSSiren, stopSOSSiren, cleanupAudioContext } from "@/lib/siren";
 import {
   Shield,
   MapPin,
@@ -30,6 +31,10 @@ export default function DashboardPage() {
 
   useEffect(() => {
     loadDashboardData();
+
+    return () => {
+      cleanupAudioContext();
+    };
   }, []);
 
   const loadDashboardData = async () => {
@@ -49,6 +54,7 @@ export default function DashboardPage() {
   const handleSOSToggle = async () => {
     if (isSOSActive && activeAlert) {
       try {
+        stopSOSSiren();
         await sosAPI.update(activeAlert.id, { status: "resolved", resolvedAt: new Date() });
         setIsSOSActive(false);
         setActiveAlert(null);
@@ -77,17 +83,15 @@ export default function DashboardPage() {
         
         setActiveAlert(alert);
         setIsSOSActive(true);
+        playSOSSiren();
         
         toast({
           title: "SOS Activated!",
-          description: "Emergency alert sent to your guardians.",
+          description: "Emergency alert sent to your guardians. Siren is playing.",
           variant: "destructive",
         });
-        
-        if ('vibrate' in navigator) {
-          navigator.vibrate([200, 100, 200]);
-        }
       } catch (error: any) {
+        stopSOSSiren();
         toast({
           title: "SOS Error",
           description: error.message,
