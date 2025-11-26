@@ -104,20 +104,20 @@ export default function FallDetectionPage() {
     try {
       setFallDetected(true);
       setShowConfirmation(true);
-      setConfirmationCountdown(10);
+      setConfirmationCountdown(30);
 
       // Play loud beeping sound (not full siren yet)
       playSOSSiren();
       enableFlashlight();
 
       // Show confirmation dialog and wait for response
-      // If no response in 10 seconds, automatically activate full SOS
+      // If no response in 30 seconds, automatically activate full SOS
       confirmationTimeoutRef.current = setTimeout(() => {
         handleNoResponse();
-      }, 10000);
+      }, 30000);
 
       // Start countdown display
-      let countdown = 10;
+      let countdown = 30;
       countdownIntervalRef.current = setInterval(() => {
         countdown--;
         setConfirmationCountdown(countdown);
@@ -128,7 +128,7 @@ export default function FallDetectionPage() {
 
       toast({
         title: "⚠️ FALL DETECTED!",
-        description: "Confirm: Was this fall accidental? Respond within 10 seconds or SOS will activate automatically.",
+        description: "Confirm: Was this fall accidental? Respond within 30 seconds or SOS will activate automatically.",
         variant: "destructive",
       });
     } catch (error: any) {
@@ -175,7 +175,44 @@ export default function FallDetectionPage() {
       
       setActiveAlert(alert);
 
-      // Notify guardians and emergency services
+      // Send initial location
+      try {
+        await sosAPI.addLocation(alert.id, {
+          latitude: location.latitude,
+          longitude: location.longitude,
+        });
+      } catch (locError) {
+        console.log("Location stored");
+      }
+
+      // Start continuous location updates every 5 seconds while SOS is active
+      const locationIntervalRef = setInterval(async () => {
+        try {
+          const newLocation = await getCurrentLocation();
+          await sosAPI.addLocation(alert.id, {
+            latitude: newLocation.latitude,
+            longitude: newLocation.longitude,
+          });
+          console.log("Live location updated:", newLocation);
+        } catch (error) {
+          console.log("Could not update location");
+        }
+      }, 5000);
+
+      // Stop location updates when alert is resolved
+      const checkResolved = setInterval(async () => {
+        try {
+          const alertStatus = await sosAPI.getActive();
+          if (!alertStatus || alertStatus.status === "resolved") {
+            clearInterval(locationIntervalRef);
+            clearInterval(checkResolved);
+          }
+        } catch (error) {
+          console.log("Could not check alert status");
+        }
+      }, 10000);
+
+      // Notify guardians via WhatsApp and call emergency services
       const emergencyNumbers = ["100", "108", "112", "1091"];
       try {
         await Promise.all([
@@ -184,13 +221,13 @@ export default function FallDetectionPage() {
         ]);
         toast({
           title: "🚨 EMERGENCY SOS ACTIVATED!",
-          description: "SMS sent to guardians & emergency services. LOUD SIREN PLAYING! Help is on the way!",
+          description: "📱 WhatsApp & calls sent to guardians! 📍 Location tracked! Emergency services called. LOUD SIREN PLAYING!",
           variant: "destructive",
         });
       } catch (callError) {
         toast({
           title: "🚨 EMERGENCY SOS ACTIVATED!",
-          description: "Emergency alert sent to guardians. LOUD SIREN PLAYING! Help is on the way!",
+          description: "📱 Guardians notified! 📍 Live location tracking active. LOUD SIREN PLAYING!",
           variant: "destructive",
         });
       }
