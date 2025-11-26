@@ -19,29 +19,40 @@ export function playSOSSiren() {
 
     isPlaying = true;
 
-    // Create repeating siren pattern - classic alternating two-tone police siren
+    // Create repeating siren pattern - MAXIMUM VOLUME two-tone police siren for 1+ km distance
     const sirenPattern = () => {
       if (!isPlaying || !audioContext) return;
 
       const now = audioContext.currentTime;
 
-      // Classic "Wee-Woo" police siren - alternating high and low tones
-      createSirenTone(now, now + 0.5, 1200); // High tone - "Wee"
-      createSirenTone(now + 0.5, now + 1.0, 900); // Low tone - "Woo"
-      createSirenTone(now + 1.0, now + 1.5, 1200); // High tone - "Wee"
-      createSirenTone(now + 1.5, now + 2.0, 900); // Low tone - "Woo"
+      // Classic "Wee-Woo" police siren - layered for maximum loudness
+      // High tone cycle - 1200 Hz
+      createSirenTone(now, now + 0.5, 1200);
+      createSirenTone(now, now + 0.5, 2400); // Harmonic overlay for more volume
+      
+      // Low tone cycle - 900 Hz
+      createSirenTone(now + 0.5, now + 1.0, 900);
+      createSirenTone(now + 0.5, now + 1.0, 1800); // Harmonic overlay for more volume
+      
+      // High tone cycle - 1200 Hz
+      createSirenTone(now + 1.0, now + 1.5, 1200);
+      createSirenTone(now + 1.0, now + 1.5, 2400); // Harmonic overlay
+      
+      // Low tone cycle - 900 Hz
+      createSirenTone(now + 1.5, now + 2.0, 900);
+      createSirenTone(now + 1.5, now + 2.0, 1800); // Harmonic overlay
     };
 
     // Play siren immediately
     sirenPattern();
 
-    // Repeat every 2 seconds for continuous loud alert
+    // Repeat continuously every 2 seconds - NO GAPS for maximum penetration distance
     const interval = setInterval(() => {
       if (isPlaying) {
         sirenPattern();
-        // Repeat vibration every siren cycle
+        // MAXIMUM vibration intensity every siren cycle
         if ('vibrate' in navigator) {
-          navigator.vibrate([200, 100, 200, 100, 200, 100, 200]);
+          navigator.vibrate([300, 100, 300, 100, 300, 100, 300, 100, 300]);
         }
       }
     }, 2000);
@@ -71,8 +82,8 @@ function createSirenTone(startTime: number, endTime: number, frequency: number) 
     osc.frequency.setValueAtTime(frequency, endTime);
 
     gain.gain.setValueAtTime(0, startTime);
-    gain.gain.linearRampToValueAtTime(0.8, startTime + 0.05);
-    gain.gain.linearRampToValueAtTime(0.8, endTime - 0.05);
+    gain.gain.linearRampToValueAtTime(1.0, startTime + 0.02);
+    gain.gain.linearRampToValueAtTime(1.0, endTime - 0.02);
     gain.gain.linearRampToValueAtTime(0, endTime);
 
     osc.connect(gain);
