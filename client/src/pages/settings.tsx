@@ -50,6 +50,21 @@ export default function SettingsPage() {
   }, [settings.theme]);
 
   useEffect(() => {
+    applyLanguageStyles(settings.language, settings.backgroundColor);
+  }, [settings.language, settings.backgroundColor]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    let fontSize = "16px";
+    if (settings.fontSize === "small") fontSize = "12px";
+    else if (settings.fontSize === "medium") fontSize = "16px";
+    else if (settings.fontSize === "large") fontSize = "18px";
+    else if (settings.fontSize === "xlarge") fontSize = "20px";
+    
+    root.style.fontSize = fontSize;
+  }, [settings.fontSize]);
+
+  useEffect(() => {
     loadGuardians();
   }, []);
 
@@ -164,7 +179,7 @@ export default function SettingsPage() {
             <Label htmlFor="language">Language</Label>
             <Select
               value={settings.language}
-              onValueChange={(value) => setSettings({ ...settings, language: value })}
+              onValueChange={handleLanguageChange}
             >
               <SelectTrigger id="language" data-testid="select-language">
                 <SelectValue />
@@ -177,6 +192,7 @@ export default function SettingsPage() {
                 ))}
               </SelectContent>
             </Select>
+            <p className="text-xs text-muted-foreground mt-2">✨ Font & background change instantly</p>
           </div>
 
           <div className="grid gap-2">
@@ -317,23 +333,24 @@ export default function SettingsPage() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-4 gap-2">
             {[
-              { name: "White", value: "bg-white" },
-              { name: "Light Blue", value: "bg-blue-50" },
-              { name: "Light Green", value: "bg-green-50" },
-              { name: "Light Yellow", value: "bg-yellow-50" },
-              { name: "Light Pink", value: "bg-pink-50" },
-              { name: "Light Purple", value: "bg-purple-50" },
-              { name: "Dark", value: "bg-gray-900" },
-              { name: "Dark Blue", value: "bg-blue-900" },
+              { name: "White", value: "white" },
+              { name: "Light Blue", value: "#f0f9ff" },
+              { name: "Light Green", value: "#f0fdf4" },
+              { name: "Light Yellow", value: "#fefce8" },
+              { name: "Light Pink", value: "#fdf2f8" },
+              { name: "Light Purple", value: "#faf5ff" },
+              { name: "Dark", value: "#111827" },
+              { name: "Dark Blue", value: "#001f3f" },
             ].map((color) => (
               <button
                 key={color.value}
-                onClick={() => setSettings({ ...settings, backgroundColor: color.value })}
+                onClick={() => handleBackgroundColorChange(color.value)}
                 className={`p-4 rounded-lg border-2 transition-all ${
                   settings.backgroundColor === color.value
                     ? "border-primary scale-105"
                     : "border-gray-300"
-                } ${color.value}`}
+                }`}
+                style={{ backgroundColor: color.value }}
                 data-testid={`button-color-${color.value}`}
                 title={color.name}
               />
