@@ -639,7 +639,7 @@ function generateMyBuddyResponse(message: string, context?: string): {
   const lowerMessage = message.toLowerCase();
   
   const emergencyKeywords = ["emergency", "help", "danger", "scared", "hurt", "pain", "bleeding", "attack", "follow", "lost"];
-  const medicalKeywords = ["sick", "fever", "headache", "dizzy", "breathing", "chest", "allergy", "medicine", "doctor", "nausea", "vomit", "cough", "cold", "flu"];
+  const medicalKeywords = ["sick", "fever", "headache", "dizzy", "breathing", "chest", "allergy", "medicine", "doctor", "nausea", "vomit", "cough", "cold", "flu", "constipation", "diarrhea", "stomach", "belly", "digestion", "bowel", "poop", "pee", "urine"];
   const emotionalKeywords = ["sad", "anxious", "worried", "afraid", "lonely", "stress", "panic", "depressed", "angry", "frustrated", "upset"];
   const contactKeywords = ["contact", "call", "reach", "phone", "guardian", "parent", "mom", "dad"];
 
@@ -687,6 +687,12 @@ function generateMyBuddyResponse(message: string, context?: string): {
         medicalAdvice += "This is serious. Please get medical attention immediately. Sit upright, take slow breaths, and call emergency services (112) if symptoms worsen.";
       } else if (lowerMessage.includes("dizzy")) {
         medicalAdvice += "Sit or lie down immediately to prevent falls. Avoid sudden movements. Drink water slowly. If it continues, please see a doctor.";
+      } else if (lowerMessage.includes("constipation")) {
+        medicalAdvice += "For constipation, try these remedies: 💧 Drink more water (6-8 glasses daily), 🥗 eat fiber-rich foods (fruits, vegetables, whole grains), 🚶 exercise regularly, 🚽 don't ignore the urge to go. If it persists for more than a week or is severe, please see a doctor. In the meantime, you can also take warm lemon water in the morning.";
+      } else if (lowerMessage.includes("diarrhea")) {
+        medicalAdvice += "For diarrhea, stay hydrated with water, coconut water, or oral rehydration solution. Eat bland foods like rice, bananas, or plain bread. Avoid dairy, fatty foods, and high-fiber foods temporarily. If it lasts more than 2 days or is severe, please consult a doctor.";
+      } else if (lowerMessage.includes("stomach") || lowerMessage.includes("belly")) {
+        medicalAdvice += "For stomach issues, try resting, drinking warm water with ginger, and eating light foods. Avoid spicy, oily, or heavy meals. If the pain is severe or lasts more than 2 hours, please see a doctor immediately.";
       } else {
         medicalAdvice += "It's important to speak with a healthcare professional about your symptoms.";
       }
