@@ -16,6 +16,7 @@ import MyBuddyPage from "@/pages/mybuddy";
 import HealthPage from "@/pages/health";
 import WomenSafetyPage from "@/pages/women-safety";
 import ComplaintPage from "@/pages/complaint";
+import WeatherPage from "@/pages/weather";
 import NotFound from "@/pages/not-found";
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
@@ -113,6 +114,14 @@ function Router() {
         <ProtectedRoute>
           <AppLayout>
             <WomenSafetyPage />
+          </AppLayout>
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/weather">
+        <ProtectedRoute>
+          <AppLayout>
+            <WeatherPage />
           </AppLayout>
         </ProtectedRoute>
       </Route>

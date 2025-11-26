@@ -340,8 +340,8 @@ function generateMyBuddyResponse(message: string, context?: string): {
   const lowerMessage = message.toLowerCase();
   
   const emergencyKeywords = ["emergency", "help", "danger", "scared", "hurt", "pain", "bleeding", "attack", "follow", "lost"];
-  const medicalKeywords = ["sick", "fever", "headache", "dizzy", "breathing", "chest", "allergy", "medicine", "doctor"];
-  const emotionalKeywords = ["sad", "anxious", "worried", "afraid", "lonely", "stress", "panic"];
+  const medicalKeywords = ["sick", "fever", "headache", "dizzy", "breathing", "chest", "allergy", "medicine", "doctor", "nausea", "vomit", "cough", "cold", "flu"];
+  const emotionalKeywords = ["sad", "anxious", "worried", "afraid", "lonely", "stress", "panic", "depressed", "angry", "frustrated", "upset"];
 
   const isEmergency = emergencyKeywords.some(k => lowerMessage.includes(k));
   const isMedical = medicalKeywords.some(k => lowerMessage.includes(k));
@@ -363,16 +363,49 @@ function generateMyBuddyResponse(message: string, context?: string): {
     sentiment = "concerned";
     keywords = medicalKeywords.filter(k => lowerMessage.includes(k));
     action = "suggest_medical_help";
-    response = "I'm not a doctor, but I'm concerned about what you're experiencing. For medical symptoms, it's important to speak with a healthcare professional. Would you like me to help you contact your guardian or call a medical helpline (108)?";
-    suggestions = ["Contact Guardian", "Call Medical Helpline", "Record Symptoms", "I feel better"];
+    
+    // Provide specific medical advice based on symptoms
+    let medicalAdvice = "I'm not a doctor, but I'm concerned about what you're experiencing. ";
+    
+    if (lowerMessage.includes("fever")) {
+      medicalAdvice += "For fever, rest well and stay hydrated. Monitor your temperature. If it exceeds 103°F (39.4°C), please consult a doctor immediately.";
+    } else if (lowerMessage.includes("headache")) {
+      medicalAdvice += "Try resting in a quiet, dark room. Drink plenty of water and avoid screens. If it persists or worsens, please see a healthcare provider.";
+    } else if (lowerMessage.includes("breathing") || lowerMessage.includes("chest")) {
+      medicalAdvice += "This is serious. Please get medical attention immediately. Sit upright, take slow breaths, and call emergency services (112) if symptoms worsen.";
+    } else if (lowerMessage.includes("dizzy")) {
+      medicalAdvice += "Sit or lie down immediately to prevent falls. Avoid sudden movements. Drink water slowly. If it continues, please see a doctor.";
+    } else {
+      medicalAdvice += "It's important to speak with a healthcare professional about your symptoms.";
+    }
+    
+    medicalAdvice += " Would you like me to help you contact your guardian or call the medical helpline (108)?";
+    response = medicalAdvice;
+    suggestions = ["Contact Guardian", "Call Medical Helpline (108)", "Record Symptoms", "I feel better"];
   } else if (isEmotional) {
     sentiment = "supportive";
     keywords = emotionalKeywords.filter(k => lowerMessage.includes(k));
     action = "provide_support";
-    response = "I hear you, and your feelings are valid. Remember, you're not alone. Taking deep breaths can help - try breathing in for 4 counts, holding for 4, and out for 4. Would talking to your guardian or a counselor help?";
-    suggestions = ["Breathing Exercise", "Contact Guardian", "Tell me more", "I'm feeling better"];
+    
+    // Provide specific emotional support based on feeling
+    let emotionalSupport = "I hear you, and your feelings are completely valid. ";
+    
+    if (lowerMessage.includes("anxiety") || lowerMessage.includes("anxious") || lowerMessage.includes("panic")) {
+      emotionalSupport += "When you're feeling anxious, it can feel overwhelming. Try this grounding technique: Name 5 things you can see, 4 you can touch, 3 you can hear, 2 you can smell, and 1 you can taste. This helps calm your mind. Would it help to talk to someone you trust?";
+    } else if (lowerMessage.includes("sad") || lowerMessage.includes("lonely")) {
+      emotionalSupport += "It's okay to feel sad sometimes. Remember that these feelings are temporary and you're not alone. Connecting with loved ones, going outside, or doing something you enjoy can help. Your guardian cares about you.";
+    } else if (lowerMessage.includes("stress") || lowerMessage.includes("frustrated")) {
+      emotionalSupport += "Stress is a normal part of life. Try taking a break, doing some light exercise, or practicing mindfulness. Break your tasks into smaller, manageable steps. You've got this!";
+    } else if (lowerMessage.includes("angry") || lowerMessage.includes("upset")) {
+      emotionalSupport += "It's okay to feel angry, but let's channel it positively. Try taking a walk, writing down your feelings, or talking to someone you trust. Deep breathing can help calm your mind.";
+    } else {
+      emotionalSupport += "Remember, you're stronger than you think. Taking things one step at a time and leaning on your support system can make a big difference.";
+    }
+    
+    response = emotionalSupport;
+    suggestions = ["Breathing Exercise", "Contact Guardian", "Share Your Feelings", "I'm feeling better"];
   } else {
-    response = "I'm here to listen and help keep you safe. How are you feeling right now? If you ever need immediate help, just say 'emergency' and I'll activate your SOS alert.";
+    response = "I'm here to listen and help keep you safe. How are you feeling right now? Whether it's about your health, emotions, or safety, I'm here to support you. If you ever need immediate help, just say 'emergency' and I'll activate your SOS alert.";
     suggestions = ["Check Weather", "View Safety Tips", "Talk to Guardian", "I'm doing well"];
   }
 
