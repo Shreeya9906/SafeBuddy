@@ -372,6 +372,27 @@ function AdultDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSTo
         </Card>
       </div>
 
+      <Card className="border-green-200 dark:border-green-800 border-2">
+        <CardHeader>
+          <CardTitle className="text-xl flex items-center gap-2">
+            <MapPin className="w-5 h-5 text-green-600" />
+            Track People
+          </CardTitle>
+          <CardDescription>Find people nearby using their phone number</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">Search by phone number to locate your family members, children, or contacts on a live map.</p>
+          <Button 
+            onClick={() => navigate("/track-people")}
+            className="w-full h-12 text-base font-bold gap-2 bg-green-600 hover:bg-green-700"
+            data-testid="button-track-people"
+          >
+            <MapPin className="w-5 h-5" />
+            Open Tracker
+          </Button>
+        </CardContent>
+      </Card>
+
       <Card className="border-orange-200 dark:border-orange-800 border-2">
         <CardHeader>
           <CardTitle className="text-xl flex items-center gap-2">
