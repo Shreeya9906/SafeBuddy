@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -17,6 +17,8 @@ export default function FallDetectionPage() {
   const [isSupported, setIsSupported] = useState(false);
   const [activeAlert, setActiveAlert] = useState<any>(null);
   const { toast } = useToast();
+  const lastAccelerationRef = useRef(0);
+  const watchIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     const checkDeviceOrientation = () => {
@@ -40,25 +42,46 @@ export default function FallDetectionPage() {
     setIsActive(true);
     toast({
       title: "Fall Detection Active",
-      description: "Monitoring for sudden movements...",
+      description: "Monitoring for sudden movements... Detecting free fall acceleration drop",
     });
+
+    let fallThresholdCounter = 0;
 
     const handleMotion = (event: DeviceMotionEvent) => {
       const acc = event.accelerationIncludingGravity;
       if (acc?.x && acc?.y && acc?.z) {
         const acceleration = Math.sqrt(acc.x ** 2 + acc.y ** 2 + acc.z ** 2);
-        setLastAcceleration(Math.round(acceleration * 100) / 100);
+        const roundedAccel = Math.round(acceleration * 100) / 100;
+        
+        // Update display
+        setLastAcceleration(roundedAccel);
 
-        // Detect sudden drop in acceleration (indicates fall)
-        if (acceleration < 2 && lastAcceleration > 15) {
+        // FIXED: Use ref for real-time comparison instead of state
+        const previousAccel = lastAccelerationRef.current;
+        lastAccelerationRef.current = acceleration;
+
+        // Enhanced fall detection:
+        // 1. Sudden drop from high acceleration (normal movement) to very low (free fall)
+        // 2. Acceleration is near 0 (weightless state during fall)
+        // 3. Consistent low readings indicate sustained fall
+        
+        const hasDropped = previousAccel > 12 && acceleration < 3; // Drop from high to low
+        const isFreefall = acceleration < 1.5; // Near zero gravity (free fall)
+        const isLowAccel = acceleration < 3; // Very low sustained acceleration
+
+        if (hasDropped || (isFreefall && fallThresholdCounter++ > 3)) {
+          console.log(`FALL DETECTED! Previous: ${previousAccel}, Current: ${acceleration}`);
           setFallDetected(true);
           triggerFallAlert();
+          fallThresholdCounter = 0;
+        } else if (!isLowAccel) {
+          fallThresholdCounter = 0; // Reset if acceleration goes back to normal
         }
       }
     };
 
     (window as any).addEventListener("devicemotion", handleMotion, true);
-
+    
     return () => {
       (window as any).removeEventListener("devicemotion", handleMotion);
     };
@@ -66,6 +89,7 @@ export default function FallDetectionPage() {
 
   const stopFallDetection = () => {
     setIsActive(false);
+    lastAccelerationRef.current = 0;
     toast({
       title: "Fall Detection Stopped",
       description: "Monitoring disabled",
