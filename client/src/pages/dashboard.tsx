@@ -722,6 +722,21 @@ export default function DashboardPage() {
     }
   };
 
+  // Show Child Dashboard if user is in child mode
+  if (user?.profileMode === "child") {
+    return (
+      <ChildDashboard 
+        user={user}
+        guardians={guardians}
+        activeAlert={activeAlert}
+        isSOSActive={isSOSActive}
+        handleSOSToggle={handleSOSToggle}
+        handleFlashlightToggle={handleFlashlightToggle}
+        isFlashlightOn={isFlashlightOn}
+      />
+    );
+  }
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
