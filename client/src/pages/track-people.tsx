@@ -1,24 +1,91 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Circle } from "react-leaflet";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { AlertCircle, MapPin, Phone, User } from "lucide-react";
+import { AlertCircle, MapPin, Phone, User, Zap } from "lucide-react";
 import L from "leaflet";
 
 export default function TrackPeoplePage() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [trackedPeople, setTrackedPeople] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [isLiveTracking, setIsLiveTracking] = useState(false);
   const [mapCenter, setMapCenter] = useState<[number, number]>([28.7041, 77.1025]); // Default: New Delhi
   const { toast } = useToast();
+  const liveTrackingInterval = useRef<NodeJS.Timeout | null>(null);
+  const trackedPhoneRef = useRef<string>("");
+
+  // Refresh location data
+  const refreshLocation = async (phone: string) => {
+    try {
+      const response = await fetch(`/api/track/search?phone=${encodeURIComponent(phone)}`, {
+        credentials: "include",
+      });
+      
+      if (response.ok) {
+        const person = await response.json();
+        if (person.latitude && person.longitude) {
+          setTrackedPeople([person]);
+          setMapCenter([person.latitude, person.longitude]);
+        }
+      }
+    } catch (error) {
+      console.error("Live tracking error:", error);
+    }
+  };
+
+  // Start live tracking
+  const startLiveTracking = () => {
+    setIsLiveTracking(true);
+    toast({
+      title: "🔴 LIVE TRACKING ACTIVE",
+      description: "Location updates every 3 seconds",
+    });
+    
+    // Refresh immediately
+    refreshLocation(trackedPhoneRef.current);
+    
+    // Then set interval for continuous updates
+    liveTrackingInterval.current = setInterval(() => {
+      refreshLocation(trackedPhoneRef.current);
+    }, 3000); // Update every 3 seconds
+  };
+
+  // Stop live tracking
+  const stopLiveTracking = () => {
+    setIsLiveTracking(false);
+    if (liveTrackingInterval.current) {
+      clearInterval(liveTrackingInterval.current);
+      liveTrackingInterval.current = null;
+    }
+    toast({
+      title: "Live tracking stopped",
+      description: "Showing last known location",
+    });
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (liveTrackingInterval.current) {
+        clearInterval(liveTrackingInterval.current);
+      }
+    };
+  }, []);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!phoneNumber.trim()) {
       toast({ title: "Error", description: "Please enter a phone number", variant: "destructive" });
       return;
+    }
+
+    // Stop any existing live tracking
+    if (liveTrackingInterval.current) {
+      stopLiveTracking();
     }
 
     setIsSearching(true);
@@ -32,11 +99,12 @@ export default function TrackPeoplePage() {
       const person = await response.json();
       
       if (person.latitude && person.longitude) {
+        trackedPhoneRef.current = phoneNumber; // Store for live tracking
         setTrackedPeople([person]);
         setMapCenter([person.latitude, person.longitude]);
         toast({
           title: "✅ Person Found!",
-          description: `📍 ${person.name} last seen nearby`,
+          description: `📍 ${person.name} - Click "Enable Live Tracking" to see updates`,
         });
       } else {
         toast({
@@ -77,9 +145,9 @@ export default function TrackPeoplePage() {
             <Phone className="w-5 h-5" />
             Search by Phone Number
           </CardTitle>
-          <CardDescription>Enter a contact's phone number to see their last known location</CardDescription>
+          <CardDescription>Enter a contact's phone number to see their location</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <form onSubmit={handleSearch} className="flex gap-2">
             <Input
               placeholder="Enter phone number (e.g., 9876543210)"
@@ -96,6 +164,43 @@ export default function TrackPeoplePage() {
               {isSearching ? "Searching..." : "Search"}
             </Button>
           </form>
+          
+          {/* Live Tracking Controls */}
+          {trackedPeople.length > 0 && (
+            <div className="flex gap-2">
+              <Button
+                onClick={startLiveTracking}
+                disabled={isLiveTracking}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold gap-2"
+                data-testid="button-enable-live-tracking"
+              >
+                <Zap className="w-4 h-4" />
+                {isLiveTracking ? "🔴 LIVE TRACKING ACTIVE" : "🔵 Enable Live Tracking"}
+              </Button>
+              
+              {isLiveTracking && (
+                <Button
+                  onClick={stopLiveTracking}
+                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold"
+                  data-testid="button-stop-live-tracking"
+                >
+                  Stop Live Tracking
+                </Button>
+              )}
+            </div>
+          )}
+          
+          {/* Live Tracking Status */}
+          {isLiveTracking && (
+            <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-3">
+              <div className="flex items-center gap-2">
+                <Badge className="bg-red-600 animate-pulse">LIVE</Badge>
+                <span className="text-sm font-semibold text-red-700 dark:text-red-300">
+                  Updating location every 3 seconds
+                </span>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
