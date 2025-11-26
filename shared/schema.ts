@@ -14,6 +14,7 @@ export const users = pgTable("users", {
   language: text("language").notNull().default("en_IN"),
   theme: text("theme").default("light"),
   fontSize: text("font_size").default("medium"),
+  backgroundColor: text("background_color").default("bg-white"),
   voiceEnabled: boolean("voice_enabled").default(true),
   ttsEnabled: boolean("tts_enabled").default(true),
   mybuddyEnabled: boolean("mybuddy_enabled").default(true),

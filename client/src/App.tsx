@@ -19,33 +19,32 @@ import ComplaintPage from "@/pages/complaint";
 import WeatherPage from "@/pages/weather";
 import NotFound from "@/pages/not-found";
 
-function PublicRouteWrapper({ children }: { children: React.ReactNode }) {
+function InnerRouter() {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
     return null;
   }
 
-  if (user) {
-    return <Redirect to="/dashboard" />;
+  function PublicRoute({ children }: { children: React.ReactNode }) {
+    if (user) {
+      return <Redirect to="/dashboard" />;
+    }
+    return <>{children}</>;
   }
 
-  return <>{children}</>;
-}
-
-function Router() {
   return (
     <Switch>
       <Route path="/login">
-        <PublicRouteWrapper>
+        <PublicRoute>
           <LoginPage />
-        </PublicRouteWrapper>
+        </PublicRoute>
       </Route>
       
       <Route path="/register">
-        <PublicRouteWrapper>
+        <PublicRoute>
           <RegisterPage />
-        </PublicRouteWrapper>
+        </PublicRoute>
       </Route>
 
       <Route path="/dashboard">
@@ -149,7 +148,7 @@ function App() {
       <TooltipProvider>
         <AuthProvider>
           <Toaster />
-          <Router />
+          <InnerRouter />
         </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>

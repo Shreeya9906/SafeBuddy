@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Settings, User, Bell, Palette, Volume2, Users, Plus, Trash2, Loader2, MessageCircle, Phone } from "lucide-react";
+import { Settings, User, Bell, Palette, Volume2, Users, Plus, Trash2, Loader2, MessageCircle, Phone, Type, Palette as PaletteIcon } from "lucide-react";
 import { openWhatsAppCall, openPhoneCall } from "@/lib/whatsapp";
 import type { Guardian } from "@shared/schema";
 
@@ -32,6 +32,7 @@ export default function SettingsPage() {
     language: user?.language || "en_IN",
     theme: user?.theme || "light",
     fontSize: user?.fontSize || "medium",
+    backgroundColor: user?.backgroundColor || "bg-white",
     voiceEnabled: user?.voiceEnabled ?? true,
     ttsEnabled: user?.ttsEnabled ?? true,
     mybuddyEnabled: user?.mybuddyEnabled ?? true,
@@ -219,6 +220,69 @@ export default function SettingsPage() {
               onCheckedChange={(checked) => setSettings({ ...settings, mybuddyEnabled: checked })}
               data-testid="switch-mybuddy-enabled"
             />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Type className="w-5 h-5" />
+            Font Size
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Select
+            value={settings.fontSize}
+            onValueChange={(value) => setSettings({ ...settings, fontSize: value })}
+          >
+            <SelectTrigger data-testid="select-font-size">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="small">Small (12px)</SelectItem>
+              <SelectItem value="medium">Medium (16px)</SelectItem>
+              <SelectItem value="large">Large (18px)</SelectItem>
+              <SelectItem value="xlarge">Extra Large (20px)</SelectItem>
+            </SelectContent>
+          </Select>
+          <div className={`p-4 rounded border text-${settings.fontSize === 'small' ? 'sm' : settings.fontSize === 'large' ? 'lg' : settings.fontSize === 'xlarge' ? 'xl' : 'base'}`}>
+            Preview text with current font size
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <PaletteIcon className="w-5 h-5" />
+            Background Color
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-4 gap-2">
+            {[
+              { name: "White", value: "bg-white" },
+              { name: "Light Blue", value: "bg-blue-50" },
+              { name: "Light Green", value: "bg-green-50" },
+              { name: "Light Yellow", value: "bg-yellow-50" },
+              { name: "Light Pink", value: "bg-pink-50" },
+              { name: "Light Purple", value: "bg-purple-50" },
+              { name: "Dark", value: "bg-gray-900" },
+              { name: "Dark Blue", value: "bg-blue-900" },
+            ].map((color) => (
+              <button
+                key={color.value}
+                onClick={() => setSettings({ ...settings, backgroundColor: color.value })}
+                className={`p-4 rounded-lg border-2 transition-all ${
+                  settings.backgroundColor === color.value
+                    ? "border-primary scale-105"
+                    : "border-gray-300"
+                } ${color.value}`}
+                data-testid={`button-color-${color.value}`}
+                title={color.name}
+              />
+            ))}
           </div>
         </CardContent>
       </Card>
