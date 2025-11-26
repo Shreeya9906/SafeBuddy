@@ -21,7 +21,7 @@ async function fetchAPI(endpoint: string, options?: RequestInit) {
 }
 
 export const authAPI = {
-  register: (data: { email: string; password: string; name: string; profileMode?: string }) =>
+  register: (data: { email: string; password: string; name: string; age?: number; profileMode?: string }) =>
     fetchAPI("/auth/register", { method: "POST", body: JSON.stringify(data) }),
   
   login: (email: string, password: string) =>

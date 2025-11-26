@@ -23,6 +23,204 @@ import {
 } from "lucide-react";
 import type { SOSAlert, Guardian } from "@shared/schema";
 
+function ChildDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSToggle, handleFlashlightToggle, isFlashlightOn }: any) {
+  return (
+    <div className="space-y-6">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-primary mb-2">Hi {user?.name}! Stay Safe 🛡️</h1>
+        <p className="text-muted-foreground">Emergency help is just one tap away</p>
+      </div>
+      
+      <div className="grid grid-cols-2 gap-4">
+        <Button
+          onClick={handleSOSToggle}
+          size="lg"
+          className={`h-32 text-lg font-bold ${isSOSActive ? 'bg-red-600 hover:bg-red-700' : 'bg-red-500 hover:bg-red-600'}`}
+          data-testid="button-sos-emergency"
+        >
+          <Shield className="mr-2 w-6 h-6" />
+          {isSOSActive ? 'STOP SOS' : 'SOS'}
+        </Button>
+        
+        <Button
+          onClick={handleFlashlightToggle}
+          size="lg"
+          variant={isFlashlightOn ? "default" : "outline"}
+          className="h-32 text-lg font-bold"
+          data-testid="button-flashlight-toggle"
+        >
+          <Lightbulb className="w-6 h-6" />
+        </Button>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="w-5 h-5" />
+            My Guardians
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {guardians.length > 0 ? (
+            <div className="space-y-2">
+              {guardians.map((g) => (
+                <div key={g.id} className="p-2 bg-blue-50 dark:bg-blue-900 rounded text-sm">
+                  <p className="font-medium">{g.name}</p>
+                  <p className="text-xs text-muted-foreground">{g.phone}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No guardians added yet</p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function AdultDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSToggle, handleFlashlightToggle, isFlashlightOn }: any) {
+  return (
+    <div className="space-y-6">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight">Welcome, {user?.name}</h1>
+        <p className="text-muted-foreground">Your personal safety hub</p>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        <Button
+          onClick={handleSOSToggle}
+          size="lg"
+          className={`h-28 text-lg font-bold ${isSOSActive ? 'bg-red-600 hover:bg-red-700' : 'bg-red-500 hover:bg-red-600'}`}
+          data-testid="button-sos-emergency"
+        >
+          <Shield className="mr-2 w-6 h-6" />
+          {isSOSActive ? 'STOP' : 'SOS'}
+        </Button>
+        
+        <Button
+          onClick={handleFlashlightToggle}
+          size="lg"
+          variant={isFlashlightOn ? "default" : "outline"}
+          className="h-28 text-lg font-bold"
+          data-testid="button-flashlight-toggle"
+        >
+          <Lightbulb className="w-6 h-6" />
+          Flashlight
+        </Button>
+
+        <Button
+          size="lg"
+          variant="outline"
+          className="h-28 text-lg font-bold"
+          onClick={() => window.open('tel:100')}
+          data-testid="button-call-police"
+        >
+          <Phone className="mr-2 w-6 h-6" />
+          Police
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Emergency Contacts
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-primary">{guardians.length}</p>
+            <p className="text-sm text-muted-foreground">guardians added</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <AlertCircle className="w-4 h-4" />
+              Status
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Badge variant={isSOSActive ? "destructive" : "secondary"}>
+              {isSOSActive ? 'SOS Active' : 'Safe'}
+            </Badge>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function ElderDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSToggle, handleFlashlightToggle, isFlashlightOn }: any) {
+  return (
+    <div className="space-y-6">
+      <div className="text-center mb-8">
+        <h1 className="text-4xl font-bold mb-2">Welcome {user?.name}!</h1>
+        <p className="text-lg text-muted-foreground">Your safety is our priority</p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6">
+        <Button
+          onClick={handleSOSToggle}
+          size="lg"
+          className={`h-40 text-2xl font-bold rounded-lg ${isSOSActive ? 'bg-red-600 hover:bg-red-700' : 'bg-red-500 hover:bg-red-600'}`}
+          data-testid="button-sos-emergency"
+        >
+          <Shield className="mr-3 w-10 h-10" />
+          {isSOSActive ? 'STOP SOS' : 'EMERGENCY SOS'}
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <Button
+          onClick={handleFlashlightToggle}
+          size="lg"
+          className="h-20 text-lg font-bold"
+          variant={isFlashlightOn ? "default" : "outline"}
+          data-testid="button-flashlight-toggle"
+        >
+          <Lightbulb className="w-6 h-6" />
+        </Button>
+
+        <Button
+          size="lg"
+          className="h-20 text-lg font-bold"
+          onClick={() => window.open('tel:100')}
+          data-testid="button-call-police"
+        >
+          <Phone className="w-6 h-6" />
+        </Button>
+      </div>
+
+      <Card className="bg-blue-50 dark:bg-blue-900 border-blue-200 dark:border-blue-800">
+        <CardHeader>
+          <CardTitle className="text-xl flex items-center gap-2">
+            <Users className="w-5 h-5" />
+            Your Caregivers
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {guardians.length > 0 ? (
+              guardians.map((g) => (
+                <div key={g.id} className="p-3 bg-white dark:bg-gray-800 rounded border">
+                  <p className="font-bold text-lg">{g.name}</p>
+                  <p className="text-primary font-mono">{g.phone}</p>
+                  {g.relationship && <p className="text-sm text-muted-foreground">{g.relationship}</p>}
+                </div>
+              ))
+            ) : (
+              <p className="text-sm">Add caregivers in Settings</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const { user } = useAuth();
   const [, navigate] = useLocation();

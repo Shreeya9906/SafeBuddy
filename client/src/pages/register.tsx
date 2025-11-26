@@ -18,6 +18,7 @@ export default function RegisterPage() {
     email: "",
     password: "",
     confirmPassword: "",
+    age: "",
     profileMode: "adult",
   });
 
@@ -40,6 +41,7 @@ export default function RegisterPage() {
         name: formData.name,
         email: formData.email,
         password: formData.password,
+        age: parseInt(formData.age) || undefined,
         profileMode: formData.profileMode,
       });
       toast({
@@ -95,7 +97,21 @@ export default function RegisterPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="profileMode">Profile Type</Label>
+              <Label htmlFor="age">Age *</Label>
+              <Input
+                id="age"
+                type="number"
+                placeholder="Enter your age"
+                min="1"
+                max="120"
+                value={formData.age}
+                onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+                required
+                data-testid="input-age"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="profileMode">Profile Type *</Label>
               <Select
                 value={formData.profileMode}
                 onValueChange={(value) => setFormData({ ...formData, profileMode: value })}
@@ -105,7 +121,7 @@ export default function RegisterPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="child">Child (Under 18)</SelectItem>
-                  <SelectItem value="adult">Adult</SelectItem>
+                  <SelectItem value="adult">Adult (18-59)</SelectItem>
                   <SelectItem value="elder">Elder (60+)</SelectItem>
                 </SelectContent>
               </Select>
