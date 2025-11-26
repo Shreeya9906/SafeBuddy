@@ -24,6 +24,7 @@ import {
   User,
   User2,
   Activity as ActivityIcon,
+  HelpCircle,
 } from "lucide-react";
 import type { SOSAlert, Guardian } from "@shared/schema";
 
@@ -104,6 +105,65 @@ function ChildDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSTo
           ) : (
             <p className="text-sm text-muted-foreground">No guardians added yet</p>
           )}
+        </CardContent>
+      </Card>
+
+      <Card className="border-2 border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-red-700 dark:text-red-300">
+            <HelpCircle className="w-5 h-5" />
+            Need Help? Child Abuse Support
+          </CardTitle>
+          <CardDescription className="text-red-600 dark:text-red-400">You're not alone. Get help now.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-foreground">If you're experiencing abuse, neglect, or unsafe situations:</p>
+          
+          <div className="grid gap-3">
+            <Button
+              onClick={() => window.open('tel:1098')}
+              className="w-full h-16 bg-red-600 hover:bg-red-700 text-white font-bold text-base gap-2"
+              data-testid="button-childline-1098"
+            >
+              <Phone className="w-5 h-5" />
+              Call Childline India: 1098
+            </Button>
+
+            <Button
+              onClick={() => window.open('tel:1091')}
+              variant="outline"
+              className="w-full h-16 font-bold text-base gap-2 border-red-300 dark:border-red-700"
+              data-testid="button-womens-helpline"
+            >
+              <Phone className="w-5 h-5" />
+              Women's Helpline: 1091
+            </Button>
+
+            <Button
+              onClick={() => window.open('tel:112')}
+              variant="outline"
+              className="w-full h-16 font-bold text-base gap-2 border-red-300 dark:border-red-700"
+              data-testid="button-emergency-112"
+            >
+              <Phone className="w-5 h-5" />
+              Emergency: 112
+            </Button>
+          </div>
+
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-lg border border-red-200 dark:border-red-800">
+            <h4 className="font-bold text-sm mb-2">What you should know:</h4>
+            <ul className="text-xs space-y-1 text-foreground">
+              <li>✓ All calls are FREE and CONFIDENTIAL</li>
+              <li>✓ You can call 24 hours a day, 7 days a week</li>
+              <li>✓ They won't judge you - they're here to help</li>
+              <li>✓ You can report anonymously if you want</li>
+              <li>✓ It's okay to ask for help</li>
+            </ul>
+          </div>
+
+          <p className="text-xs text-muted-foreground text-center italic">
+            💙 Your safety and well-being matter. You deserve to be safe and happy.
+          </p>
         </CardContent>
       </Card>
     </div>
