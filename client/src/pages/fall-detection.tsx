@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AlertCircle, Activity, TrendingUp, Power } from "lucide-react";
 import { sosAPI, emergencyAPI } from "@/lib/api";
 import { playSOSSiren, stopSOSSiren } from "@/lib/siren";
+import { enableFlashlight, disableFlashlight } from "@/lib/flashlight";
 import { getCurrentLocation, getBatteryLevel } from "@/lib/geolocation";
 
 export default function FallDetectionPage() {
@@ -89,8 +90,9 @@ export default function FallDetectionPage() {
       
       setActiveAlert(alert);
       
-      // PLAY LOUD SOS SIREN
+      // PLAY LOUD SOS SIREN AND TURN ON FLASHLIGHT
       playSOSSiren();
+      enableFlashlight();
 
       // Notify guardians and emergency services
       const emergencyNumbers = ["100", "108", "112", "1091"];
@@ -101,13 +103,13 @@ export default function FallDetectionPage() {
         ]);
         toast({
           title: "⚠️ FALL DETECTED!",
-          description: "SOS ACTIVATED! SMS sent to guardians & emergency services. LOUD SIREN PLAYING!",
+          description: "SOS ACTIVATED! Flashlight ON. SMS sent to guardians & emergency services. LOUD SIREN PLAYING!",
           variant: "destructive",
         });
       } catch (callError) {
         toast({
           title: "⚠️ FALL DETECTED!",
-          description: "SOS ACTIVATED! Emergency alert sent to guardians. LOUD SIREN PLAYING!",
+          description: "SOS ACTIVATED! Flashlight ON. Emergency alert sent to guardians. LOUD SIREN PLAYING!",
           variant: "destructive",
         });
       }
@@ -124,6 +126,7 @@ export default function FallDetectionPage() {
     try {
       if (activeAlert) {
         stopSOSSiren();
+        disableFlashlight();
         await sosAPI.update(activeAlert.id, { status: "resolved", resolvedAt: new Date() });
         setActiveAlert(null);
       }
