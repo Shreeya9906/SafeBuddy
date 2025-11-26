@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { sosAPI, guardianAPI, emergencyAPI } from "@/lib/api";
+import { sosAPI, guardianAPI, emergencyAPI, childrenAPI } from "@/lib/api";
 import { getCurrentLocation, getBatteryLevel } from "@/lib/geolocation";
 import { useToast } from "@/hooks/use-toast";
 import { WeatherWidget } from "@/components/weather-widget";
@@ -20,6 +20,9 @@ import {
   Heart,
   Cloud,
   Lightbulb,
+  Plus,
+  User,
+  User2,
 } from "lucide-react";
 import type { SOSAlert, Guardian } from "@shared/schema";
 
@@ -107,6 +110,24 @@ function ChildDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSTo
 }
 
 function AdultDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSToggle, handleFlashlightToggle, isFlashlightOn }: any) {
+  const [children, setChildren] = useState<any[]>([]);
+  const [elders, setElders] = useState<any[]>([]);
+
+  useEffect(() => {
+    loadFamilyMembers();
+  }, []);
+
+  const loadFamilyMembers = async () => {
+    try {
+      const childrenData = await childrenAPI.getAll();
+      setChildren(childrenData);
+      const eldersData = await childrenAPI.getElders();
+      setElders(eldersData);
+    } catch (error) {
+      console.error("Error loading family members:", error);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="mb-8">
@@ -173,6 +194,86 @@ function AdultDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSTo
             <Badge variant={isSOSActive ? "destructive" : "secondary"}>
               {isSOSActive ? 'SOS Active' : 'Safe'}
             </Badge>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <Card className="border-blue-200 dark:border-blue-800">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <User className="w-4 h-4 text-blue-600" />
+              My Children
+            </CardTitle>
+            <CardDescription>Monitor & manage child accounts</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {children.length > 0 ? (
+              <div className="space-y-2">
+                {children.map((child) => (
+                  <Button
+                    key={child.id}
+                    variant="outline"
+                    className="w-full justify-start text-left"
+                    data-testid={`button-child-${child.id}`}
+                  >
+                    <User className="mr-2 w-4 h-4" />
+                    <div className="flex flex-col gap-0">
+                      <span className="font-medium">{child.name}</span>
+                      <span className="text-xs text-muted-foreground">Child Mode - Age {child.age}</span>
+                    </div>
+                  </Button>
+                ))}
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                data-testid="button-add-child"
+              >
+                <Plus className="w-4 h-4" />
+                Link Child Account
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-purple-200 dark:border-purple-800">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <User2 className="w-4 h-4 text-purple-600" />
+              My Elders
+            </CardTitle>
+            <CardDescription>Monitor & manage elder accounts</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {elders.length > 0 ? (
+              <div className="space-y-2">
+                {elders.map((elder) => (
+                  <Button
+                    key={elder.id}
+                    variant="outline"
+                    className="w-full justify-start text-left"
+                    data-testid={`button-elder-${elder.id}`}
+                  >
+                    <User2 className="mr-2 w-4 h-4" />
+                    <div className="flex flex-col gap-0">
+                      <span className="font-medium">{elder.name}</span>
+                      <span className="text-xs text-muted-foreground">Elder Mode - Age {elder.age}</span>
+                    </div>
+                  </Button>
+                ))}
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                data-testid="button-add-elder"
+              >
+                <Plus className="w-4 h-4" />
+                Link Elder Account
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>

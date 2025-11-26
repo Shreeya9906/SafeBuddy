@@ -96,6 +96,7 @@ export const mybuddyAPI = {
 
 export const childrenAPI = {
   getAll: (): Promise<User[]> => fetchAPI("/children"),
+  getElders: (): Promise<User[]> => fetchAPI("/elders"),
 };
 
 export const emergencyAPI = {

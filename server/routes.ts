@@ -467,6 +467,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/elders", requireAuth, async (req, res, next) => {
+    try {
+      const elders = await db
+        .select()
+        .from(users)
+        .where(eq(users.profileMode, "elder"))
+        .limit(10);
+      res.json(elders);
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.post("/api/sos/:id/notify-guardians", requireAuth, async (req, res, next) => {
     try {
       const sosAlert = await storage.getSOSById(req.params.id);

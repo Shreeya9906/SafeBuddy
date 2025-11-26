@@ -113,7 +113,6 @@ function InnerRouter() {
           </AppLayout>
         </ProtectedRoute>
       </Route>
-      </Route>
 
       <Route path="/settings">
         <ProtectedRoute>
