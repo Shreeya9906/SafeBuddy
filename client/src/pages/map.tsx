@@ -152,8 +152,8 @@ export default function MapPage() {
   }
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-4 bg-card border-b space-y-3">
+    <div className="h-screen flex flex-col">
+      <div className="p-4 bg-card border-b space-y-3 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold">Live Map</h2>

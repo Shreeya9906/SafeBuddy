@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { FakeCallModal } from "@/components/fake-call-modal";
 import { getCurrentLocation } from "@/lib/geolocation";
 import { useToast } from "@/hooks/use-toast";
 import { Shield, Phone, Share2, MapPin, AlertTriangle } from "lucide-react";
@@ -14,6 +16,7 @@ const helplines = [
 
 export default function WomenSafetyPage() {
   const { toast } = useToast();
+  const [isFakeCallActive, setIsFakeCallActive] = useState(false);
 
   const handleShareLocation = async () => {
     try {
@@ -42,14 +45,7 @@ export default function WomenSafetyPage() {
   };
 
   const handleFakeCall = () => {
-    toast({
-      title: "Fake Call Initiated",
-      description: "Pretending to receive an important call...",
-    });
-    
-    if ('vibrate' in navigator) {
-      navigator.vibrate([200, 100, 200, 100, 200]);
-    }
+    setIsFakeCallActive(true);
   };
 
   return (
@@ -99,6 +95,8 @@ export default function WomenSafetyPage() {
           </CardContent>
         </Card>
       </div>
+
+      <FakeCallModal isOpen={isFakeCallActive} onClose={() => setIsFakeCallActive(false)} />
 
       <Card>
         <CardHeader>
