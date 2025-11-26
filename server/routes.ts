@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import passport from "passport";
 import { setupAuth, hashPassword } from "./auth";
 import { storage } from "./storage";
+import { getMedicalAdvice } from "./medical-advisor";
 import { insertUserSchema, insertGuardianSchema, insertSOSAlertSchema, insertSOSLocationSchema, insertHealthVitalSchema, insertPoliceComplaintSchema, insertMyBuddyLogSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -424,23 +425,30 @@ function generateMyBuddyResponse(message: string, context?: string): {
     keywords = medicalKeywords.filter(k => lowerMessage.includes(k));
     action = "suggest_medical_help";
     
-    // Provide specific medical advice based on symptoms
-    let medicalAdvice = "I'm not a doctor, but I'm concerned about what you're experiencing. ";
+    // Check for specific medical advice from knowledge base
+    const medicalInfo = getMedicalAdvice(message);
     
-    if (lowerMessage.includes("fever")) {
-      medicalAdvice += "For fever, rest well and stay hydrated. Monitor your temperature. If it exceeds 103°F (39.4°C), please consult a doctor immediately.";
-    } else if (lowerMessage.includes("headache")) {
-      medicalAdvice += "Try resting in a quiet, dark room. Drink plenty of water and avoid screens. If it persists or worsens, please see a healthcare provider.";
-    } else if (lowerMessage.includes("breathing") || lowerMessage.includes("chest")) {
-      medicalAdvice += "This is serious. Please get medical attention immediately. Sit upright, take slow breaths, and call emergency services (112) if symptoms worsen.";
-    } else if (lowerMessage.includes("dizzy")) {
-      medicalAdvice += "Sit or lie down immediately to prevent falls. Avoid sudden movements. Drink water slowly. If it continues, please see a doctor.";
+    if (medicalInfo) {
+      response = medicalInfo.advice;
     } else {
-      medicalAdvice += "It's important to speak with a healthcare professional about your symptoms.";
+      let medicalAdvice = "I'm not a doctor, but I'm concerned about what you're experiencing. ";
+      
+      if (lowerMessage.includes("fever")) {
+        medicalAdvice += "For fever, rest well and stay hydrated. Monitor your temperature. If it exceeds 103°F (39.4°C), please consult a doctor immediately.";
+      } else if (lowerMessage.includes("headache")) {
+        medicalAdvice += "Try resting in a quiet, dark room. Drink plenty of water and avoid screens. If it persists or worsens, please see a healthcare provider.";
+      } else if (lowerMessage.includes("breathing") || lowerMessage.includes("chest")) {
+        medicalAdvice += "This is serious. Please get medical attention immediately. Sit upright, take slow breaths, and call emergency services (112) if symptoms worsen.";
+      } else if (lowerMessage.includes("dizzy")) {
+        medicalAdvice += "Sit or lie down immediately to prevent falls. Avoid sudden movements. Drink water slowly. If it continues, please see a doctor.";
+      } else {
+        medicalAdvice += "It's important to speak with a healthcare professional about your symptoms.";
+      }
+      
+      medicalAdvice += " Would you like me to help you contact your guardian or call the medical helpline (108)?";
+      response = medicalAdvice;
     }
     
-    medicalAdvice += " Would you like me to help you contact your guardian or call the medical helpline (108)?";
-    response = medicalAdvice;
     suggestions = ["Contact Guardian", "Call Medical Helpline (108)", "Record Symptoms", "I feel better"];
   } else if (isEmotional) {
     sentiment = "supportive";
