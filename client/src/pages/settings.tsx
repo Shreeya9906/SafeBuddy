@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { userAPI, guardianAPI } from "@/lib/api";
 import { INDIAN_LANGUAGES } from "@/lib/languages";
+import { applyLanguageStyles, LANGUAGE_STYLES } from "@/lib/language-styles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -69,6 +70,7 @@ export default function SettingsPage() {
     setIsLoading(true);
     try {
       await userAPI.updateProfile(settings);
+      applyLanguageStyles(settings.language, settings.backgroundColor);
       await refreshUser();
       toast({
         title: "Settings Saved",
@@ -83,6 +85,16 @@ export default function SettingsPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleLanguageChange = (newLanguage: string) => {
+    setSettings({ ...settings, language: newLanguage });
+    applyLanguageStyles(newLanguage, settings.backgroundColor);
+  };
+
+  const handleBackgroundColorChange = (newColor: string) => {
+    setSettings({ ...settings, backgroundColor: newColor });
+    applyLanguageStyles(settings.language, newColor);
   };
 
   const handleAddGuardian = async () => {

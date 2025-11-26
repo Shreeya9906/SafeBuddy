@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import type { User } from "@shared/schema";
 import { authAPI } from "./api";
+import { applyLanguageStyles } from "./language-styles";
 
 interface AuthContextType {
   user: User | null;
@@ -20,6 +21,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const { user } = await authAPI.getMe();
       setUser(user);
+      if (user?.language) {
+        applyLanguageStyles(user.language, user.backgroundColor);
+      }
     } catch (error) {
       setUser(null);
     } finally {
@@ -30,6 +34,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     refreshUser();
   }, []);
+
+  useEffect(() => {
+    if (user?.language) {
+      applyLanguageStyles(user.language, user.backgroundColor);
+    }
+  }, [user?.language, user?.backgroundColor]);
 
   const login = async (email: string, password: string) => {
     const { user } = await authAPI.login(email, password);
