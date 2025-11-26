@@ -9,6 +9,7 @@ import { getCurrentLocation, getBatteryLevel } from "@/lib/geolocation";
 import { useToast } from "@/hooks/use-toast";
 import { WeatherWidget } from "@/components/weather-widget";
 import { playSOSSiren, stopSOSSiren, cleanupAudioContext } from "@/lib/siren";
+import { enableFlashlight, disableFlashlight } from "@/lib/flashlight";
 import {
   Shield,
   MapPin,
@@ -18,6 +19,7 @@ import {
   Phone,
   Heart,
   Cloud,
+  Lightbulb,
 } from "lucide-react";
 import type { SOSAlert, Guardian } from "@shared/schema";
 
@@ -28,6 +30,7 @@ export default function DashboardPage() {
   const [activeAlert, setActiveAlert] = useState<SOSAlert | null>(null);
   const [guardians, setGuardians] = useState<Guardian[]>([]);
   const [isSOSActive, setIsSOSActive] = useState(false);
+  const [isFlashlightOn, setIsFlashlightOn] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
@@ -101,6 +104,32 @@ export default function DashboardPage() {
     }
   };
 
+  const handleFlashlightToggle = async () => {
+    try {
+      if (isFlashlightOn) {
+        await disableFlashlight();
+        setIsFlashlightOn(false);
+        toast({
+          title: "Flashlight Off",
+          description: "Flashlight has been disabled.",
+        });
+      } else {
+        await enableFlashlight();
+        setIsFlashlightOn(true);
+        toast({
+          title: "Flashlight On",
+          description: "Flashlight is now active.",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const getModeColor = (mode: string) => {
     switch (mode) {
       case "child":
@@ -168,6 +197,20 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">Clear</div>
             <p className="text-xs text-muted-foreground">No warnings</p>
+          </CardContent>
+        </Card>
+
+        <Card 
+          className={`hover:shadow-lg transition-shadow cursor-pointer ${isFlashlightOn ? "bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200" : ""}`}
+          onClick={handleFlashlightToggle}
+        >
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Flashlight</CardTitle>
+            <Lightbulb className={`h-4 w-4 ${isFlashlightOn ? "text-yellow-500" : "text-muted-foreground"}`} />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{isFlashlightOn ? "ON" : "OFF"}</div>
+            <p className="text-xs text-muted-foreground">Tap to toggle</p>
           </CardContent>
         </Card>
       </div>
