@@ -30,127 +30,146 @@ import type { SOSAlert, Guardian } from "@shared/schema";
 
 function ChildDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSToggle, handleFlashlightToggle, isFlashlightOn }: any) {
   return (
-    <div className="space-y-3 p-4 bg-gradient-to-br from-purple-200/40 via-pink-200/40 to-blue-200/40 dark:from-purple-950/40 dark:via-pink-950/40 dark:to-blue-950/40 min-h-screen overflow-hidden">
-      {/* Floating decorative emojis */}
-      <div className="absolute top-4 left-4 text-4xl animate-float" style={{animationDelay: '0s'}}>🌟</div>
-      <div className="absolute top-20 right-6 text-3xl animate-pulse">💫</div>
-      <div className="absolute bottom-32 left-8 text-3xl animate-bounce" style={{animationDelay: '0.5s'}}>🎈</div>
+    <div className="space-y-4 p-4 bg-gradient-to-br from-rainbow-1 via-rainbow-2 to-rainbow-3 min-h-screen overflow-hidden relative">
+      {/* Animated Rainbow Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-300/30 via-pink-300/30 to-blue-300/30 dark:from-purple-900/30 dark:via-pink-900/30 dark:to-blue-900/30"></div>
+      
+      {/* Large Floating decorative emojis - BIGGER! */}
+      <div className="absolute top-0 left-4 text-9xl animate-float" style={{animationDelay: '0s'}}>🌟</div>
+      <div className="absolute top-40 right-4 text-8xl animate-pulse">💫</div>
+      <div className="absolute bottom-40 left-12 text-8xl animate-wiggle" style={{animationDelay: '0.5s'}}>🎈</div>
+      <div className="absolute bottom-20 right-8 text-7xl animate-bounce" style={{animationDelay: '1s'}}>🎉</div>
+      <div className="absolute top-1/3 left-1/4 text-6xl animate-float" style={{animationDelay: '2s'}}>🌈</div>
 
-      {/* Header Section */}
-      <div className="text-center mb-3 relative z-10">
-        <div className="inline-block">
-          <div className="text-7xl mb-2 animate-bounce inline-block">👋</div>
-          <div className="text-6xl animate-pulse inline-block ml-2">✨</div>
+      {/* Rainbow Stars Line */}
+      <div className="flex justify-center gap-4 mb-2 relative z-10">
+        <span className="text-4xl animate-bounce" style={{animationDelay: '0s'}}>⭐</span>
+        <span className="text-4xl animate-bounce" style={{animationDelay: '0.2s'}}>🌟</span>
+        <span className="text-4xl animate-bounce" style={{animationDelay: '0.4s'}}>✨</span>
+        <span className="text-4xl animate-bounce" style={{animationDelay: '0.6s'}}>🌟</span>
+        <span className="text-4xl animate-bounce" style={{animationDelay: '0.8s'}}>⭐</span>
+      </div>
+
+      {/* Header Section - MASSIVE EMOJIS */}
+      <div className="text-center mb-4 relative z-20 bg-gradient-to-r from-red-300/30 via-yellow-300/30 to-purple-300/30 rounded-3xl py-6 backdrop-blur-sm border-4 border-white shadow-2xl">
+        <div className="inline-flex items-center justify-center gap-4 mb-3">
+          <div className="text-9xl animate-bounce hover:scale-125 transition">👋</div>
+          <div className="text-8xl animate-pulse">✨</div>
+          <div className="text-9xl animate-bounce" style={{animationDelay: '0.3s'}}>👋</div>
         </div>
-        <h1 className="text-6xl font-black bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 bg-clip-text text-transparent mb-2 drop-shadow-lg">
+        <h1 className="text-8xl font-black bg-gradient-to-r from-purple-600 via-pink-600 via-red-600 to-yellow-600 bg-clip-text text-transparent mb-2 drop-shadow-lg">
           Hi {user?.name}!
         </h1>
-        <div className="flex items-center justify-center gap-2">
-          <span className="text-2xl">🛡️</span>
-          <p className="text-2xl font-black text-transparent bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text">You Are Safe!</p>
-          <span className="text-2xl">🛡️</span>
+        <div className="flex items-center justify-center gap-3 mb-3">
+          <span className="text-5xl animate-bounce">🛡️</span>
+          <p className="text-4xl font-black text-transparent bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 bg-clip-text">You Are SUPER Safe!</p>
+          <span className="text-5xl animate-bounce" style={{animationDelay: '0.3s'}}>🛡️</span>
         </div>
-        <p className="text-base font-bold text-purple-700 dark:text-purple-300 mt-1">💫 Help is ONE tap away! 💫</p>
+        <p className="text-2xl font-black text-yellow-600 dark:text-yellow-400 drop-shadow-md">🎯 Help is ONE QUICK TAP! 🎯</p>
       </div>
 
       {/* Emergency Alert - Animated */}
       {isSOSActive && (
-        <Card className="border-4 border-red-500 bg-gradient-to-r from-red-400 via-orange-400 to-red-400 shadow-2xl relative overflow-hidden">
-          <div className="absolute inset-0 animate-pulse bg-red-300 opacity-30"></div>
-          <CardContent className="p-4 text-center relative z-10">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <span className="text-5xl animate-bounce">🚨</span>
-              <span className="text-white font-black text-3xl drop-shadow-lg">SIREN IS PLAYING!</span>
-              <span className="text-5xl animate-bounce" style={{animationDelay: '0.3s'}}>🚨</span>
+        <Card className="border-6 border-red-600 bg-gradient-to-r from-red-500 via-orange-500 to-red-500 shadow-2xl relative overflow-hidden z-20">
+          <div className="absolute inset-0 animate-pulse bg-red-300 opacity-40"></div>
+          <CardContent className="p-6 text-center relative z-10">
+            <div className="flex items-center justify-center gap-3 mb-3">
+              <span className="text-8xl animate-bounce">🚨</span>
+              <span className="text-white font-black text-5xl drop-shadow-lg">SOS ACTIVE!</span>
+              <span className="text-8xl animate-bounce" style={{animationDelay: '0.3s'}}>🚨</span>
             </div>
-            <p className="text-white font-black text-lg drop-shadow-md">✅ Your guardians know you need help!</p>
-            <p className="text-white font-bold text-sm mt-2">🚗 Help is coming now! 🏥</p>
+            <p className="text-white font-black text-3xl drop-shadow-md">✅ Guardians Alerted!</p>
+            <p className="text-white font-black text-2xl mt-3">🚗 HELP COMING! 🏥</p>
           </CardContent>
         </Card>
       )}
       
-      {/* Main Action Buttons */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* Main Action Buttons - MASSIVE! */}
+      <div className="grid grid-cols-2 gap-4 z-20">
         <Button
           onClick={handleSOSToggle}
-          className={`h-56 rounded-3xl text-3xl font-black flex flex-col items-center justify-center gap-2 shadow-2xl transform transition hover:scale-110 active:scale-95 relative overflow-hidden group ${
+          className={`h-64 rounded-4xl text-4xl font-black flex flex-col items-center justify-center gap-3 shadow-2xl transform transition hover:scale-110 active:scale-95 relative overflow-hidden group border-4 ${
             isSOSActive 
-              ? 'bg-gradient-to-br from-red-600 to-red-700 hover:from-red-700 hover:to-red-800' 
-              : 'bg-gradient-to-br from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600'
+              ? 'bg-gradient-to-br from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 border-red-800' 
+              : 'bg-gradient-to-br from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 border-red-600'
           }`}
           data-testid="button-sos-emergency"
         >
           <div className="absolute inset-0 opacity-0 group-hover:opacity-20 bg-white transition"></div>
-          <span className="text-7xl drop-shadow-lg">{isSOSActive ? '🛑' : '🆘'}</span>
-          <span className="drop-shadow-md">{isSOSActive ? 'STOP\nSOS' : 'CALL\nSOS'}</span>
-          <span className="text-sm font-bold drop-shadow-md">{isSOSActive ? '⏹️' : '📞'}</span>
+          <span className="text-9xl drop-shadow-lg">{isSOSActive ? '🛑' : '🆘'}</span>
+          <span className="drop-shadow-md text-3xl">{isSOSActive ? 'STOP\nALARM' : 'PRESS\nSOS'}</span>
+          <span className="text-2xl font-bold drop-shadow-md">{isSOSActive ? '⏹️' : '📞'}</span>
         </Button>
         
         <Button
           onClick={handleFlashlightToggle}
-          className={`h-56 rounded-3xl text-3xl font-black flex flex-col items-center justify-center gap-2 shadow-2xl transform transition hover:scale-110 active:scale-95 relative overflow-hidden group ${
+          className={`h-64 rounded-4xl text-4xl font-black flex flex-col items-center justify-center gap-3 shadow-2xl transform transition hover:scale-110 active:scale-95 relative overflow-hidden group border-4 ${
             isFlashlightOn 
-              ? 'bg-gradient-to-br from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600' 
-              : 'bg-gradient-to-br from-yellow-300 to-yellow-400 hover:from-yellow-400 hover:to-yellow-500'
+              ? 'bg-gradient-to-br from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 border-yellow-600' 
+              : 'bg-gradient-to-br from-yellow-300 to-yellow-400 hover:from-yellow-400 hover:to-yellow-500 border-yellow-500'
           }`}
           data-testid="button-flashlight-toggle"
         >
           <div className="absolute inset-0 opacity-0 group-hover:opacity-20 bg-white transition"></div>
-          <span className="text-7xl drop-shadow-lg">{isFlashlightOn ? '💡' : '🔦'}</span>
-          <span className="drop-shadow-md">Light</span>
-          <span className="text-sm font-bold drop-shadow-md">{isFlashlightOn ? '✨' : '🌙'}</span>
+          <span className="text-9xl drop-shadow-lg">{isFlashlightOn ? '💡' : '🔦'}</span>
+          <span className="drop-shadow-md text-3xl">{isFlashlightOn ? 'LIGHT\nON' : 'LIGHT\nOFF'}</span>
+          <span className="text-2xl font-bold drop-shadow-md">{isFlashlightOn ? '✨' : '🌙'}</span>
         </Button>
       </div>
 
       {/* Success Status when SOS is active */}
       {isSOSActive && (
-        <Card className="border-4 border-green-500 bg-gradient-to-r from-green-300 to-emerald-300 dark:from-green-900/60 dark:to-emerald-900/60 shadow-xl">
-          <CardContent className="p-4 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 flex-1">
-              <span className="text-5xl animate-bounce">✅</span>
+        <Card className="border-6 border-green-600 bg-gradient-to-r from-green-400 to-emerald-400 dark:from-green-900/80 dark:to-emerald-900/80 shadow-2xl z-20 relative">
+          <CardContent className="p-6 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4 flex-1">
+              <span className="text-7xl animate-bounce">✅</span>
               <div>
-                <p className="text-green-900 dark:text-green-100 font-black text-2xl drop-shadow-md">HELP IS COMING!</p>
-                <p className="text-green-800 dark:text-green-200 font-bold text-sm">🚨 Siren Playing • 💡 Light On • 📍 Location Sent</p>
+                <p className="text-green-900 dark:text-green-100 font-black text-3xl drop-shadow-md">HELP IS COMING!</p>
+                <p className="text-green-800 dark:text-green-200 font-bold text-lg mt-1">🔔 LOUD ALARM • 💡 LIGHT ON • 📍 LOCATION SENT</p>
               </div>
             </div>
             <Button
               onClick={handleSOSToggle}
-              className="bg-green-700 hover:bg-green-800 font-black text-white shadow-lg"
-              size="sm"
+              className="bg-green-700 hover:bg-green-800 font-black text-white shadow-lg text-lg px-6 py-4"
+              size="lg"
             >
-              Stop
+              ⏹️ STOP
             </Button>
           </CardContent>
         </Card>
       )}
 
-      {/* Guardians Section */}
-      <Card className="border-4 border-blue-400 bg-gradient-to-br from-blue-200/60 to-cyan-200/60 dark:from-blue-900/50 dark:to-cyan-900/50 shadow-xl relative overflow-hidden">
-        <div className="absolute -top-10 -right-10 text-8xl opacity-10 animate-pulse">👥</div>
-        <CardHeader className="pb-3 relative z-10">
-          <CardTitle className="text-3xl font-black flex items-center gap-2">
-            <span className="text-4xl animate-bounce">👥</span>
+      {/* Guardians Section - SUPER COLORFUL */}
+      <Card className="border-6 border-blue-500 bg-gradient-to-br from-blue-300/70 to-cyan-300/70 dark:from-blue-900/70 dark:to-cyan-900/70 shadow-2xl relative overflow-hidden z-10">
+        <div className="absolute -top-10 -right-10 text-9xl opacity-15 animate-spin" style={{animationDuration: '20s'}}>👥</div>
+        <CardHeader className="pb-4 relative z-10">
+          <CardTitle className="text-4xl font-black flex items-center gap-3">
+            <span className="text-6xl animate-bounce">👥</span>
             My Guardians
           </CardTitle>
-          <CardDescription className="text-lg font-bold text-blue-700 dark:text-blue-300">💙 People who love & protect you!</CardDescription>
+          <CardDescription className="text-2xl font-black text-blue-700 dark:text-blue-300">💙💙💙 People who LOVE you!</CardDescription>
         </CardHeader>
         <CardContent className="relative z-10">
           {guardians.length > 0 ? (
-            <div className="space-y-3">
-              {guardians.map((g: Guardian | any) => (
-                <div key={g.id} className="p-4 bg-gradient-to-r from-blue-100 to-cyan-100 dark:from-blue-800/60 dark:to-cyan-800/60 rounded-3xl border-3 border-blue-400 shadow-lg transform hover:scale-110 transition active:scale-95">
-                  <p className="font-black text-xl text-blue-900 dark:text-blue-100">💙 {g.name}</p>
-                  <p className="text-base font-bold text-blue-700 dark:text-blue-300">📱 {g.phone}</p>
-                  <p className="text-xs font-bold text-blue-600 dark:text-blue-400 mt-2">✅ Ready to help!</p>
+            <div className="space-y-4">
+              {guardians.map((g: Guardian | any, idx: number) => (
+                <div key={g.id} className={`p-5 bg-gradient-to-r from-blue-100 to-cyan-100 dark:from-blue-800/80 dark:to-cyan-800/80 rounded-3xl border-4 border-blue-500 shadow-lg transform hover:scale-110 transition active:scale-95 ${
+                  idx % 3 === 0 ? 'from-pink-100 to-purple-100 dark:from-pink-800/80 dark:to-purple-800/80 border-pink-500' :
+                  idx % 3 === 1 ? 'from-yellow-100 to-orange-100 dark:from-yellow-800/80 dark:to-orange-800/80 border-yellow-500' :
+                  ''
+                }`}>
+                  <p className="font-black text-3xl text-blue-900 dark:text-blue-100">💙 {g.name}</p>
+                  <p className="text-xl font-bold text-blue-700 dark:text-blue-300 mt-2">📱 {g.phone}</p>
+                  <p className="text-lg font-black text-blue-600 dark:text-blue-400 mt-2">✨ READY TO HELP! ✨</p>
                 </div>
               ))}
             </div>
           ) : (
             <div className="text-center py-8">
-              <div className="text-6xl mb-3">🤔</div>
-              <p className="text-lg font-black text-blue-900 dark:text-blue-100">Ask an adult to add</p>
-              <p className="text-lg font-black text-blue-900 dark:text-blue-100">your guardians!</p>
-              <div className="text-4xl mt-4">👉👈</div>
+              <div className="text-8xl mb-4 animate-bounce">🤔</div>
+              <p className="text-3xl font-black text-blue-900 dark:text-blue-100">Ask an adult to add</p>
+              <p className="text-3xl font-black text-blue-900 dark:text-blue-100">your guardians!</p>
+              <div className="text-6xl mt-4 animate-wiggle">👉👈</div>
             </div>
           )}
         </CardContent>
@@ -218,10 +237,18 @@ function ChildDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSTo
       <style>{`
         @keyframes float {
           0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-20px) rotate(5deg); }
+          50% { transform: translateY(-25px) rotate(8deg); }
         }
         .animate-float {
-          animation: float 3s ease-in-out infinite;
+          animation: float 4s ease-in-out infinite;
+        }
+        @keyframes wiggle {
+          0%, 100% { transform: rotate(0deg); }
+          25% { transform: rotate(-5deg); }
+          75% { transform: rotate(5deg); }
+        }
+        .animate-wiggle {
+          animation: wiggle 0.5s ease-in-out infinite;
         }
       `}</style>
     </div>
