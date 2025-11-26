@@ -573,6 +573,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Set location for current user (for testing tracking)
+  app.post("/api/track/set-location", requireAuth, async (req, res, next) => {
+    try {
+      const { latitude, longitude, address } = req.body;
+      
+      if (!latitude || !longitude) {
+        return res.status(400).json({ message: "Latitude and longitude required" });
+      }
+
+      // Create a location record in sosAlerts table so tracking can find it
+      const sosAlert = await storage.createSOSAlert({
+        userId: req.user!.id,
+        triggerMethod: "manual_location_set",
+        latitude: parseFloat(latitude),
+        longitude: parseFloat(longitude),
+        address: address || "Manual Location",
+        batteryLevel: 100,
+      });
+
+      res.json({ 
+        message: "Location saved successfully", 
+        location: {
+          latitude: sosAlert.latitude,
+          longitude: sosAlert.longitude,
+          address: sosAlert.address
+        }
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   // Track nearby people by phone number
   app.get("/api/track/search", requireAuth, async (req, res, next) => {
     try {
