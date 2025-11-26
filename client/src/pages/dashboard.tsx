@@ -23,6 +23,7 @@ import {
   Plus,
   User,
   User2,
+  Activity as ActivityIcon,
 } from "lucide-react";
 import type { SOSAlert, Guardian } from "@shared/schema";
 
@@ -198,7 +199,7 @@ function AdultDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSTo
         </Card>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         <Card className="border-blue-200 dark:border-blue-800">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
@@ -214,7 +215,7 @@ function AdultDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSTo
                   <Button
                     key={child.id}
                     variant="outline"
-                    className="w-full justify-start text-left"
+                    className="w-full justify-start text-left h-16"
                     data-testid={`button-child-${child.id}`}
                   >
                     <User className="mr-2 w-4 h-4" />
@@ -228,7 +229,7 @@ function AdultDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSTo
             ) : (
               <Button
                 variant="outline"
-                className="w-full gap-2"
+                className="w-full gap-2 h-16"
                 data-testid="button-add-child"
               >
                 <Plus className="w-4 h-4" />
@@ -238,28 +239,28 @@ function AdultDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSTo
           </CardContent>
         </Card>
 
-        <Card className="border-purple-200 dark:border-purple-800">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <User2 className="w-4 h-4 text-purple-600" />
+        <Card className="border-purple-200 dark:border-purple-800 border-4">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-2xl flex items-center gap-3">
+              <User2 className="w-6 h-6 text-purple-600" />
               My Elders
             </CardTitle>
-            <CardDescription>Monitor & manage elder accounts</CardDescription>
+            <CardDescription className="text-base">Monitor & manage elder accounts</CardDescription>
           </CardHeader>
           <CardContent>
             {elders.length > 0 ? (
-              <div className="space-y-2">
+              <div className="space-y-4">
                 {elders.map((elder) => (
                   <Button
                     key={elder.id}
                     variant="outline"
-                    className="w-full justify-start text-left"
+                    className="w-full justify-start text-left h-24 text-base"
                     data-testid={`button-elder-${elder.id}`}
                   >
-                    <User2 className="mr-2 w-4 h-4" />
-                    <div className="flex flex-col gap-0">
-                      <span className="font-medium">{elder.name}</span>
-                      <span className="text-xs text-muted-foreground">Elder Mode - Age {elder.age}</span>
+                    <User2 className="mr-3 w-6 h-6 text-purple-600" />
+                    <div className="flex flex-col gap-1">
+                      <span className="font-bold text-lg">{elder.name}</span>
+                      <span className="text-sm text-muted-foreground">Elder Mode - Age {elder.age}</span>
                     </div>
                   </Button>
                 ))}
@@ -267,16 +268,37 @@ function AdultDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSTo
             ) : (
               <Button
                 variant="outline"
-                className="w-full gap-2"
+                className="w-full gap-3 h-24 text-base font-bold"
                 data-testid="button-add-elder"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-6 h-6" />
                 Link Elder Account
               </Button>
             )}
           </CardContent>
         </Card>
       </div>
+
+      <Card className="border-orange-200 dark:border-orange-800 border-2">
+        <CardHeader>
+          <CardTitle className="text-xl flex items-center gap-2">
+            <Activity className="w-5 h-5 text-orange-600" />
+            Fall Detection System
+          </CardTitle>
+          <CardDescription>Automatic monitoring for elderly & health-at-risk users</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">Continuously monitors device motion sensors to detect sudden falls and automatically alert emergency services.</p>
+          <Button 
+            className="w-full h-12 text-base font-bold gap-2"
+            data-testid="button-enable-fall-detection"
+          >
+            <Activity className="w-5 h-5" />
+            Enable Fall Detection
+          </Button>
+          <p className="text-xs text-muted-foreground text-center">💡 Pro Tip: Keep your phone in your pocket while moving for accurate detection</p>
+        </CardContent>
+      </Card>
     </div>
   );
 }
