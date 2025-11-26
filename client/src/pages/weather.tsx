@@ -3,10 +3,12 @@ import { weatherAPI } from "@/lib/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { AlertTriangle, CloudDrizzle, Wind, Eye, RefreshCw } from "lucide-react";
+import { AlertTriangle, CloudDrizzle, Wind, Eye, RefreshCw, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { WeatherAlert } from "@shared/schema";
+import { indianCities, searchCities } from "@/data/indian-cities";
 
 const weatherIcons: Record<string, React.ReactNode> = {
   "heavy_rain": <CloudDrizzle className="w-8 h-8 text-blue-500" />,
@@ -20,10 +22,24 @@ export default function WeatherPage() {
   const { toast } = useToast();
   const [alerts, setAlerts] = useState<WeatherAlert[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<typeof indianCities>([]);
+  const [selectedCity, setSelectedCity] = useState<typeof indianCities[0] | null>(null);
+  const [showSearchResults, setShowSearchResults] = useState(false);
 
   useEffect(() => {
     loadAlerts();
   }, []);
+
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      setSearchResults(searchCities(searchQuery));
+      setShowSearchResults(true);
+    } else {
+      setSearchResults([]);
+      setShowSearchResults(false);
+    }
+  }, [searchQuery]);
 
   const loadAlerts = async () => {
     setIsLoading(true);
@@ -46,6 +62,16 @@ export default function WeatherPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleCitySelect = (city: typeof indianCities[0]) => {
+    setSelectedCity(city);
+    setSearchQuery(city.name);
+    setShowSearchResults(false);
+    toast({
+      title: "Location Selected",
+      description: `Viewing weather alerts for ${city.name}, ${city.state}`,
+    });
   };
 
   const getSeverityColor = (severity?: string) => {
@@ -73,7 +99,7 @@ export default function WeatherPage() {
             <CloudDrizzle className="w-8 h-8" />
             Weather & Disaster Alerts
           </h2>
-          <p className="text-muted-foreground">Stay safe with real-time weather information</p>
+          <p className="text-muted-foreground">Stay safe with real-time weather information across India</p>
         </div>
         <Button
           onClick={loadAlerts}
@@ -85,6 +111,66 @@ export default function WeatherPage() {
           Refresh
         </Button>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Search className="w-5 h-5" />
+            Search Cities & Districts
+          </CardTitle>
+          <CardDescription>Find weather alerts for any city or district across India</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="relative">
+            <Input
+              placeholder="Search for a city or district..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              data-testid="input-search-city"
+              className="w-full"
+            />
+            {showSearchResults && searchResults.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 border rounded-md bg-background shadow-lg z-10">
+                <div className="max-h-64 overflow-y-auto">
+                  {searchResults.map((city, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleCitySelect(city)}
+                      className="w-full text-left px-4 py-2 hover:bg-muted transition-colors"
+                      data-testid={`button-city-${city.name}`}
+                    >
+                      <div className="font-medium">{city.name}</div>
+                      <div className="text-xs text-muted-foreground">{city.state}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {selectedCity && (
+            <div className="p-3 bg-muted rounded-md">
+              <p className="text-sm"><strong>Selected:</strong> {selectedCity.name}, {selectedCity.state}</p>
+              <p className="text-xs text-muted-foreground mt-1">Coordinates: {selectedCity.lat.toFixed(2)}°N, {selectedCity.lon.toFixed(2)}°E</p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+            {indianCities.slice(0, 12).map((city, index) => (
+              <Button
+                key={index}
+                variant={selectedCity?.name === city.name ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleCitySelect(city)}
+                data-testid={`button-quick-city-${city.name}`}
+                className="text-xs"
+              >
+                {city.name}
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       {alerts.length === 0 ? (
         <Card className="bg-green-50 dark:bg-green-950/20">
