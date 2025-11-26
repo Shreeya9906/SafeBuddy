@@ -94,3 +94,11 @@ export const mybuddyAPI = {
 export const childrenAPI = {
   getAll: (): Promise<User[]> => fetchAPI("/children"),
 };
+
+export const emergencyAPI = {
+  callEmergency: (sosId: string, phoneNumbers: string[]) =>
+    fetchAPI(`/sos/${sosId}/call-emergency`, { 
+      method: "POST", 
+      body: JSON.stringify({ phoneNumbers }) 
+    }),
+};

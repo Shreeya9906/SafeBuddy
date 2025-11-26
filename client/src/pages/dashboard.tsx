@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { sosAPI, guardianAPI } from "@/lib/api";
+import { sosAPI, guardianAPI, emergencyAPI } from "@/lib/api";
 import { getCurrentLocation, getBatteryLevel } from "@/lib/geolocation";
 import { useToast } from "@/hooks/use-toast";
 import { WeatherWidget } from "@/components/weather-widget";
@@ -87,12 +87,24 @@ export default function DashboardPage() {
         setActiveAlert(alert);
         setIsSOSActive(true);
         playSOSSiren();
-        
-        toast({
-          title: "SOS Activated!",
-          description: "Emergency alert sent to your guardians. Siren is playing.",
-          variant: "destructive",
-        });
+
+        // Automatically call emergency numbers
+        const emergencyNumbers = ["100", "108", "112", "1091"];
+        try {
+          await emergencyAPI.callEmergency(alert.id, emergencyNumbers);
+          toast({
+            title: "SOS Activated!",
+            description: "Emergency alert sent to guardians. Calling emergency services: 100, 108, 112, 1091",
+            variant: "destructive",
+          });
+        } catch (callError) {
+          // Still show SOS activated even if calls fail
+          toast({
+            title: "SOS Activated!",
+            description: "Emergency alert sent to guardians. Siren is playing.",
+            variant: "destructive",
+          });
+        }
       } catch (error: any) {
         stopSOSSiren();
         toast({

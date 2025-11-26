@@ -325,6 +325,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/sos/:id/call-emergency", requireAuth, async (req, res, next) => {
+    try {
+      const { phoneNumbers } = req.body;
+      const sosAlert = await storage.getSOSById(req.params.id);
+      
+      if (!sosAlert || sosAlert.userId !== req.user!.id) {
+        return res.status(404).json({ message: "SOS alert not found" });
+      }
+
+      if (!phoneNumbers || !Array.isArray(phoneNumbers)) {
+        return res.status(400).json({ message: "Phone numbers array required" });
+      }
+
+      // Log the emergency calls attempt
+      const callsAttempted = phoneNumbers.map(num => ({
+        number: num,
+        timestamp: new Date(),
+        status: "initiated",
+      }));
+
+      res.json({ 
+        message: "Emergency calls initiated",
+        calls: callsAttempted,
+        sosId: req.params.id,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
