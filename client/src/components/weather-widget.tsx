@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, CloudDrizzle, AlertTriangle, Wind, Droplets, Thermometer } from "lucide-react";
+import { Loader2, CloudDrizzle, AlertTriangle, Wind, Droplets, Thermometer, Smog } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getCurrentLocation } from "@/lib/geolocation";
 
@@ -12,6 +12,7 @@ interface WeatherData {
   windSpeed: number;
   weatherCode: number;
   apparentTemperature: number;
+  aqi?: number; // Air Quality Index
   location: { lat: number; lon: number; name: string };
 }
 
@@ -29,22 +30,38 @@ export function WeatherWidget() {
   const loadWeather = async () => {
     try {
       const location = await getCurrentLocation();
-      const response = await fetch(
+      // Fetch weather data
+      const weatherResponse = await fetch(
         `https://api.open-meteo.com/v1/forecast?latitude=${location.latitude}&longitude=${location.longitude}&current=temperature_2m,relative_humidity_2m,weather_code,apparent_temperature,wind_speed_10m&timezone=auto`
       );
-      const data = await response.json();
+      const weatherData = await weatherResponse.json();
       
-      if (data.current) {
+      // Fetch air quality data
+      let aqi = undefined;
+      try {
+        const aqiResponse = await fetch(
+          `https://api.open-meteo.com/v1/air-quality?latitude=${location.latitude}&longitude=${location.longitude}&current=us_aqi`
+        );
+        const aqiData = await aqiResponse.json();
+        if (aqiData.current) {
+          aqi = Math.round(aqiData.current.us_aqi);
+        }
+      } catch (e) {
+        console.error("AQI fetch error:", e);
+      }
+      
+      if (weatherData.current) {
         setWeather({
-          temperature: data.current.temperature_2m,
-          humidity: data.current.relative_humidity_2m,
-          windSpeed: data.current.wind_speed_10m,
-          weatherCode: data.current.weather_code,
-          apparentTemperature: data.current.apparent_temperature,
+          temperature: weatherData.current.temperature_2m,
+          humidity: weatherData.current.relative_humidity_2m,
+          windSpeed: weatherData.current.wind_speed_10m,
+          weatherCode: weatherData.current.weather_code,
+          apparentTemperature: weatherData.current.apparent_temperature,
+          aqi: aqi,
           location: {
             lat: location.latitude,
             lon: location.longitude,
-            name: data.timezone || "Your Location",
+            name: weatherData.timezone || "Your Location",
           },
         });
       }
@@ -152,6 +169,15 @@ export function WeatherWidget() {
   const heatAlert = getHeatAlertLevel(weather.temperature, weather.humidity);
   const windAlert = getWindAlertLevel(weather.windSpeed);
   const safetyInstructions = getSafetyInstructions(weather.temperature, weather.windSpeed, weather.humidity);
+  
+  const getAQIStatus = (aqi: number): { color: string; label: string } => {
+    if (aqi <= 50) return { color: "bg-green-100 text-green-900 border-green-300", label: "Good" };
+    if (aqi <= 100) return { color: "bg-yellow-100 text-yellow-900 border-yellow-300", label: "Moderate" };
+    if (aqi <= 150) return { color: "bg-orange-100 text-orange-900 border-orange-300", label: "Unhealthy for Sensitive" };
+    if (aqi <= 200) return { color: "bg-red-100 text-red-900 border-red-300", label: "Unhealthy" };
+    if (aqi <= 300) return { color: "bg-purple-100 text-purple-900 border-purple-300", label: "Very Unhealthy" };
+    return { color: "bg-red-950 text-red-50 border-red-900", label: "Hazardous" };
+  };
 
   const getHeatAlertColor = (level: string) => {
     if (level === "Extreme Heat") return "bg-red-500";
@@ -213,6 +239,17 @@ export function WeatherWidget() {
             </div>
             <p className="text-lg font-bold">{getWeatherDescription(weather.weatherCode)}</p>
           </div>
+
+          {weather.aqi !== undefined && (
+            <div className={`p-3 rounded-lg border ${getAQIStatus(weather.aqi).color}`}>
+              <div className="flex items-center gap-2 mb-1">
+                <Smog className="w-4 h-4" />
+                <p className="text-xs font-medium">Air Quality</p>
+              </div>
+              <p className="text-2xl font-bold">{weather.aqi}</p>
+              <p className="text-xs">{getAQIStatus(weather.aqi).label}</p>
+            </div>
+          )}
         </div>
 
         {/* Safety Instructions */}

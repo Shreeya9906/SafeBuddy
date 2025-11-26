@@ -70,6 +70,13 @@ export const TRANSLATIONS: Record<string, Record<string, string>> = {
     condition: "Condition",
     humidity: "Humidity",
     windSpeed: "Wind Speed",
+    airQuality: "Air Quality",
+    airQualityGood: "Good",
+    airQualityModerate: "Moderate",
+    airQualityUnhealthySensitive: "Unhealthy for Sensitive Groups",
+    airQualityUnhealthy: "Unhealthy",
+    airQualityVeryUnhealthy: "Very Unhealthy",
+    airQualityHazardous: "Hazardous",
     
     // Contacts action labels
     phoneCall: "Phone Call",
