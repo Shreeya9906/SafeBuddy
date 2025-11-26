@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { AlertCircle, MapPin, Phone, User, Zap, AlertTriangle } from "lucide-react";
+import { AlertCircle, MapPin, Phone, User, Zap, AlertTriangle, Wind } from "lucide-react";
 import { weatherAPI } from "@/lib/api";
 import L from "leaflet";
 
@@ -17,13 +17,15 @@ export default function TrackPeoplePage() {
   const [isLiveTracking, setIsLiveTracking] = useState(false);
   const [mapCenter, setMapCenter] = useState<[number, number]>([28.7041, 77.1025]); // Default: New Delhi
   const [weatherData, setWeatherData] = useState<any>(null);
+  const [pollutionData, setPollutionData] = useState<any>(null);
   const [cycloneAlert, setCycloneAlert] = useState<any>(null);
+  const [pollutionAlert, setPollutionAlert] = useState<any>(null);
   const { toast } = useToast();
   const liveTrackingInterval = useRef<NodeJS.Timeout | null>(null);
   const trackedPhoneRef = useRef<string>("");
   const weatherInterval = useRef<NodeJS.Timeout | null>(null);
 
-  // Refresh location data and fetch weather
+  // Refresh location data and fetch weather + pollution
   const refreshLocation = async (phone: string) => {
     try {
       const response = await fetch(`/api/track/search?phone=${encodeURIComponent(phone)}`, {
@@ -36,10 +38,28 @@ export default function TrackPeoplePage() {
           setTrackedPeople([person]);
           setMapCenter([person.latitude, person.longitude]);
           
-          // Fetch weather for the location
+          // Fetch weather and pollution for the location
           try {
-            const weather = await weatherAPI.getLiveWeather(person.latitude, person.longitude, person.address || "Location");
+            const [weather, pollution] = await Promise.all([
+              weatherAPI.getLiveWeather(person.latitude, person.longitude, person.address || "Location"),
+              fetch(`/api/pollution?city=${encodeURIComponent(person.address?.split(',')[0] || person.phone)}`, {
+                credentials: "include",
+              }).then(r => r.json()).catch(() => null)
+            ]);
+
             setWeatherData(weather);
+            if (pollution) {
+              setPollutionData(pollution);
+              if (pollution.warning) {
+                setPollutionAlert({
+                  severity: pollution.aqi > 200 ? "critical" : "warning",
+                  message: pollution.warningMessage,
+                  aqi: pollution.aqi
+                });
+              } else {
+                setPollutionAlert(null);
+              }
+            }
             
             // Check for cyclone in weather conditions
             if (weather?.conditions?.includes("cyclone") || weather?.conditions?.includes("storm")) {
@@ -51,7 +71,7 @@ export default function TrackPeoplePage() {
               setCycloneAlert(null);
             }
           } catch (error) {
-            console.error("Weather fetch error:", error);
+            console.error("Weather/Pollution fetch error:", error);
           }
         }
       }
@@ -204,20 +224,37 @@ export default function TrackPeoplePage() {
         </Alert>
       )}
 
+      {/* Pollution Alert */}
+      {pollutionAlert && (
+        <Alert className={`border-2 ${pollutionAlert.severity === "critical" ? "border-red-600 bg-red-50 dark:bg-red-950/50" : "border-orange-500 bg-orange-50 dark:bg-orange-950/50"}`}>
+          <Wind className={`h-6 w-6 ${pollutionAlert.severity === "critical" ? "text-red-600" : "text-orange-600"}`} />
+          <AlertDescription className={`${pollutionAlert.severity === "critical" ? "text-red-700 dark:text-red-300" : "text-orange-700 dark:text-orange-300"} font-bold text-lg ml-2`}>
+            {pollutionAlert.message} (AQI: {pollutionAlert.aqi})
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Map - Always Visible and Large */}
       <Card className="overflow-hidden border-2 border-blue-300">
         <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white pb-3">
-          <CardTitle className="flex items-center gap-2 text-white justify-between">
+          <CardTitle className="flex items-center gap-2 text-white justify-between flex-wrap">
             <div className="flex items-center gap-2">
               <MapPin className="w-6 h-6" />
               Live Map {isLiveTracking && <Badge className="bg-red-600 animate-pulse ml-2">🔴 LIVE</Badge>}
             </div>
-            {weatherData && (
-              <div className="text-2xl">
-                {getWeatherEmoji()}
-                <span className="text-xs ml-1">{weatherData?.temp || "N/A"}°C</span>
-              </div>
-            )}
+            <div className="flex items-center gap-3">
+              {weatherData && (
+                <div className="text-sm">
+                  {getWeatherEmoji()}
+                  <span className="text-xs ml-1">{weatherData?.temp || "N/A"}°C</span>
+                </div>
+              )}
+              {pollutionData && (
+                <Badge className={`${pollutionData.aqi > 200 ? "bg-red-600" : pollutionData.aqi > 150 ? "bg-orange-600" : pollutionData.aqi > 100 ? "bg-yellow-600" : "bg-green-600"}`}>
+                  🌫️ AQI: {pollutionData.aqi}
+                </Badge>
+              )}
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
@@ -290,33 +327,70 @@ export default function TrackPeoplePage() {
         </CardContent>
       </Card>
 
-      {/* Weather Details Card */}
-      {weatherData && (
-        <Card className="border-blue-200">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              {getWeatherEmoji()} Live Weather Conditions
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-muted-foreground">Temperature</p>
-              <p className="text-2xl font-bold">{weatherData.temp}°C</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Conditions</p>
-              <p className="text-lg font-semibold">{weatherData.conditions || "No data"}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Wind Speed</p>
-              <p className="text-lg font-bold">{weatherData.wind || "N/A"} km/h</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Humidity</p>
-              <p className="text-lg font-bold">{weatherData.humidity || "N/A"}%</p>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Weather & Pollution Details Card */}
+      {(weatherData || pollutionData) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {weatherData && (
+            <Card className="border-blue-200">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  {getWeatherEmoji()} Live Weather
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Temperature</p>
+                  <p className="text-2xl font-bold">{weatherData.temp}°C</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Conditions</p>
+                  <p className="text-lg font-semibold">{weatherData.conditions || "No data"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Wind Speed</p>
+                  <p className="text-lg font-bold">{weatherData.wind || "N/A"} km/h</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Humidity</p>
+                  <p className="text-lg font-bold">{weatherData.humidity || "N/A"}%</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {pollutionData && (
+            <Card className={`border-2 ${pollutionData.aqi > 200 ? "border-red-400 bg-red-50 dark:bg-red-950/20" : pollutionData.aqi > 150 ? "border-orange-400 bg-orange-50 dark:bg-orange-950/20" : pollutionData.aqi > 100 ? "border-yellow-400 bg-yellow-50 dark:bg-yellow-950/20" : "border-green-400 bg-green-50 dark:bg-green-950/20"}`}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  🌫️ Air Quality (AQI)
+                  <Badge className={`${pollutionData.aqi > 200 ? "bg-red-600" : pollutionData.aqi > 150 ? "bg-orange-600" : pollutionData.aqi > 100 ? "bg-yellow-600" : "bg-green-600"}`}>
+                    {pollutionData.status}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">AQI Index</p>
+                  <p className={`text-2xl font-bold ${pollutionData.aqi > 200 ? "text-red-600" : pollutionData.aqi > 150 ? "text-orange-600" : pollutionData.aqi > 100 ? "text-yellow-600" : "text-green-600"}`}>
+                    {pollutionData.aqi}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">PM2.5</p>
+                  <p className="text-lg font-bold">{pollutionData.pm25 || "N/A"} µg/m³</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">PM10</p>
+                  <p className="text-lg font-bold">{pollutionData.pm10 || "N/A"} µg/m³</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">NO₂</p>
+                  <p className="text-lg font-bold">{pollutionData.no2 || "N/A"} µg/m³</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       )}
 
       {/* Search Card */}
