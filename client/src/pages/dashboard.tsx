@@ -12,6 +12,7 @@ import { WeatherWidget } from "@/components/weather-widget";
 import { playSOSSiren, stopSOSSiren, cleanupAudioContext } from "@/lib/siren";
 import { enableFlashlight, disableFlashlight } from "@/lib/flashlight";
 import { watchLocation, clearLocationWatch } from "@/lib/geolocation";
+import { activateSOS, deactivateSOS } from "@/lib/sos-handler";
 import {
   Shield,
   MapPin,
@@ -658,99 +659,35 @@ export default function DashboardPage() {
 
   const handleSOSToggle = async () => {
     if (isSOSActive && activeAlert) {
-      try {
-        stopSOSSiren();
-        disableFlashlight();
-        setIsFlashlightOn(false);
-        if (locationWatchIdRef.current !== null) {
-          clearLocationWatch(locationWatchIdRef.current);
-          locationWatchIdRef.current = null;
-        }
-        await sosAPI.update(activeAlert.id, { status: "resolved", resolvedAt: new Date() });
-        setIsSOSActive(false);
-        setActiveAlert(null);
+      const result = await deactivateSOS();
+      setIsSOSActive(false);
+      setActiveAlert(null);
+      setIsFlashlightOn(false);
+      if (locationWatchIdRef.current !== null) {
+        clearLocationWatch(locationWatchIdRef.current);
+        locationWatchIdRef.current = null;
+      }
+      toast({
+        title: result.success ? "SOS Deactivated" : "Error",
+        description: result.message,
+        variant: result.success ? "default" : "destructive",
+      });
+    } else {
+      const result = await activateSOS();
+      if (result.success) {
+        setIsSOSActive(true);
+        setIsFlashlightOn(true);
+        const alert = await sosAPI.getActive();
+        if (alert) setActiveAlert(alert);
         toast({
-          title: "SOS Deactivated",
-          description: "Your emergency alert has been resolved.",
-        });
-      } catch (error: any) {
-        toast({
-          title: "Error",
-          description: error.message,
+          title: "🚨 SOS ACTIVATED!",
+          description: result.message,
           variant: "destructive",
         });
-      }
-    } else {
-      try {
-        let location = { city: "GPS", lat: 0, lon: 0 };
-        
-        // Try browser GPS
-        try {
-          const gpsLocation = await getCurrentLocation();
-          location = { city: "GPS", lat: gpsLocation.latitude, lon: gpsLocation.longitude };
-        } catch (gpsError) {
-          console.log("GPS unavailable, using default location");
-        }
-        
-        const battery = await getBatteryLevel();
-        
-        const alert = await sosAPI.create({
-          triggerMethod: "manual",
-          latitude: location.lat,
-          longitude: location.lon,
-          batteryLevel: battery,
-        });
-        
-        setActiveAlert(alert);
-        setIsSOSActive(true);
-        playSOSSiren();
-        enableFlashlight();
-        setIsFlashlightOn(true);
-
-        // Start CONTINUOUS real-time GPS tracking (updates as you move)
-        try {
-          locationWatchIdRef.current = watchLocation(async (newLocation) => {
-            try {
-              const newBattery = await getBatteryLevel();
-              await sosAPI.update(alert.id, {
-                latitude: newLocation.latitude,
-                longitude: newLocation.longitude,
-                batteryLevel: newBattery,
-              });
-              console.log("📍 Location updated: ", newLocation.latitude, newLocation.longitude);
-            } catch (err) {
-              console.log("Location update in progress...");
-            }
-          });
-        } catch (watchErr) {
-          console.warn("GPS watch not available, using fallback polling");
-        }
-
-        // Notify emergency services AND guardians
-        const emergencyNumbers = ["100", "108", "112", "1091"];
-        try {
-          await Promise.all([
-            emergencyAPI.callEmergency(alert.id, emergencyNumbers),
-            emergencyAPI.notifyGuardians(alert.id),
-          ]);
-          toast({
-            title: "🚨 SOS ACTIVATED!",
-            description: "✅ Siren ON ✅ Flashlight ON ✅ GPS Tracking ACTIVE\n🔔 Push notifications sent to guardians\n📍 Live location being shared",
-            variant: "destructive",
-          });
-        } catch (error) {
-          toast({
-            title: "🚨 SOS ACTIVATED!",
-            description: "✅ Siren ON ✅ Flashlight ON ✅ GPS Tracking ACTIVE\n🔔 Emergency alerts in progress",
-            variant: "destructive",
-          });
-        }
-      } catch (error: any) {
-        stopSOSSiren();
-        disableFlashlight();
+      } else {
         toast({
           title: "SOS Error",
-          description: error.message || "Enable location access in your browser settings",
+          description: result.message,
           variant: "destructive",
         });
       }
