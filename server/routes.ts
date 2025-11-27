@@ -9,7 +9,6 @@ import { eq, desc, and } from "drizzle-orm";
 import { getMedicalAdvice } from "./medical-advisor";
 import { insertUserSchema, insertGuardianSchema, insertSOSAlertSchema, insertSOSLocationSchema, insertHealthVitalSchema, insertPoliceComplaintSchema, insertMyBuddyLogSchema, insertGuardianEmergencyAlertSchema, guardianEmergencyAlerts, guardians as guardiansTable, users as usersTable } from "@shared/schema";
 import { z } from "zod";
-import twilio from "twilio";
 import { getFirebaseMessaging } from "./firebase-config";
 import { deviceTokens } from "@shared/schema";
 
@@ -26,42 +25,65 @@ declare global {
   }
 }
 
-// Send SMS using Twilio Messaging Service
-async function sendSMS(phoneNumber: string, message: string): Promise<void> {
-  if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_MESSAGING_SERVICE_SID) {
-    console.warn("⚠️ Twilio credentials not configured, SMS not sent");
-    return;
+// Send emergency notification via Firebase to all guardians' devices
+async function sendEmergencyNotificationViaFirebase(
+  guardians: any[],
+  title: string,
+  body: string,
+  emergencyData: any
+): Promise<{ sent: number; failed: number; details: any[] }> {
+  const messaging = getFirebaseMessaging();
+  const results = { sent: 0, failed: 0, details: [] as any[] };
+
+  if (!messaging) {
+    console.log("ℹ️ Firebase not available for push notifications");
+    return results;
   }
-  
-  try {
-    // Format phone number to E.164 format (+91XXXXXXXXXX for India)
-    let formattedNumber = phoneNumber.trim();
-    if (!formattedNumber.startsWith('+')) {
-      // If no + prefix, assume India (+91)
-      if (formattedNumber.startsWith('91')) {
-        formattedNumber = '+' + formattedNumber;
-      } else {
-        formattedNumber = '+91' + formattedNumber;
+
+  for (const guardian of guardians) {
+    try {
+      // Get device tokens for this guardian
+      const tokens = await db
+        .select()
+        .from(deviceTokens)
+        .where(and(
+          eq(deviceTokens.userId, guardian.id),
+          eq(deviceTokens.isActive, true)
+        ));
+
+      if (tokens.length === 0) {
+        console.log(`ℹ️ No devices registered for guardian ${guardian.name}`);
+        continue;
       }
+
+      // Send notification to all guardian's devices
+      for (const token of tokens) {
+        try {
+          await messaging.send({
+            token: token.fcmToken,
+            notification: {
+              title,
+              body,
+            },
+            data: emergencyData,
+          });
+
+          results.sent++;
+          results.details.push({ guardian: guardian.name, device: token.deviceName, status: "sent" });
+          console.log(`✅ Push notification sent to ${guardian.name} on ${token.deviceName}`);
+        } catch (err: any) {
+          results.failed++;
+          results.details.push({ guardian: guardian.name, device: token.deviceName, status: "failed", error: err.message });
+          console.error(`❌ Failed to send push to ${guardian.name}:`, err.message);
+        }
+      }
+    } catch (err: any) {
+      console.error(`❌ Error sending to guardian ${guardian.name}:`, err.message);
+      results.failed++;
     }
-    
-    // Initialize Twilio client
-    const twilioClient = twilio(
-      process.env.TWILIO_ACCOUNT_SID,
-      process.env.TWILIO_AUTH_TOKEN
-    );
-    
-    // Use Messaging Service SID for sending SMS (no "from" number needed)
-    const result = await twilioClient.messages.create({
-      body: message,
-      messagingServiceSid: process.env.TWILIO_MESSAGING_SERVICE_SID,
-      to: formattedNumber,
-    });
-    
-    console.log(`✅ SMS sent successfully to ${formattedNumber} (Message SID: ${result.sid})`);
-  } catch (error: any) {
-    console.error("❌ Error sending SMS to " + phoneNumber + ":", error.message || error);
   }
+
+  return results;
 }
 
 
@@ -534,32 +556,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUserById(req.user!.id);
       const guardians = await storage.getGuardiansByUserId(req.user!.id);
 
-      // Send SMS to all guardians
-      const notifications = await Promise.all(guardians.map(async (g) => {
-        const locationUrl = `https://maps.google.com/?q=${sosAlert.latitude},${sosAlert.longitude}`;
-        const smsMessage = `🚨 EMERGENCY! ${user?.name} needs IMMEDIATE help! 🚨\n📍 Location: ${locationUrl}\n🔋 Battery: ${sosAlert.batteryLevel}%\n⏰ Time: ${new Date().toLocaleString()}\n📞 Call: 100/108/112`;
+      const locationUrl = `https://maps.google.com/?q=${sosAlert.latitude},${sosAlert.longitude}`;
 
-        console.log(`📤 Sending SMS to ${g.name} (${g.phone}):`, smsMessage);
-        
-        // Actually send the SMS via Twilio
-        await sendSMS(g.phone, smsMessage);
-
-        return {
-          guardianId: g.id,
-          guardianName: g.name,
-          phone: g.phone,
-          smsMessage: smsMessage,
-          timestamp: new Date(),
-          status: "sent",
-          locationUrl: locationUrl,
-        };
-      }));
+      // Send Firebase push notifications to all guardians
+      const notificationResult = await sendEmergencyNotificationViaFirebase(
+        guardians,
+        "🚨 EMERGENCY SOS ALERT!",
+        `${user?.name} needs IMMEDIATE help!`,
+        {
+          sosId: req.params.id,
+          userName: user?.name || "User",
+          latitude: sosAlert.latitude.toString(),
+          longitude: sosAlert.longitude.toString(),
+          locationUrl,
+          address: sosAlert.address || "Location",
+          battery: sosAlert.batteryLevel.toString(),
+          timestamp: new Date().toISOString(),
+        }
+      );
 
       res.json({ 
-        message: "✅ SMS alerts sent to all guardians",
-        notifications,
+        message: "✅ Emergency notifications sent to guardians via Firebase",
+        notificationsSent: notificationResult.sent,
+        notificationsFailed: notificationResult.failed,
+        details: notificationResult.details,
         sosId: req.params.id,
-        totalGuardiansNotified: notifications.length,
+        totalGuardians: guardians.length,
       });
     } catch (error) {
       next(error);
@@ -885,27 +907,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get all guardians for this user
       const guardians = await storage.getGuardiansByUserId(user.id);
       
-      // Prepare notification message with live location link
+      // Prepare notification with live location link
       const userPhone = user.phone || "unknown";
       const liveTrackingUrl = `${process.env.VITE_API_BASE || 'http://localhost:5000'}/track?phone=${userPhone}`;
       
-      const smsMessage = `🚨 EMERGENCY SOS ALERT 🚨\n${user.name} needs help!\nLocation: ${sosAlert.address || `${sosAlert.latitude}, ${sosAlert.longitude}`}\nLive Tracking: ${liveTrackingUrl}\nTime: ${new Date().toLocaleString()}`;
-      
-      // Send SMS to all guardians
-      const smsSendPromises = guardians.map(guardian => 
-        sendSMS(guardian.phone, smsMessage).catch(err => {
-          console.error(`Failed to send SMS to ${guardian.phone}:`, err);
-        })
+      // Send Firebase push notifications
+      const notificationResult = await sendEmergencyNotificationViaFirebase(
+        guardians,
+        "🚨 EMERGENCY SOS ALERT!",
+        `${user.name} needs immediate help!`,
+        {
+          sosId: sosAlertId,
+          userName: user.name,
+          location: sosAlert.address || `${sosAlert.latitude}, ${sosAlert.longitude}`,
+          liveTrackingUrl,
+          latitude: sosAlert.latitude.toString(),
+          longitude: sosAlert.longitude.toString(),
+          timestamp: new Date().toISOString(),
+        }
       );
-      
-      await Promise.all(smsSendPromises);
       
       // Mark notifications as sent
       await storage.updateSOSAlert(sosAlertId, { notificationsSent: true });
       
       res.json({ 
-        message: "Guardians notified successfully",
+        message: "Guardians notified via Firebase push notifications",
         guardianCount: guardians.length,
+        notificationsSent: notificationResult.sent,
+        notificationsFailed: notificationResult.failed,
         timestamp: new Date()
       });
     } catch (error) {
@@ -933,12 +962,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         source: "user_alert"
       });
 
-      // Send SMS to user about weather alert
-      const weatherMessage = `⚠️ WEATHER ALERT: ${title}\nType: ${alertType}\nSeverity: ${severity}\nDetails: ${description}`;
-      if (user.phone) {
-        await sendSMS(user.phone, weatherMessage).catch(err => {
-          console.error("Failed to send weather alert SMS:", err);
-        });
+      // Send Firebase push notification to user about weather alert
+      const userTokens = await db
+        .select()
+        .from(deviceTokens)
+        .where(and(
+          eq(deviceTokens.userId, user.id),
+          eq(deviceTokens.isActive, true)
+        ));
+
+      const messaging = getFirebaseMessaging();
+      if (messaging && userTokens.length > 0) {
+        for (const token of userTokens) {
+          try {
+            await messaging.send({
+              token: token.fcmToken,
+              notification: {
+                title: `⚠️ ${title}`,
+                body: `Severity: ${severity}`,
+              },
+              data: {
+                alertType,
+                description,
+                severity,
+                instructions: JSON.stringify(instructions),
+              },
+            });
+            console.log(`✅ Weather alert sent to user's device`);
+          } catch (err: any) {
+            console.error("Failed to send weather alert push notification:", err.message);
+          }
+        }
       }
 
       res.json({
