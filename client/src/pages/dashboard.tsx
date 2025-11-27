@@ -374,26 +374,6 @@ function AdultDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSTo
         </Card>
       </div>
 
-      <Card className="border-green-200 dark:border-green-800 border-2">
-        <CardHeader>
-          <CardTitle className="text-xl flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-green-600" />
-            Track People
-          </CardTitle>
-          <CardDescription>Find people nearby using their phone number</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">Search by phone number to locate your family members, children, or contacts on a live map.</p>
-          <Button 
-            onClick={() => navigate("/track-people")}
-            className="w-full h-12 text-base font-bold gap-2 bg-green-600 hover:bg-green-700"
-            data-testid="button-track-people"
-          >
-            <MapPin className="w-5 h-5" />
-            Open Tracker
-          </Button>
-        </CardContent>
-      </Card>
 
       <Card className="border-orange-200 dark:border-orange-800 border-2">
         <CardHeader>
@@ -702,14 +682,14 @@ export default function DashboardPage() {
       }
     } else {
       try {
-        let location = manualLocation;
+        let location = { city: "GPS", lat: 0, lon: 0 };
         
-        // Try browser GPS first, fallback to manual location
+        // Try browser GPS
         try {
           const gpsLocation = await getCurrentLocation();
           location = { city: "GPS", lat: gpsLocation.latitude, lon: gpsLocation.longitude };
         } catch (gpsError) {
-          console.log("GPS unavailable, using manual location:", manualLocation);
+          console.log("GPS unavailable, using default location");
         }
         
         const battery = await getBatteryLevel();
@@ -827,8 +807,6 @@ export default function DashboardPage() {
         handleSOSToggle={handleSOSToggle}
         handleFlashlightToggle={handleFlashlightToggle}
         isFlashlightOn={isFlashlightOn}
-        manualLocation={manualLocation}
-        setManualLocation={setManualLocation}
       />
     );
   }
@@ -989,15 +967,6 @@ export default function DashboardPage() {
             >
               <AlertCircle className="mr-2 w-4 h-4" />
               File Police Complaint
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full justify-start"
-              onClick={() => navigate("/track-people")}
-              data-testid="button-track-people"
-            >
-              <MapPin className="mr-2 w-4 h-4" />
-              Track People by Phone
             </Button>
           </CardContent>
         </Card>
