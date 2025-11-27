@@ -5,9 +5,8 @@ import { useTranslation } from "@/lib/useTranslation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { sosAPI, guardianAPI, emergencyAPI, childrenAPI, trackingAPI, medicineAPI } from "@/lib/api";
+import { sosAPI, guardianAPI, emergencyAPI, childrenAPI, medicineAPI } from "@/lib/api";
 import { getCurrentLocation, getBatteryLevel } from "@/lib/geolocation";
-import { indianCities } from "@/data/indian-cities";
 import { useToast } from "@/hooks/use-toast";
 import { WeatherWidget } from "@/components/weather-widget";
 import { playSOSSiren, stopSOSSiren, cleanupAudioContext } from "@/lib/siren";
@@ -31,7 +30,7 @@ import {
 } from "lucide-react";
 import type { SOSAlert, Guardian } from "@shared/schema";
 
-function ChildDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSToggle, handleFlashlightToggle, isFlashlightOn, manualLocation, setManualLocation }: any) {
+function ChildDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSToggle, handleFlashlightToggle, isFlashlightOn }: any) {
   return (
     <div className="space-y-6 p-6 min-h-screen overflow-hidden relative" style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #00f2fe 100%)'}}>
       {/* Subtle gradient overlay */}
@@ -44,57 +43,6 @@ function ChildDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSTo
         </h1>
         <p className="text-lg text-white font-semibold drop-shadow">Stay safe and protected</p>
       </div>
-
-      {/* Set Your Real-Time Location */}
-      <Card className="border-2 border-orange-400 bg-orange-50 z-20 relative">
-        <CardHeader>
-          <CardTitle className="text-orange-900 flex items-center gap-2">
-            📍 Your Live Location (Updates in Real-Time)
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-sm text-orange-800 font-semibold">Latitude</label>
-              <input 
-                type="number" 
-                step="0.0001"
-                value={manualLocation.lat} 
-                onChange={(e) => setManualLocation({ ...manualLocation, lat: parseFloat(e.target.value) || 0 })}
-                className="w-full p-2 border border-orange-300 rounded bg-white"
-                data-testid="input-latitude"
-                placeholder="e.g. 13.0827"
-              />
-            </div>
-            <div>
-              <label className="text-sm text-orange-800 font-semibold">Longitude</label>
-              <input 
-                type="number" 
-                step="0.0001"
-                value={manualLocation.lon} 
-                onChange={(e) => setManualLocation({ ...manualLocation, lon: parseFloat(e.target.value) || 0 })}
-                className="w-full p-2 border border-orange-300 rounded bg-white"
-                data-testid="input-longitude"
-                placeholder="e.g. 80.2707"
-              />
-            </div>
-          </div>
-          <select 
-            value={manualLocation.city} 
-            onChange={(e) => {
-              const city = indianCities.find(c => c.name === e.target.value);
-              if (city) setManualLocation({ city: city.name, lat: city.lat, lon: city.lon });
-            }}
-            className="w-full p-2 border border-orange-300 rounded bg-white text-sm"
-            data-testid="select-quick-city"
-          >
-            <option value="">-- Quick Select City --</option>
-            {indianCities.map(city => <option key={city.name} value={city.name}>{city.name}</option>)}
-          </select>
-          <p className="text-xs text-orange-700">Enter your exact latitude & longitude or quick-select a city. Updates send to guardians when you press SOS.</p>
-          <p className="text-xs text-orange-600 font-semibold">📍 Current: {manualLocation.lat.toFixed(4)}, {manualLocation.lon.toFixed(4)}</p>
-        </CardContent>
-      </Card>
 
       {/* Emergency Alert */}
       {isSOSActive && (
@@ -700,7 +648,6 @@ export default function DashboardPage() {
   const [guardians, setGuardians] = useState<Guardian[]>([]);
   const [isSOSActive, setIsSOSActive] = useState(false);
   const [isFlashlightOn, setIsFlashlightOn] = useState(false);
-  const [manualLocation, setManualLocation] = useState({ city: "Chennai", lat: 13.0827, lon: 80.2707 });
   const locationWatchIdRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -714,21 +661,6 @@ export default function DashboardPage() {
     };
   }, []);
 
-  // REAL-TIME continuous location tracking - sends to server every 2 seconds
-  useEffect(() => {
-    if (!user) return;
-
-    const locationInterval = setInterval(async () => {
-      try {
-        await trackingAPI.updateLiveLocation(manualLocation.lat, manualLocation.lon, manualLocation.city);
-        console.log("📍 Live location updated to server:", manualLocation.lat, manualLocation.lon);
-      } catch (err) {
-        console.log("Location sync in progress...");
-      }
-    }, 2000); // Send every 2 seconds
-
-    return () => clearInterval(locationInterval);
-  }, [manualLocation, user]);
 
   const loadDashboardData = async () => {
     try {
