@@ -564,7 +564,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Emergency SOS endpoint - notes on calling limitations
+  // Automatic emergency calls to 100, 108, 112, 1091
   app.post("/api/sos/:id/call-emergency", requireAuth, async (req, res, next) => {
     try {
       const sosAlert = await storage.getSOSById(req.params.id);
@@ -573,13 +573,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "SOS alert not found" });
       }
 
-      // Note: Due to Twilio trial account limitations, voice calls to unverified numbers are not available
-      // Primary emergency notification is via SMS to all guardians
-      // To enable voice calls, upgrade your Twilio account and verify guardian phone numbers
-      
+      const user = await storage.getUserById(req.user!.id);
+      const locationUrl = `https://maps.google.com/?q=${sosAlert.latitude},${sosAlert.longitude}`;
+      const emergencyNumbers = ["100", "108", "112", "1091"];
+
+      // Attempt to call emergency services
+      const callResults = await Promise.all(emergencyNumbers.map(async (num) => {
+        try {
+          // Format the number
+          let toNumber = "+91" + num;
+
+          // Format Twilio from number
+          let fromNumber = process.env.TWILIO_PHONE_NUMBER?.trim() || '';
+          if (!fromNumber.startsWith('+')) {
+            fromNumber = '+' + fromNumber;
+          }
+
+          // Initialize Twilio client
+          const twilioClient = twilio(
+            process.env.TWILIO_ACCOUNT_SID,
+            process.env.TWILIO_AUTH_TOKEN
+          );
+
+          // Create TwiML voice message
+          const VoiceResponse = twilio.twiml.VoiceResponse;
+          const response = new VoiceResponse();
+          response.say(
+            { voice: 'alice', language: 'en-IN' },
+            `Emergency! ${user?.name} needs immediate help. Location: ${locationUrl}`
+          );
+
+          // Attempt to make the call
+          const call = await twilioClient.calls.create({
+            twiml: response.toString(),
+            to: toNumber,
+            from: fromNumber,
+          });
+
+          console.log(`✅ Emergency call to ${num}: Call SID ${call.sid}`);
+          return { number: num, status: "initiated", callSid: call.sid };
+        } catch (err: any) {
+          console.error(`❌ Emergency call to ${num}: ${err.message}`);
+          return { number: num, status: "failed", error: err.message };
+        }
+      }));
+
       res.json({ 
-        message: "Emergency SMS notifications active",
-        note: "Guardians receive SMS with live location. For voice calls, verify numbers in Twilio account.",
+        message: "Emergency calls attempted to all services",
+        calls: callResults,
         sosId: req.params.id,
       });
     } catch (error) {
