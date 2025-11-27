@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { sosAPI, guardianAPI, emergencyAPI, childrenAPI } from "@/lib/api";
 import { getCurrentLocation, getBatteryLevel } from "@/lib/geolocation";
+import { indianCities } from "@/data/indian-cities";
 import { useToast } from "@/hooks/use-toast";
 import { WeatherWidget } from "@/components/weather-widget";
 import { playSOSSiren, stopSOSSiren, cleanupAudioContext } from "@/lib/siren";
@@ -30,7 +31,7 @@ import {
 } from "lucide-react";
 import type { SOSAlert, Guardian } from "@shared/schema";
 
-function ChildDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSToggle, handleFlashlightToggle, isFlashlightOn }: any) {
+function ChildDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSToggle, handleFlashlightToggle, isFlashlightOn, manualLocation, setManualLocation }: any) {
   return (
     <div className="space-y-6 p-6 min-h-screen overflow-hidden relative" style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #00f2fe 100%)'}}>
       {/* Subtle gradient overlay */}
@@ -43,6 +44,29 @@ function ChildDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSTo
         </h1>
         <p className="text-lg text-white font-semibold drop-shadow">Stay safe and protected</p>
       </div>
+
+      {/* Set Your Location Before SOS */}
+      <Card className="border-2 border-orange-400 bg-orange-50 z-20 relative">
+        <CardHeader>
+          <CardTitle className="text-orange-900 flex items-center gap-2">
+            📍 Set Your Current Location
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <select 
+            value={manualLocation.city} 
+            onChange={(e) => {
+              const city = indianCities.find(c => c.name === e.target.value);
+              if (city) setManualLocation({ city: city.name, lat: city.lat, lon: city.lon });
+            }}
+            className="w-full p-2 border border-orange-300 rounded"
+            data-testid="select-your-location"
+          >
+            {indianCities.map(city => <option key={city.name} value={city.name}>{city.name}</option>)}
+          </select>
+          <p className="text-xs text-orange-700 mt-2">Select where you are NOW. This location will be sent when you press SOS.</p>
+        </CardContent>
+      </Card>
 
       {/* Emergency Alert */}
       {isSOSActive && (
@@ -531,6 +555,7 @@ export default function DashboardPage() {
   const [guardians, setGuardians] = useState<Guardian[]>([]);
   const [isSOSActive, setIsSOSActive] = useState(false);
   const [isFlashlightOn, setIsFlashlightOn] = useState(false);
+  const [manualLocation, setManualLocation] = useState({ city: "Chennai", lat: 13.0827, lon: 80.2707 });
   const locationWatchIdRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -584,13 +609,22 @@ export default function DashboardPage() {
       }
     } else {
       try {
-        const location = await getCurrentLocation();
+        let location = manualLocation;
+        
+        // Try browser GPS first, fallback to manual location
+        try {
+          const gpsLocation = await getCurrentLocation();
+          location = { city: "GPS", lat: gpsLocation.latitude, lon: gpsLocation.longitude };
+        } catch (gpsError) {
+          console.log("GPS unavailable, using manual location:", manualLocation);
+        }
+        
         const battery = await getBatteryLevel();
         
         const alert = await sosAPI.create({
           triggerMethod: "manual",
-          latitude: location.latitude,
-          longitude: location.longitude,
+          latitude: location.lat,
+          longitude: location.lon,
           batteryLevel: battery,
         });
         
@@ -700,6 +734,8 @@ export default function DashboardPage() {
         handleSOSToggle={handleSOSToggle}
         handleFlashlightToggle={handleFlashlightToggle}
         isFlashlightOn={isFlashlightOn}
+        manualLocation={manualLocation}
+        setManualLocation={setManualLocation}
       />
     );
   }
