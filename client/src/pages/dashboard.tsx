@@ -45,26 +45,54 @@ function ChildDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSTo
         <p className="text-lg text-white font-semibold drop-shadow">Stay safe and protected</p>
       </div>
 
-      {/* Set Your Location Before SOS */}
+      {/* Set Your Real-Time Location */}
       <Card className="border-2 border-orange-400 bg-orange-50 z-20 relative">
         <CardHeader>
           <CardTitle className="text-orange-900 flex items-center gap-2">
-            📍 Set Your Current Location
+            📍 Your Live Location (Updates in Real-Time)
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm text-orange-800 font-semibold">Latitude</label>
+              <input 
+                type="number" 
+                step="0.0001"
+                value={manualLocation.lat} 
+                onChange={(e) => setManualLocation({ ...manualLocation, lat: parseFloat(e.target.value) || 0 })}
+                className="w-full p-2 border border-orange-300 rounded bg-white"
+                data-testid="input-latitude"
+                placeholder="e.g. 13.0827"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-orange-800 font-semibold">Longitude</label>
+              <input 
+                type="number" 
+                step="0.0001"
+                value={manualLocation.lon} 
+                onChange={(e) => setManualLocation({ ...manualLocation, lon: parseFloat(e.target.value) || 0 })}
+                className="w-full p-2 border border-orange-300 rounded bg-white"
+                data-testid="input-longitude"
+                placeholder="e.g. 80.2707"
+              />
+            </div>
+          </div>
           <select 
             value={manualLocation.city} 
             onChange={(e) => {
               const city = indianCities.find(c => c.name === e.target.value);
               if (city) setManualLocation({ city: city.name, lat: city.lat, lon: city.lon });
             }}
-            className="w-full p-2 border border-orange-300 rounded"
-            data-testid="select-your-location"
+            className="w-full p-2 border border-orange-300 rounded bg-white text-sm"
+            data-testid="select-quick-city"
           >
+            <option value="">-- Quick Select City --</option>
             {indianCities.map(city => <option key={city.name} value={city.name}>{city.name}</option>)}
           </select>
-          <p className="text-xs text-orange-700 mt-2">Select where you are NOW. This location will be sent when you press SOS.</p>
+          <p className="text-xs text-orange-700">Enter your exact latitude & longitude or quick-select a city. Updates send to guardians when you press SOS.</p>
+          <p className="text-xs text-orange-600 font-semibold">📍 Current: {manualLocation.lat.toFixed(4)}, {manualLocation.lon.toFixed(4)}</p>
         </CardContent>
       </Card>
 
