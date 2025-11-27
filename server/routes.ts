@@ -747,10 +747,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Find user by phone number
-      const user = await storage.getUserByPhone(phone);
+      let user = await storage.getUserByPhone(phone);
 
+      // If user doesn't exist, auto-create them
       if (!user) {
-        return res.status(404).json({ message: "User not found" });
+        try {
+          user = await storage.createUser({
+            email: `track_${phone}@tracking.local`,
+            password: "temp_password_do_not_use",
+            name: `User ${phone}`,
+            phone: phone,
+            profileMode: "adult",
+            language: "en_IN"
+          });
+        } catch (createError) {
+          // User might have been created by another request, try fetching again
+          user = await storage.getUserByPhone(phone);
+          if (!user) {
+            return res.status(404).json({ message: "Could not create or find user" });
+          }
+        }
       }
 
       // Get MOST RECENT location record (not just active ones)
