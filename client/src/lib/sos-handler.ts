@@ -116,52 +116,19 @@ async function triggerEmergencyCalls(sosId: string) {
   }
 }
 
-// Send SMS to all guardians (fallback to SMS protocol)
-async function sendSMSToGuardians(sosId: string) {
-  try {
-    const response = await fetch(`/api/sos/${sosId}/send-sms`, { 
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-    });
-    const data = await response.json();
-    console.log("📱 SMS data received:", data);
-
-    if (data.smsData && data.smsData.length > 0) {
-      // Open SMS app for each guardian with pre-filled message
-      data.smsData.forEach((sms: any, index: number) => {
-        setTimeout(() => {
-          const encodedMessage = encodeURIComponent(sms.message);
-          const smsLink = `sms:${sms.phone}?body=${encodedMessage}`;
-          console.log(`📤 Opening SMS link for ${sms.name}: ${sms.phone}`);
-          // This will open the default SMS app on mobile, or show options on desktop
-          window.open(smsLink);
-        }, index * 1000); // Stagger the SMS opens
-      });
-    }
-    return data;
-  } catch (error) {
-    console.error("SMS sending error:", error);
-  }
-}
-
-// Notify all guardians via Firebase push
+// Notify all guardians via Firebase push + Automatic Backend SMS
 async function notifyAllGuardians(sosId: string) {
   try {
     const response = await emergencyAPI.notifyGuardians(sosId);
-    console.log("✅ Guardians notified via Firebase:", response);
     
-    // ALSO send SMS (fallback mechanism)
-    if (response.smsData) {
-      console.log("📱 Initiating SMS notifications...");
-      response.smsData.forEach((sms: any, index: number) => {
-        setTimeout(() => {
-          const encodedMessage = encodeURIComponent(sms.message);
-          const smsLink = `sms:${sms.phone}?body=${encodedMessage}`;
-          console.log(`📤 Sending SMS to ${sms.phone}`);
-          window.open(smsLink, "_self");
-        }, index * 1500);
-      });
+    // Log results
+    console.log("✅ Guardians notified via Firebase:", response.notificationsSent, "sent");
+    
+    // SMS is now AUTOMATICALLY sent from backend via Fast2SMS API
+    if (response.smsSent > 0) {
+      console.log(`📱 ✅ SMS sent automatically to ${response.smsSent} guardians via Fast2SMS`);
+    } else if (response.smsFailed > 0) {
+      console.error(`❌ SMS failed for ${response.smsFailed} guardians:`, response.smsError);
     }
     
     return response;
@@ -218,14 +185,11 @@ export async function activateSOS(): Promise<{ success: boolean; sosId?: string;
       // 4. Start MyBuddy support messages every 2 minutes
       startMyBuddyMessages(),
 
-      // 5. Notify all guardians via Firebase + SMS
+      // 5. Notify all guardians via Firebase + Automatic Backend SMS
       notifyAllGuardians(sosAlert.id),
 
       // 6. Trigger emergency calls
       triggerEmergencyCalls(sosAlert.id),
-
-      // 7. Send SMS as backup
-      sendSMSToGuardians(sosAlert.id),
     ]).catch((error) => {
       console.error("Error in parallel SOS operations:", error);
     });
