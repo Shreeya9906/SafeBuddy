@@ -112,7 +112,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         password: hashedPassword,
       });
 
-      req.login(user, (err) => {
+      req.login(user as any, (err) => {
         if (err) return next(err);
         const { password, ...userWithoutPassword } = user;
         return res.json({ user: userWithoutPassword });
@@ -570,7 +570,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           longitude: sosAlert.longitude.toString(),
           locationUrl,
           address: sosAlert.address || "Location",
-          battery: sosAlert.batteryLevel.toString(),
+          battery: (sosAlert.batteryLevel || 100).toString(),
           timestamp: new Date().toISOString(),
         }
       );
@@ -610,7 +610,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const allTokens = await db
             .select()
             .from(deviceTokens)
-            .where(deviceTokens.isActive);
+            .where(eq(deviceTokens.isActive, true));
 
           console.log(`📤 Sending Firebase push notifications to ${allTokens.length} devices...`);
 
