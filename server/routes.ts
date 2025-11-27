@@ -605,6 +605,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Notify guardians when SOS is activated
+  app.post("/api/sos/notify-guardians", requireAuth, async (req, res, next) => {
+    try {
+      const { sosAlertId } = req.body;
+      const user = req.user!;
+      
+      if (!sosAlertId) {
+        return res.status(400).json({ message: "SOS Alert ID required" });
+      }
+
+      const sosAlert = await storage.getSOSById(sosAlertId);
+      if (!sosAlert) {
+        return res.status(404).json({ message: "SOS Alert not found" });
+      }
+
+      // Get all guardians for this user
+      const guardians = await storage.getGuardiansByUserId(user.id);
+      
+      // Prepare notification message with live location link
+      const liveTrackingUrl = `${process.env.VITE_API_BASE || 'http://localhost:5000'}/track?phone=${user.phone}`;
+      
+      const notificationData = {
+        userId: user.id,
+        userName: user.name,
+        userPhone: user.phone,
+        latitude: sosAlert.latitude,
+        longitude: sosAlert.longitude,
+        address: sosAlert.address,
+        timestamp: new Date(),
+        liveTrackingUrl,
+        guardians: guardians.map(g => ({
+          id: g.id,
+          name: g.name,
+          phone: g.phone,
+          email: g.email
+        }))
+      };
+
+      // Mark notifications as sent
+      await storage.updateSOSAlert(sosAlertId, { notificationsSent: true });
+      
+      res.json({ 
+        message: "Guardians notified successfully",
+        notificationData,
+        guardianCount: guardians.length
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Send weather alert notification
+  app.post("/api/weather/notify-alert", requireAuth, async (req, res, next) => {
+    try {
+      const { city, alertType, severity, title, description, instructions } = req.body;
+      
+      if (!city || !alertType) {
+        return res.status(400).json({ message: "City and alert type required" });
+      }
+
+      // Create weather alert
+      const weatherAlert = await storage.createWeatherAlert({
+        city,
+        alertType,
+        severity: severity || "moderate",
+        title,
+        description,
+        instructions: instructions || [],
+        isActive: true
+      });
+
+      res.json({
+        message: "Weather alert notification sent",
+        alert: weatherAlert
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   // Track nearby people by phone number
   app.get("/api/track/search", requireAuth, async (req, res, next) => {
     try {
