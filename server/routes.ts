@@ -32,6 +32,27 @@ async function sendSMS(phoneNumber: string, message: string): Promise<void> {
   }
   
   try {
+    // Format phone number to E.164 format (+91XXXXXXXXXX for India)
+    let formattedNumber = phoneNumber.trim();
+    if (!formattedNumber.startsWith('+')) {
+      // If no + prefix, assume India (+91)
+      if (formattedNumber.startsWith('91')) {
+        formattedNumber = '+' + formattedNumber;
+      } else {
+        formattedNumber = '+91' + formattedNumber;
+      }
+    }
+    
+    // Format Twilio phone number similarly
+    let fromNumber = process.env.TWILIO_PHONE_NUMBER.trim();
+    if (!fromNumber.startsWith('+')) {
+      if (fromNumber.startsWith('91')) {
+        fromNumber = '+' + fromNumber;
+      } else {
+        fromNumber = '+91' + fromNumber;
+      }
+    }
+    
     // Initialize Twilio client only when needed
     const twilioClient = twilio(
       process.env.TWILIO_ACCOUNT_SID,
@@ -40,14 +61,15 @@ async function sendSMS(phoneNumber: string, message: string): Promise<void> {
     
     await twilioClient.messages.create({
       body: message,
-      from: process.env.TWILIO_PHONE_NUMBER,
-      to: phoneNumber,
+      from: fromNumber,
+      to: formattedNumber,
     });
-    console.log(`SMS sent to ${phoneNumber}`);
+    console.log(`✅ SMS sent successfully to ${formattedNumber}`);
   } catch (error) {
-    console.error("Error sending SMS:", error);
+    console.error("❌ Error sending SMS:", error);
   }
 }
+
 
 function requireAuth(req: Request, res: Response, next: () => void) {
   if (!req.isAuthenticated()) {
