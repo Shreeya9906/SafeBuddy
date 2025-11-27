@@ -5,7 +5,7 @@ import { useTranslation } from "@/lib/useTranslation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { sosAPI, guardianAPI, emergencyAPI, childrenAPI, trackingAPI } from "@/lib/api";
+import { sosAPI, guardianAPI, emergencyAPI, childrenAPI, trackingAPI, medicineAPI } from "@/lib/api";
 import { getCurrentLocation, getBatteryLevel } from "@/lib/geolocation";
 import { indianCities } from "@/data/indian-cities";
 import { useToast } from "@/hooks/use-toast";
@@ -480,6 +480,49 @@ function AdultDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSTo
 
 function ElderDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSToggle, handleFlashlightToggle, isFlashlightOn }: any) {
   const [, navigate] = useLocation();
+  const { toast } = useToast();
+  const [medicines, setMedicines] = useState<any[]>([]);
+  const [newMedicine, setNewMedicine] = useState({ medicineName: "", dosage: "", frequency: "daily", reminderTimes: ["08:00", "20:00"] });
+  const [showAddMedicine, setShowAddMedicine] = useState(false);
+
+  useEffect(() => {
+    loadMedicines();
+  }, []);
+
+  const loadMedicines = async () => {
+    try {
+      const data = await medicineAPI.getAll();
+      setMedicines(data);
+    } catch (error) {
+      console.error("Error loading medicines:", error);
+    }
+  };
+
+  const handleAddMedicine = async () => {
+    if (!newMedicine.medicineName || !newMedicine.dosage) {
+      toast({ title: "Error", description: "Medicine name and dosage required", variant: "destructive" });
+      return;
+    }
+    try {
+      await medicineAPI.create(newMedicine);
+      toast({ title: "✅ Medicine Added", description: `${newMedicine.medicineName} added to your reminders` });
+      setNewMedicine({ medicineName: "", dosage: "", frequency: "daily", reminderTimes: ["08:00", "20:00"] });
+      setShowAddMedicine(false);
+      loadMedicines();
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to add medicine", variant: "destructive" });
+    }
+  };
+
+  const handleDeleteMedicine = async (id: string) => {
+    try {
+      await medicineAPI.delete(id);
+      toast({ title: "✅ Removed", description: "Medicine reminder deleted" });
+      loadMedicines();
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to delete medicine", variant: "destructive" });
+    }
+  };
   
   return (
     <div className="space-y-6">
@@ -569,6 +612,80 @@ function ElderDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSTo
               <p className="text-sm">Add caregivers in Settings</p>
             )}
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-green-50 dark:bg-green-900 border-green-300 dark:border-green-700">
+        <CardHeader>
+          <CardTitle className="text-xl flex items-center gap-2">
+            💊 Medicine Reminders
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {medicines.length > 0 && (
+            <div className="space-y-2">
+              {medicines.map((med) => (
+                <div key={med.id} className="p-3 bg-white dark:bg-gray-800 rounded border-l-4 border-green-500">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-bold text-lg">{med.medicineName}</p>
+                      <p className="text-sm text-muted-foreground">Dosage: {med.dosage}</p>
+                      <p className="text-sm text-muted-foreground">Frequency: {med.frequency}</p>
+                      <p className="text-sm text-green-600 font-semibold">⏰ Times: {med.reminderTimes?.join(", ") || "08:00, 20:00"}</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleDeleteMedicine(med.id)}
+                      data-testid={`button-delete-medicine-${med.id}`}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {!showAddMedicine ? (
+            <Button onClick={() => setShowAddMedicine(true)} className="w-full bg-green-600 hover:bg-green-700" data-testid="button-add-medicine">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Medicine Reminder
+            </Button>
+          ) : (
+            <div className="space-y-3 p-3 bg-white dark:bg-gray-800 rounded border-2 border-green-300">
+              <input
+                type="text"
+                placeholder="Medicine Name"
+                value={newMedicine.medicineName}
+                onChange={(e) => setNewMedicine({ ...newMedicine, medicineName: e.target.value })}
+                className="w-full p-2 border rounded"
+                data-testid="input-medicine-name"
+              />
+              <input
+                type="text"
+                placeholder="Dosage (e.g., 500mg)"
+                value={newMedicine.dosage}
+                onChange={(e) => setNewMedicine({ ...newMedicine, dosage: e.target.value })}
+                className="w-full p-2 border rounded"
+                data-testid="input-medicine-dosage"
+              />
+              <select
+                value={newMedicine.frequency}
+                onChange={(e) => setNewMedicine({ ...newMedicine, frequency: e.target.value })}
+                className="w-full p-2 border rounded"
+                data-testid="select-medicine-frequency"
+              >
+                <option value="daily">Daily</option>
+                <option value="twice">Twice Daily</option>
+                <option value="thrice">Thrice Daily</option>
+              </select>
+              <div className="flex gap-2">
+                <Button onClick={handleAddMedicine} className="flex-1 bg-green-600" data-testid="button-save-medicine">Save</Button>
+                <Button onClick={() => setShowAddMedicine(false)} variant="outline" className="flex-1" data-testid="button-cancel-medicine">Cancel</Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
