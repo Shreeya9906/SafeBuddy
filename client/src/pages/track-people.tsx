@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { AlertCircle, MapPin, Phone, User, Zap, AlertTriangle, Wind, Users } from "lucide-react";
+import { AlertCircle, MapPin, Phone, User, Zap, AlertTriangle, Wind, Users, Plus } from "lucide-react";
 import { weatherAPI } from "@/lib/api";
+import { indianCities } from "@/data/indian-cities";
 import L from "leaflet";
 
 export default function TrackPeoplePage() {
@@ -21,6 +22,13 @@ export default function TrackPeoplePage() {
   const [cycloneAlert, setCycloneAlert] = useState<any>(null);
   const [pollutionAlert, setPollutionAlert] = useState<any>(null);
   const [familyMembers, setFamilyMembers] = useState<any[]>([]);
+  
+  // Add person to track
+  const [addPersonPhone, setAddPersonPhone] = useState("");
+  const [addPersonName, setAddPersonName] = useState("");
+  const [addPersonCity, setAddPersonCity] = useState("Chennai");
+  const [isAddingPerson, setIsAddingPerson] = useState(false);
+  
   const { toast } = useToast();
   const liveTrackingInterval = useRef<NodeJS.Timeout | null>(null);
   const trackedPhoneRef = useRef<string>("");
