@@ -99,18 +99,23 @@ async function triggerEmergencyCalls(sosId: string) {
   try {
     await emergencyAPI.callEmergency(sosId, ["112", "100", "108", "1091"]);
 
-    // For web: provide dial links
+    // For web: provide dial links - CALL BOTH 112 AND 100 IMMEDIATELY
     setTimeout(() => {
-      console.log("📞 Opening emergency dialer...");
+      console.log("📞 Calling Emergency (112)...");
       window.open("tel:112");
     }, 500);
 
     setTimeout(() => {
-      console.log("📞 Queuing police call...");
+      console.log("📞 Calling Police (100)...");
       window.open("tel:100");
-    }, 8000);
+    }, 1500); // Changed from 8000ms to 1500ms - faster!
 
-    console.log("✅ Emergency calls initiated");
+    setTimeout(() => {
+      console.log("📞 Calling Medical Emergency (108)...");
+      window.open("tel:108");
+    }, 2500);
+
+    console.log("✅ Emergency calls initiated: 112, 100, 108");
   } catch (error) {
     console.error("Emergency call error:", error);
   }
