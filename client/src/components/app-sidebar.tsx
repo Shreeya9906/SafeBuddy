@@ -34,6 +34,7 @@ import type { Guardian } from "@shared/schema";
 const adultMenuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: Map, label: "Live Map", path: "/map" },
+  { icon: Shield, label: "Live Location", path: "/live-location" },
   { icon: MessageCircle, label: "MyBuddy", path: "/mybuddy" },
   { icon: Cloud, label: "Weather Alerts", path: "/weather" },
   { icon: AlertTriangle, label: "Disaster Alerts", path: "/disasters" },
@@ -51,6 +52,7 @@ const childMenuItems = [
   { icon: AlertTriangle, label: "Disasters", path: "/disasters" },
   { icon: MessageCircle, label: "MyBuddy", path: "/mybuddy" },
   { icon: Map, label: "Location", path: "/map" },
+  { icon: Shield, label: "Live Location", path: "/live-location" },
   { icon: Heart, label: "Contacts", path: "/settings" },
   { icon: Settings, label: "Settings", path: "/settings" },
 ];
@@ -58,6 +60,7 @@ const childMenuItems = [
 const elderMenuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: Map, label: "Live Map", path: "/map" },
+  { icon: Shield, label: "Live Location", path: "/live-location" },
   { icon: MessageCircle, label: "MyBuddy", path: "/mybuddy" },
   { icon: Cloud, label: "Weather", path: "/weather" },
   { icon: AlertTriangle, label: "Disasters", path: "/disasters" },
