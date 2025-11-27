@@ -597,22 +597,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const user = await storage.getUserById(req.user!.id);
       const locationUrl = `https://maps.google.com/?q=${sosAlert.latitude},${sosAlert.longitude}`;
-      const emergencySMS = `🚨 EMERGENCY: ${user?.name} needs IMMEDIATE help! Battery: ${sosAlert.batteryLevel}%. Location: ${locationUrl}. Call 100/108/112`;
 
-      // Send SMS to emergency numbers
-      const callsAttempted = await Promise.all(phoneNumbers.map(async (num) => {
-        console.log(`📞 Sending emergency alert to ${num}`);
-        await sendSMS(num, emergencySMS);
+      // Note: Emergency short codes (100, 108, 112) cannot receive SMS via Twilio
+      // In production, would use Twilio Voice API to make actual calls
+      // For now, log that emergency services would be contacted
+      const callsAttempted = phoneNumbers.map((num) => {
+        console.log(`📞 Emergency alert triggered for ${num} - User Location: ${locationUrl}`);
         
         return {
           number: num,
           timestamp: new Date(),
-          status: "sent",
+          status: "alert_triggered",
+          message: `Emergency alert for ${user?.name} at ${locationUrl}`,
         };
-      }));
+      });
 
       res.json({ 
-        message: "Emergency alerts sent",
+        message: "Emergency alerts triggered - Emergency services should be called manually",
         calls: callsAttempted,
         sosId: req.params.id,
       });
