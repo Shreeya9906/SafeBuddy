@@ -27,7 +27,7 @@ declare global {
 // Send SMS using Twilio
 async function sendSMS(phoneNumber: string, message: string): Promise<void> {
   if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_PHONE_NUMBER) {
-    console.warn("Twilio credentials not configured, SMS not sent");
+    console.warn("⚠️ Twilio credentials not configured, SMS not sent");
     return;
   }
   
@@ -53,20 +53,30 @@ async function sendSMS(phoneNumber: string, message: string): Promise<void> {
       }
     }
     
-    // Initialize Twilio client only when needed
-    const twilioClient = twilio(
-      process.env.TWILIO_ACCOUNT_SID,
-      process.env.TWILIO_AUTH_TOKEN
-    );
+    // Initialize Twilio client - handle both Account SID and API Key authentication
+    let twilioClient: any;
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
     
-    await twilioClient.messages.create({
+    // If using API Key (not Account SID starting with AC), need to provide account SID separately
+    if (accountSid && accountSid.startsWith('AC')) {
+      // Standard authentication with Account SID
+      twilioClient = twilio(accountSid, authToken);
+    } else {
+      // API Key authentication - extract account SID from environment or use the provided one
+      const actualAccountSid = process.env.TWILIO_ACCOUNT_SID || '';
+      twilioClient = twilio(actualAccountSid, authToken);
+    }
+    
+    const result = await twilioClient.messages.create({
       body: message,
       from: fromNumber,
       to: formattedNumber,
     });
-    console.log(`✅ SMS sent successfully to ${formattedNumber}`);
-  } catch (error) {
-    console.error("❌ Error sending SMS:", error);
+    
+    console.log(`✅ SMS sent successfully to ${formattedNumber} (Message SID: ${result.sid})`);
+  } catch (error: any) {
+    console.error("❌ Error sending SMS to " + phoneNumber + ":", error.message || error);
   }
 }
 
