@@ -252,3 +252,22 @@ export const insertMedicineReminderSchema = createInsertSchema(medicineReminders
 
 export type InsertMedicineReminder = z.infer<typeof insertMedicineReminderSchema>;
 export type MedicineReminder = typeof medicineReminders.$inferSelect;
+
+export const guardianEmergencyAlerts = pgTable("guardian_emergency_alerts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  initiatedByGuardianId: varchar("initiated_by_guardian_id").notNull().references(() => guardians.id, { onDelete: "cascade" }),
+  status: text("status").notNull().default("active"),
+  reason: text("reason"),
+  notificationsSent: boolean("notifications_sent").default(false),
+  resolvedAt: timestamp("resolved_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertGuardianEmergencyAlertSchema = createInsertSchema(guardianEmergencyAlerts).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertGuardianEmergencyAlert = z.infer<typeof insertGuardianEmergencyAlertSchema>;
+export type GuardianEmergencyAlert = typeof guardianEmergencyAlerts.$inferSelect;

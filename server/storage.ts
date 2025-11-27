@@ -21,6 +21,8 @@ import {
   type InsertParentChildLink,
   type MedicineReminder,
   type InsertMedicineReminder,
+  type GuardianEmergencyAlert,
+  type InsertGuardianEmergencyAlert,
   users,
   guardians,
   sosAlerts,
@@ -31,6 +33,7 @@ import {
   mybuddyLogs,
   parentChildLinks,
   medicineReminders,
+  guardianEmergencyAlerts,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -72,6 +75,10 @@ export interface IStorage {
   createMedicineReminder(reminder: InsertMedicineReminder): Promise<MedicineReminder>;
   updateMedicineReminder(id: string, reminder: Partial<InsertMedicineReminder>): Promise<MedicineReminder | undefined>;
   deleteMedicineReminder(id: string): Promise<void>;
+
+  createGuardianEmergencyAlert(alert: InsertGuardianEmergencyAlert): Promise<GuardianEmergencyAlert>;
+  getGuardianEmergencyAlertsByUserId(userId: string): Promise<GuardianEmergencyAlert[]>;
+  updateGuardianEmergencyAlert(id: string, alert: Partial<InsertGuardianEmergencyAlert>): Promise<GuardianEmergencyAlert | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -269,6 +276,25 @@ export class DatabaseStorage implements IStorage {
 
   async deleteMedicineReminder(id: string): Promise<void> {
     await db.delete(medicineReminders).where(eq(medicineReminders.id, id));
+  }
+
+  async createGuardianEmergencyAlert(alert: InsertGuardianEmergencyAlert): Promise<GuardianEmergencyAlert> {
+    const [newAlert] = await db.insert(guardianEmergencyAlerts).values(alert).returning();
+    return newAlert;
+  }
+
+  async getGuardianEmergencyAlertsByUserId(userId: string): Promise<GuardianEmergencyAlert[]> {
+    return await db.select().from(guardianEmergencyAlerts)
+      .where(eq(guardianEmergencyAlerts.userId, userId))
+      .orderBy(desc(guardianEmergencyAlerts.createdAt));
+  }
+
+  async updateGuardianEmergencyAlert(id: string, updateData: Partial<InsertGuardianEmergencyAlert>): Promise<GuardianEmergencyAlert | undefined> {
+    const [alert] = await db.update(guardianEmergencyAlerts)
+      .set(updateData)
+      .where(eq(guardianEmergencyAlerts.id, id))
+      .returning();
+    return alert;
   }
 }
 
