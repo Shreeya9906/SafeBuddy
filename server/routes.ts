@@ -765,7 +765,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Track nearby people by phone number - Shows REAL location from SOS alerts
+  // Track nearby people by phone number - Shows REAL live location
   app.get("/api/track/search", requireAuth, async (req, res, next) => {
     try {
       const { phone } = req.query;
@@ -781,16 +781,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Person not found. They need to activate SOS first or be added via the Add Person form." });
       }
 
-      // Get MOST RECENT location from SOS alert (REAL location data)
-      const [sos] = await db
+      // Get LIVE TRACKING location (continuously updated)
+      const [liveSOS] = await db
+        .select()
+        .from(sosAlerts)
+        .where(and(eq(sosAlerts.userId, user.id), eq(sosAlerts.triggerMethod, "live_tracking")))
+        .orderBy(desc(sosAlerts.updatedAt))
+        .limit(1);
+      
+      // Fallback to most recent SOS if no live tracking
+      const [sos] = liveSOS ? [liveSOS] : await db
         .select()
         .from(sosAlerts)
         .where(eq(sosAlerts.userId, user.id))
-        .orderBy(desc(sosAlerts.createdAt))
+        .orderBy(desc(sosAlerts.updatedAt))
         .limit(1);
       
       if (!sos) {
-        return res.status(404).json({ message: "No location data. Person needs to activate SOS first." });
+        return res.status(404).json({ message: "No location data. Person needs to set their location first." });
       }
 
       res.json({
@@ -800,7 +808,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         latitude: sos.latitude,
         longitude: sos.longitude,
         address: sos.address,
-        timestamp: sos.createdAt,
+        timestamp: sos.updatedAt || sos.createdAt,
         accuracy: 50,
       });
     } catch (error) {
