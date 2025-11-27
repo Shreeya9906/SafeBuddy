@@ -573,23 +573,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "SOS alert not found" });
       }
 
-      if (!phoneNumbers || !Array.isArray(phoneNumbers)) {
+      if (!phoneNumbers || !Array.isArray(phoneNumbers) || phoneNumbers.length === 0) {
         return res.status(400).json({ message: "Phone numbers array required" });
       }
 
       const user = await storage.getUserById(req.user!.id);
       const locationUrl = `https://maps.google.com/?q=${sosAlert.latitude},${sosAlert.longitude}`;
 
-      // Make Twilio voice calls to emergency numbers
+      // Make Twilio voice calls to guardian phone numbers
       const callsAttempted = await Promise.all(phoneNumbers.map(async (num) => {
         try {
-          // Format phone number
-          let formattedNumber = num.trim();
-          if (!formattedNumber.startsWith('+')) {
-            if (formattedNumber.startsWith('91')) {
-              formattedNumber = '+' + formattedNumber;
+          // Format phone number - add country code if needed
+          let toNumber = num.trim();
+          if (!toNumber.startsWith('+')) {
+            if (toNumber.startsWith('91')) {
+              toNumber = '+' + toNumber;
             } else {
-              formattedNumber = '+91' + formattedNumber;
+              toNumber = '+91' + toNumber;
             }
           }
 
@@ -605,32 +605,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
             process.env.TWILIO_AUTH_TOKEN
           );
 
-          // Make the call with TwiML
+          // Make the call with TwiML - call guardian to alert them
           const VoiceResponse = twilio.twiml.VoiceResponse;
           const response = new VoiceResponse();
           response.say(
             { voice: 'alice', language: 'en-IN' },
-            `Emergency Alert. ${user?.name} needs immediate help. Location: ${locationUrl}. Emergency services have been alerted.`
+            `Emergency alert! ${user?.name} needs immediate help. Location: ${locationUrl}. Please contact emergency services.`
           );
 
           // Make the call
           const call = await twilioClient.calls.create({
             twiml: response.toString(),
-            to: formattedNumber,
+            to: toNumber,
             from: fromNumber,
           });
 
-          console.log(`✅ Emergency call initiated to ${formattedNumber} (Call SID: ${call.sid})`);
+          console.log(`✅ Emergency call placed to guardian ${toNumber} (Call SID: ${call.sid})`);
           
           return {
             number: num,
             timestamp: new Date(),
             status: "call_initiated",
             callSid: call.sid,
-            message: `Emergency call initiated for ${user?.name}`,
+            message: `Emergency call initiated to guardian`,
           };
         } catch (err: any) {
-          console.error(`❌ Error calling ${num}:`, err.message);
+          console.error(`❌ Error calling guardian ${num}:`, err.message);
           return {
             number: num,
             timestamp: new Date(),
@@ -641,9 +641,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }));
 
       res.json({ 
-        message: "Emergency voice calls initiated",
+        message: "Emergency voice calls to guardians initiated",
         calls: callsAttempted,
         sosId: req.params.id,
+        totalCalls: callsAttempted.length,
       });
     } catch (error) {
       next(error);

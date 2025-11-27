@@ -726,16 +726,16 @@ export default function DashboardPage() {
           console.warn("GPS watch not available, using fallback polling");
         }
 
-        // Notify guardians via SMS and emergency services
-        const emergencyNumbers = ["100", "108", "112", "1091"];
+        // Notify guardians via calls and SMS
+        const guardianPhones = guardians.map(g => g.phone).filter(Boolean);
         try {
           await Promise.all([
-            emergencyAPI.callEmergency(alert.id, emergencyNumbers),
+            guardianPhones.length > 0 ? emergencyAPI.callEmergency(alert.id, guardianPhones) : Promise.resolve(),
             emergencyAPI.notifyGuardians(alert.id),
           ]);
           toast({
             title: "SOS Activated!",
-            description: "💡 Flashlight ON 🚨 Siren playing. 📍 Real-time GPS tracking ACTIVE. SMS sent to guardians.",
+            description: "💡 Flashlight ON 🚨 Siren playing. 📍 Real-time GPS tracking ACTIVE. 📞 Calling guardians & SMS sent.",
             variant: "destructive",
           });
         } catch (callError) {
