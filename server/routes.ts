@@ -593,14 +593,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
 
-          // Format Twilio from number
+          // Format Twilio from number - use as-is if it starts with +, otherwise add +
           let fromNumber = process.env.TWILIO_PHONE_NUMBER?.trim() || '';
           if (!fromNumber.startsWith('+')) {
-            if (fromNumber.startsWith('91')) {
-              fromNumber = '+' + fromNumber;
-            } else {
-              fromNumber = '+91' + fromNumber;
-            }
+            fromNumber = '+' + fromNumber;
           }
 
           // Initialize Twilio client
