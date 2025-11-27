@@ -602,6 +602,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Setup location for testing (no auth required) - for demo purposes
+  app.post("/api/track/setup-test-location", async (req, res, next) => {
+    try {
+      const { phone, latitude, longitude, address, name } = req.body;
+      
+      if (!phone || !latitude || !longitude) {
+        return res.status(400).json({ message: "Phone, latitude, and longitude required" });
+      }
+
+      // Check if user exists with this phone
+      let user = await storage.getUserByPhone(phone);
+      
+      if (!user) {
+        // Create a test user with this phone
+        user = await storage.createUser({
+          email: `test_${phone}@test.com`,
+          password: "test_password_123",
+          name: name || `User ${phone}`,
+          phone: phone,
+          profileMode: "adult",
+          language: "en_IN"
+        });
+      }
+
+      // Create SOS alert with location
+      const sosAlert = await storage.createSOSAlert({
+        userId: user.id,
+        triggerMethod: "test_setup",
+        latitude: parseFloat(latitude),
+        longitude: parseFloat(longitude),
+        address: address || "Test Location",
+        batteryLevel: 100,
+      });
+
+      res.json({ 
+        message: "Test location setup successful",
+        user: {
+          id: user.id,
+          name: user.name,
+          phone: user.phone
+        },
+        location: {
+          latitude: sosAlert.latitude,
+          longitude: sosAlert.longitude,
+          address: sosAlert.address
+        }
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   // Notify guardians when SOS is activated
   app.post("/api/sos/notify-guardians", requireAuth, async (req, res, next) => {
     try {
