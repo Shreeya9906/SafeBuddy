@@ -577,55 +577,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const user = await storage.getUserById(req.user!.id);
       const locationUrl = `https://maps.google.com/?q=${sosAlert.latitude},${sosAlert.longitude}`;
-      
-      // Get all guardians
-      const guardians = await storage.getGuardiansByUserId(req.user!.id);
-      
+      const notificationResults: any[] = [];
+
       // Get Firebase Messaging instance
       const messaging = getFirebaseMessaging();
-      const notificationResults = [];
 
-      if (messaging && guardians.length > 0) {
-        // Get device tokens for all guardians
-        const guardianTokens = await db
-          .select()
-          .from(deviceTokens)
-          .where(deviceTokens.isActive)
-          .limit(100);
+      if (messaging) {
+        // Get all device tokens
+        try {
+          const allTokens = await db
+            .select()
+            .from(deviceTokens)
+            .where(deviceTokens.isActive);
 
-        // Send push notifications to all registered devices
-        for (const token of guardianTokens) {
-          try {
-            await messaging.send({
-              token: token.fcmToken,
-              notification: {
-                title: "🚨 EMERGENCY SOS ALERT!",
-                body: `${user?.name} needs immediate help!`,
-              },
-              data: {
-                alertType: "sos",
-                sosId: req.params.id,
-                userName: user?.name || "User",
-                latitude: sosAlert.latitude.toString(),
-                longitude: sosAlert.longitude.toString(),
-                locationUrl: locationUrl,
-                timestamp: new Date().toISOString(),
-              },
-            });
+          console.log(`📤 Sending Firebase push notifications to ${allTokens.length} devices...`);
 
-            console.log(`✅ Push notification sent to device token: ${token.fcmToken.substring(0, 20)}...`);
-            notificationResults.push({ token: token.fcmToken.substring(0, 20), status: "sent" });
-          } catch (err: any) {
-            console.error(`❌ Push notification failed:`, err.message);
-            notificationResults.push({ token: token.fcmToken.substring(0, 20), status: "failed" });
+          // Send push notifications to all registered devices
+          for (const token of allTokens) {
+            try {
+              await messaging.send({
+                token: token.fcmToken,
+                notification: {
+                  title: "🚨 EMERGENCY SOS ALERT!",
+                  body: `${user?.name} needs immediate help!`,
+                },
+                data: {
+                  alertType: "sos",
+                  sosId: req.params.id,
+                  userName: user?.name || "User",
+                  latitude: sosAlert.latitude.toString(),
+                  longitude: sosAlert.longitude.toString(),
+                  locationUrl: locationUrl,
+                  timestamp: new Date().toISOString(),
+                },
+              });
+
+              console.log(`✅ Push notification sent to device: ${token.deviceName || token.fcmToken.substring(0, 20)}`);
+              notificationResults.push({ device: token.deviceName || "Device", status: "sent" });
+            } catch (err: any) {
+              console.error(`❌ Push to ${token.deviceName}:`, err.message);
+              notificationResults.push({ device: token.deviceName || "Device", status: "failed", error: err.message });
+            }
           }
+        } catch (err: any) {
+          console.error("Error fetching device tokens:", err.message);
         }
+      } else {
+        console.log("ℹ️ Firebase Messaging not available - ensure FIREBASE_SERVICE_ACCOUNT is set");
       }
 
       res.json({ 
-        message: "Emergency notifications sent via Firebase",
-        guardians: guardians.length,
-        notifications: notificationResults,
+        message: "Emergency SOS activated - Firebase notifications sent",
+        firebaseEnabled: !!messaging,
+        notificationsSent: notificationResults.length,
+        details: notificationResults,
         sosId: req.params.id,
       });
     } catch (error) {

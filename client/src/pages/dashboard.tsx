@@ -735,13 +735,13 @@ export default function DashboardPage() {
           ]);
           toast({
             title: "🚨 SOS ACTIVATED!",
-            description: "✅ Siren ON ✅ Flashlight ON ✅ GPS Tracking\n✅ Emergency calls dialing 100/108/112/1091\n✅ SMS sent to all guardians",
+            description: "✅ Siren ON ✅ Flashlight ON ✅ GPS Tracking ACTIVE\n🔔 Push notifications sent to guardians\n📍 Live location being shared",
             variant: "destructive",
           });
         } catch (error) {
           toast({
             title: "🚨 SOS ACTIVATED!",
-            description: "✅ Siren ON ✅ Flashlight ON ✅ GPS Tracking\n📞 Emergency calls in progress\n📤 SMS sent to guardians",
+            description: "✅ Siren ON ✅ Flashlight ON ✅ GPS Tracking ACTIVE\n🔔 Emergency alerts in progress",
             variant: "destructive",
           });
         }
