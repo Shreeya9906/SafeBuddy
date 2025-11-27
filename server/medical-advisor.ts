@@ -178,20 +178,3 @@ export function getMedicalAdvice(userMessage: string, language: string = 'en_IN'
 
   return null;
 }
-
-export function getMedicalAdvice(userMessage: string, language: string = 'en_IN'): { type: string; advice: string } | null {
-  const lowerMessage = userMessage.toLowerCase();
-
-  for (const [conditionKey, conditionData] of Object.entries(MEDICAL_ADVICE)) {
-    const symptoms = (conditionData as any).symptoms || [];
-    if (symptoms.some((symptom: string) => lowerMessage.includes(symptom))) {
-      const advice = (conditionData as any).advice[language] || (conditionData as any).advice['en_IN'];
-      return {
-        type: conditionKey,
-        advice: advice
-      };
-    }
-  }
-
-  return null;
-}
