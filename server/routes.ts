@@ -540,50 +540,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUserById(req.user!.id);
       const guardians = await storage.getGuardiansByUserId(req.user!.id);
 
-      // Create comprehensive WhatsApp and SMS messages for each guardian
+      // Send SMS to all guardians
       const notifications = await Promise.all(guardians.map(async (g) => {
         const locationUrl = `https://maps.google.com/?q=${sosAlert.latitude},${sosAlert.longitude}`;
-        const whatsappMessage = `🚨 EMERGENCY ALERT FROM ${user?.name?.toUpperCase()}! 🚨
+        const smsMessage = `🚨 EMERGENCY! ${user?.name} needs IMMEDIATE help! 🚨\n📍 Location: ${locationUrl}\n🔋 Battery: ${sosAlert.batteryLevel}%\n⏰ Time: ${new Date().toLocaleString()}\n📞 Call: 100/108/112`;
 
-📍 *Location:* ${locationUrl}
-⚡ *Status:* SOS ACTIVATED
-📱 *Name:* ${user?.name}
-🔋 *Battery:* ${sosAlert.batteryLevel || 'Unknown'}%
-🕐 *Time:* ${new Date().toLocaleString()}
-
-🚗 PLEASE HELP IMMEDIATELY!
-
-📞 *Call Emergency Services:*
-• Police: 100
-• Ambulance: 108
-• General: 112
-• Women Help: 1091
-
-✅ Live location is being tracked`;
-
-        const smsMessage = `EMERGENCY! ${user?.name} needs help. Location: ${locationUrl} Battery: ${sosAlert.batteryLevel}%. Call 100/108/112 immediately.`;
-
-        // Log that we're sending WhatsApp and SMS
-        console.log(`📱 Sending WhatsApp to ${g.name} (${g.phone}):`, whatsappMessage);
         console.log(`📤 Sending SMS to ${g.name} (${g.phone}):`, smsMessage);
+        
+        // Actually send the SMS via Twilio
+        await sendSMS(g.phone, smsMessage);
 
-        // In production, integrate with Twilio or WhatsApp Business API
-        // For now, we log the attempts as they would be sent
         return {
           guardianId: g.id,
           guardianName: g.name,
           phone: g.phone,
-          whatsappMessage: whatsappMessage,
           smsMessage: smsMessage,
           timestamp: new Date(),
           status: "sent",
-          channels: ["WhatsApp", "SMS"],
           locationUrl: locationUrl,
         };
       }));
 
       res.json({ 
-        message: "✅ WhatsApp & SMS alerts sent to all emergency contacts",
+        message: "✅ SMS alerts sent to all guardians",
         notifications,
         sosId: req.params.id,
         totalGuardiansNotified: notifications.length,
@@ -606,14 +585,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Phone numbers array required" });
       }
 
-      const callsAttempted = phoneNumbers.map(num => ({
-        number: num,
-        timestamp: new Date(),
-        status: "initiated",
+      const user = await storage.getUserById(req.user!.id);
+      const locationUrl = `https://maps.google.com/?q=${sosAlert.latitude},${sosAlert.longitude}`;
+      const emergencySMS = `🚨 EMERGENCY: ${user?.name} needs IMMEDIATE help! Battery: ${sosAlert.batteryLevel}%. Location: ${locationUrl}. Call 100/108/112`;
+
+      // Send SMS to emergency numbers
+      const callsAttempted = await Promise.all(phoneNumbers.map(async (num) => {
+        console.log(`📞 Sending emergency alert to ${num}`);
+        await sendSMS(num, emergencySMS);
+        
+        return {
+          number: num,
+          timestamp: new Date(),
+          status: "sent",
+        };
       }));
 
       res.json({ 
-        message: "Emergency calls initiated",
+        message: "Emergency alerts sent",
         calls: callsAttempted,
         sosId: req.params.id,
       });
