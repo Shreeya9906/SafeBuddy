@@ -628,7 +628,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           );
 
           // Make the call with TwiML
-          const VoiceResponse = require('twilio').twiml.VoiceResponse;
+          const VoiceResponse = twilio.twiml.VoiceResponse;
           const response = new VoiceResponse();
           response.say(
             { voice: 'alice', language: 'en-IN' },
