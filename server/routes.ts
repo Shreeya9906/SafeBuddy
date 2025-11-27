@@ -11,6 +11,7 @@ import { insertUserSchema, insertGuardianSchema, insertSOSAlertSchema, insertSOS
 import { z } from "zod";
 import { getFirebaseMessaging } from "./firebase-config";
 import { deviceTokens } from "@shared/schema";
+import { sendSOSSMS } from "./fast2sms";
 
 declare global {
   namespace Express {
@@ -597,6 +598,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const guardians = await storage.getGuardiansByUserId(req.user!.id);
 
       const locationUrl = `https://maps.google.com/?q=${sosAlert.latitude},${sosAlert.longitude}`;
+      const battery = sosAlert.batteryLevel || 100;
 
       // Send Firebase push notifications to all guardians
       const notificationResult = await sendEmergencyNotificationViaFirebase(
@@ -610,27 +612,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
           longitude: sosAlert.longitude.toString(),
           locationUrl,
           address: sosAlert.address || "Location",
-          battery: (sosAlert.batteryLevel || 100).toString(),
+          battery: battery.toString(),
           timestamp: new Date().toISOString(),
         }
       );
 
-      // ALSO prepare SMS data (browser will send via SMS protocol or show options)
-      const battery = sosAlert.batteryLevel || 100;
-      const timestamp = new Date().toLocaleString();
-      const smsData = guardians.map(g => ({
-        phone: g.phone,
-        message: `🚨 EMERGENCY! ${user?.name} needs IMMEDIATE help! 🚨\n📍 Location: ${locationUrl}\n📱 Name: ${user?.name}\n🔋 Battery: ${battery}%\n⏰ Time: ${timestamp}\n📞 Call: 100/108/112`,
-      }));
+      // SEND REAL SMS VIA FAST2SMS API
+      const guardianPhones = guardians.map(g => g.phone);
+      let smsSent = 0;
+      let smsFailed = 0;
+      let smsError = "";
+
+      if (guardianPhones.length > 0) {
+        console.log(`📤 Sending SOS SMS to ${guardianPhones.length} guardians...`);
+        const smsResult = await sendSOSSMS(
+          guardianPhones,
+          user?.name || "User",
+          sosAlert.latitude,
+          sosAlert.longitude,
+          battery
+        );
+        smsSent = smsResult.sent;
+        smsFailed = smsResult.failed;
+        smsError = smsResult.error || "";
+        console.log(`📱 SMS Result: Sent=${smsSent}, Failed=${smsFailed}`);
+      }
 
       res.json({ 
-        message: "✅ Guardians notified via Firebase + SMS prepared",
+        message: "✅ Guardians notified via Firebase + Fast2SMS",
         notificationsSent: notificationResult.sent,
         notificationsFailed: notificationResult.failed,
-        details: notificationResult.details,
+        smsSent,
+        smsFailed,
+        smsError: smsError || null,
         sosId: req.params.id,
         totalGuardians: guardians.length,
-        smsData, // Include SMS data for client to process
       });
     } catch (error) {
       next(error);
