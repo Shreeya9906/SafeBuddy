@@ -469,12 +469,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/elders", requireAuth, async (req, res, next) => {
     try {
-      const elders = await db
-        .select()
-        .from(users)
-        .where(eq(users.profileMode, "elder"))
-        .limit(10);
-      res.json(elders);
+      // This is a placeholder - elders tracking requires explicit linking
+      // For now, return empty array
+      res.json([]);
     } catch (error) {
       next(error);
     }
@@ -624,12 +621,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const guardians = await storage.getGuardiansByUserId(user.id);
       
       // Prepare notification message with live location link
-      const liveTrackingUrl = `${process.env.VITE_API_BASE || 'http://localhost:5000'}/track?phone=${user.phone}`;
+      const userPhone = user.phone || "unknown";
+      const liveTrackingUrl = `${process.env.VITE_API_BASE || 'http://localhost:5000'}/track?phone=${userPhone}`;
       
       const notificationData = {
         userId: user.id,
         userName: user.name,
-        userPhone: user.phone,
+        userPhone: userPhone,
         latitude: sosAlert.latitude,
         longitude: sosAlert.longitude,
         address: sosAlert.address,
@@ -659,15 +657,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Send weather alert notification
   app.post("/api/weather/notify-alert", requireAuth, async (req, res, next) => {
     try {
-      const { city, alertType, severity, title, description, instructions } = req.body;
+      const { alertType, severity, title, description, instructions } = req.body;
       
-      if (!city || !alertType) {
-        return res.status(400).json({ message: "City and alert type required" });
+      if (!alertType) {
+        return res.status(400).json({ message: "Alert type required" });
       }
 
-      // Create weather alert
+      // Create weather alert (city/location comes from description)
       const weatherAlert = await storage.createWeatherAlert({
-        city,
         alertType,
         severity: severity || "moderate",
         title,

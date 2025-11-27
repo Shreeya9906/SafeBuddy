@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { AlertCircle, MapPin, Phone, User, Zap, AlertTriangle, Wind } from "lucide-react";
+import { AlertCircle, MapPin, Phone, User, Zap, AlertTriangle, Wind, Users } from "lucide-react";
 import { weatherAPI } from "@/lib/api";
 import L from "leaflet";
 
@@ -20,6 +20,7 @@ export default function TrackPeoplePage() {
   const [pollutionData, setPollutionData] = useState<any>(null);
   const [cycloneAlert, setCycloneAlert] = useState<any>(null);
   const [pollutionAlert, setPollutionAlert] = useState<any>(null);
+  const [familyMembers, setFamilyMembers] = useState<any[]>([]);
   const { toast } = useToast();
   const liveTrackingInterval = useRef<NodeJS.Timeout | null>(null);
   const trackedPhoneRef = useRef<string>("");
@@ -110,21 +111,39 @@ export default function TrackPeoplePage() {
     });
   };
 
-  // Cleanup on unmount
+  // Load family members on mount
   useEffect(() => {
-    return () => {
-      if (liveTrackingInterval.current) {
-        clearInterval(liveTrackingInterval.current);
-      }
-      if (weatherInterval.current) {
-        clearInterval(weatherInterval.current);
-      }
-    };
+    loadFamilyMembers();
   }, []);
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!phoneNumber.trim()) {
+  // Load family members (children)
+  const loadFamilyMembers = async () => {
+    try {
+      const response = await fetch("/api/children", { credentials: "include" });
+      if (response.ok) {
+        const children = await response.json();
+        setFamilyMembers(children);
+      }
+    } catch (error) {
+      console.error("Error loading family members:", error);
+    }
+  };
+
+  // Quick track a family member
+  const trackFamilyMember = async (member: any) => {
+    if (!member.phone) {
+      toast({ title: "Error", description: "Family member has no phone number", variant: "destructive" });
+      return;
+    }
+    
+    setPhoneNumber(member.phone);
+    // Trigger search after setting phone number
+    setTimeout(() => performSearch(member.phone), 100);
+  };
+
+  // Perform actual search
+  const performSearch = async (phone: string) => {
+    if (!phone.trim()) {
       toast({ title: "Error", description: "Please enter a phone number", variant: "destructive" });
       return;
     }
@@ -137,7 +156,7 @@ export default function TrackPeoplePage() {
 
     setIsSearching(true);
     try {
-      const response = await fetch(`/api/track/search?phone=${encodeURIComponent(phoneNumber)}`, {
+      const response = await fetch(`/api/track/search?phone=${encodeURIComponent(phone)}`, {
         credentials: "include",
       });
       
@@ -146,7 +165,7 @@ export default function TrackPeoplePage() {
       const person = await response.json();
       
       if (person.latitude && person.longitude) {
-        trackedPhoneRef.current = phoneNumber; // Store for live tracking
+        trackedPhoneRef.current = phone;
         setTrackedPeople([person]);
         setMapCenter([person.latitude, person.longitude]);
         
@@ -159,7 +178,7 @@ export default function TrackPeoplePage() {
         
         // Start the tracking interval
         liveTrackingInterval.current = setInterval(() => {
-          refreshLocation(phoneNumber);
+          refreshLocation(phone);
         }, 3000);
       } else {
         toast({
@@ -177,6 +196,23 @@ export default function TrackPeoplePage() {
     } finally {
       setIsSearching(false);
     }
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (liveTrackingInterval.current) {
+        clearInterval(liveTrackingInterval.current);
+      }
+      if (weatherInterval.current) {
+        clearInterval(weatherInterval.current);
+      }
+    };
+  }, []);
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    performSearch(phoneNumber);
   };
 
   // Get weather emoji based on conditions
@@ -232,6 +268,35 @@ export default function TrackPeoplePage() {
             {pollutionAlert.message} (AQI: {pollutionAlert.aqi})
           </AlertDescription>
         </Alert>
+      )}
+
+      {/* Family Members Quick Track */}
+      {familyMembers.length > 0 && (
+        <Card className="border-2 border-purple-300">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              My Family Members
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {familyMembers.map((member) => (
+                <Button
+                  key={member.id}
+                  onClick={() => trackFamilyMember(member)}
+                  variant="outline"
+                  className="h-24 flex flex-col justify-center items-center gap-1 border-purple-300 hover:bg-purple-50"
+                  data-testid={`button-track-${member.id}`}
+                >
+                  <span className="text-2xl">👤</span>
+                  <span className="text-xs font-medium text-center line-clamp-2">{member.name}</span>
+                  <span className="text-xs text-muted-foreground">{member.phone || "No phone"}</span>
+                </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Map - Always Visible and Large */}
