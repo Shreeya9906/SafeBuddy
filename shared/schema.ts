@@ -271,3 +271,20 @@ export const insertGuardianEmergencyAlertSchema = createInsertSchema(guardianEme
 
 export type InsertGuardianEmergencyAlert = z.infer<typeof insertGuardianEmergencyAlertSchema>;
 export type GuardianEmergencyAlert = typeof guardianEmergencyAlerts.$inferSelect;
+
+export const deviceTokens = pgTable("device_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  fcmToken: text("fcm_token").notNull().unique(),
+  deviceName: text("device_name"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertDeviceTokenSchema = createInsertSchema(deviceTokens).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertDeviceToken = z.infer<typeof insertDeviceTokenSchema>;
+export type DeviceToken = typeof deviceTokens.$inferSelect;
