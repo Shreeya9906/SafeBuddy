@@ -347,6 +347,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Submit complaint to police via WhatsApp
+  app.post("/api/complaints/:id/submit-to-police", requireAuth, async (req, res, next) => {
+    try {
+      const allComplaints = await storage.getPoliceComplaintsByUserId(req.user!.id);
+      const complaint = allComplaints.find(c => c.id === req.params.id);
+      if (!complaint) {
+        return res.status(404).json({ message: "Complaint not found" });
+      }
+
+      const user = await storage.getUserById(req.user!.id);
+
+      // Format complaint for WhatsApp
+      const complaintText = `
+🚨 *POLICE COMPLAINT - SafeBuddy Guardian+*
+
+*Complainant Details:*
+• Name: ${user?.name || "Not provided"}
+• Phone: ${user?.phone || "Not provided"}
+
+*Complaint Category:* ${complaint.category || "Not specified"}
+
+*Incident Details:*
+${complaint.complaintText}
+
+*Date of Incident:* ${complaint.incidentDate ? new Date(complaint.incidentDate).toLocaleDateString() : "Not specified"}
+*Location:* ${complaint.incidentLocation || "Not specified"}
+*Witnesses:* ${complaint.witnesses || "None"}
+
+*Submitted on:* ${new Date().toLocaleString()}
+*Reference ID:* ${complaint.id}
+
+Please use this reference ID when following up on this complaint.
+      `.trim();
+
+      // Generate WhatsApp link (user needs to paste and send)
+      const encodedMessage = encodeURIComponent(complaintText);
+      const whatsappLink = `https://wa.me/?text=${encodedMessage}`;
+
+      // Update complaint status to "filed"
+      const updatedComplaint = await storage.updatePoliceComplaint(req.params.id, {
+        status: "filed",
+        filedAt: new Date(),
+      });
+
+      console.log(`📋 Complaint submitted to police:`, {
+        complaintId: complaint.id,
+        userId: user?.id,
+        phone: user?.phone,
+        timestamp: new Date(),
+      });
+
+      res.json({
+        message: "✅ Complaint ready to send to police",
+        whatsappLink,
+        complaintText,
+        instructions: `
+1. Click the WhatsApp button to open WhatsApp
+2. Select "SafeBuddy Police Support" contact or paste the complaint link
+3. Send the complaint text to your local police department's WhatsApp number
+4. Save the reference ID: ${complaint.id} for follow-up
+        `,
+        referenceId: complaint.id,
+        status: "filed",
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.get("/api/weather/alerts", async (req, res, next) => {
     try {
       const alerts = await storage.getActiveWeatherAlerts();

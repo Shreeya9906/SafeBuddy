@@ -96,6 +96,33 @@ export default function ComplaintPage() {
     }
   };
 
+  const handleSubmitToPolice = async (complaintId: string) => {
+    setIsLoading(true);
+    try {
+      const result = await complaintAPI.submitToPolice(complaintId);
+      
+      // Open WhatsApp with pre-filled message
+      if (result.whatsappLink) {
+        window.open(result.whatsappLink, "_blank");
+      }
+
+      await loadComplaints();
+      
+      toast({
+        title: "✅ Complaint Ready",
+        description: `WhatsApp opened with your complaint. Send it to your local police number.\nReference ID: ${result.referenceId}`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "draft":
@@ -251,6 +278,17 @@ export default function ComplaintPage() {
                         Filed: {new Date(complaint.createdAt).toLocaleDateString()}
                       </span>
                     </div>
+                    {complaint.status === "draft" && (
+                      <Button
+                        onClick={() => handleSubmitToPolice(complaint.id)}
+                        disabled={isLoading}
+                        className="w-full mt-3 bg-green-600 hover:bg-green-700"
+                        size="sm"
+                        data-testid="button-submit-to-police"
+                      >
+                        📱 Submit to Police via WhatsApp
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               ))}

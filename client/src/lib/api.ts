@@ -77,6 +77,9 @@ export const complaintAPI = {
   
   update: (id: string, data: Partial<PoliceComplaint>) =>
     fetchAPI(`/complaints/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  
+  submitToPolice: (id: string) =>
+    fetchAPI(`/complaints/${id}/submit-to-police`, { method: "POST" }),
 };
 
 export const weatherAPI = {
