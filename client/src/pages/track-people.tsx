@@ -309,14 +309,35 @@ export default function TrackPeoplePage() {
         <p className="text-lg text-muted-foreground">Track people in real-time on map</p>
       </div>
 
-      {/* Add Person to Track */}
+      {/* How Live Tracking Works */}
+      <Card className="border-2 border-blue-400 bg-blue-50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-blue-900">
+            📍 How Live Tracking Works
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm">
+          <div className="grid gap-3">
+            <div className="bg-white p-3 rounded border border-blue-200">
+              <p className="font-semibold text-blue-800">✅ Real Location Tracking:</p>
+              <p className="text-blue-700">Search for a person's phone number who has activated SOS. Their REAL GPS location will show on the map.</p>
+            </div>
+            <div className="bg-white p-3 rounded border border-green-200">
+              <p className="font-semibold text-green-800">🧪 Test Tracking (Demo):</p>
+              <p className="text-green-700">Use the form below to add test people at different cities for testing purposes.</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Add Person to Track - For Testing Only */}
       <Card className="border-2 border-green-400 bg-green-50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-green-900">
             <Plus className="w-5 h-5" />
-            Add Person to Track
+            Add Test Person to Track (Demo Only)
           </CardTitle>
-          <CardDescription>Enter phone, name, and select a city to start tracking</CardDescription>
+          <CardDescription>For testing - add test users at different cities</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
@@ -347,7 +368,7 @@ export default function TrackPeoplePage() {
             className="w-full bg-green-600 hover:bg-green-700"
             data-testid="button-add-person"
           >
-            {isAddingPerson ? "Adding..." : "➕ Add & Track"}
+            {isAddingPerson ? "Adding..." : "➕ Add Test Person"}
           </Button>
         </CardContent>
       </Card>

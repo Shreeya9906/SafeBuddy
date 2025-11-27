@@ -737,7 +737,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Track nearby people by phone number
+  // Track nearby people by phone number - Shows REAL location from SOS alerts
   app.get("/api/track/search", requireAuth, async (req, res, next) => {
     try {
       const { phone } = req.query;
@@ -747,46 +747,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Find user by phone number
-      let user = await storage.getUserByPhone(phone);
+      const user = await storage.getUserByPhone(phone);
 
-      // If user doesn't exist, auto-create them
       if (!user) {
-        try {
-          user = await storage.createUser({
-            email: `track_${phone}@tracking.local`,
-            password: "temp_password_do_not_use",
-            name: `User ${phone}`,
-            phone: phone,
-            profileMode: "adult",
-            language: "en_IN"
-          });
-        } catch (createError) {
-          // User might have been created by another request, try fetching again
-          user = await storage.getUserByPhone(phone);
-          if (!user) {
-            return res.status(404).json({ message: "Could not create or find user" });
-          }
-        }
+        return res.status(404).json({ message: "Person not found. They need to activate SOS first or be added via the Add Person form." });
       }
 
-      // Get MOST RECENT location record (not just active ones)
-      let [sos] = await db
+      // Get MOST RECENT location from SOS alert (REAL location data)
+      const [sos] = await db
         .select()
         .from(sosAlerts)
         .where(eq(sosAlerts.userId, user.id))
         .orderBy(desc(sosAlerts.createdAt))
         .limit(1);
       
-      // If no location exists, auto-create one at a default location (Chennai)
       if (!sos) {
-        sos = await storage.createSOSAlert({
-          userId: user.id,
-          triggerMethod: "auto_default_location",
-          latitude: 13.0827,
-          longitude: 80.2707,
-          address: "Chennai, Tamil Nadu",
-          batteryLevel: 100,
-        });
+        return res.status(404).json({ message: "No location data. Person needs to activate SOS first." });
       }
 
       res.json({
@@ -797,7 +773,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         longitude: sos.longitude,
         address: sos.address,
         timestamp: sos.createdAt,
-        accuracy: 50, // Default accuracy in meters
+        accuracy: 50,
       });
     } catch (error) {
       next(error);
