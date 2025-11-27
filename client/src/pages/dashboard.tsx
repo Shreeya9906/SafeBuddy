@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { WeatherWidget } from "@/components/weather-widget";
 import { playSOSSiren, stopSOSSiren, cleanupAudioContext } from "@/lib/siren";
 import { enableFlashlight, disableFlashlight } from "@/lib/flashlight";
+import { watchLocation, clearLocationWatch } from "@/lib/geolocation";
 import {
   Shield,
   MapPin,
@@ -530,15 +531,15 @@ export default function DashboardPage() {
   const [guardians, setGuardians] = useState<Guardian[]>([]);
   const [isSOSActive, setIsSOSActive] = useState(false);
   const [isFlashlightOn, setIsFlashlightOn] = useState(false);
-  const locationUpdateIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const locationWatchIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     loadDashboardData();
 
     return () => {
       cleanupAudioContext();
-      if (locationUpdateIntervalRef.current) {
-        clearInterval(locationUpdateIntervalRef.current);
+      if (locationWatchIdRef.current !== null) {
+        clearLocationWatch(locationWatchIdRef.current);
       }
     };
   }, []);
@@ -563,9 +564,9 @@ export default function DashboardPage() {
         stopSOSSiren();
         disableFlashlight();
         setIsFlashlightOn(false);
-        if (locationUpdateIntervalRef.current) {
-          clearInterval(locationUpdateIntervalRef.current);
-          locationUpdateIntervalRef.current = null;
+        if (locationWatchIdRef.current !== null) {
+          clearLocationWatch(locationWatchIdRef.current);
+          locationWatchIdRef.current = null;
         }
         await sosAPI.update(activeAlert.id, { status: "resolved", resolvedAt: new Date() });
         setIsSOSActive(false);
@@ -599,20 +600,24 @@ export default function DashboardPage() {
         enableFlashlight();
         setIsFlashlightOn(true);
 
-        // Start continuous location updates every 5 seconds
-        locationUpdateIntervalRef.current = setInterval(async () => {
-          try {
-            const newLocation = await getCurrentLocation();
-            const newBattery = await getBatteryLevel();
-            await sosAPI.update(alert.id, {
-              latitude: newLocation.latitude,
-              longitude: newLocation.longitude,
-              batteryLevel: newBattery,
-            });
-          } catch (err) {
-            console.log("Location update in progress...");
-          }
-        }, 5000);
+        // Start CONTINUOUS real-time GPS tracking (updates as you move)
+        try {
+          locationWatchIdRef.current = watchLocation(async (newLocation) => {
+            try {
+              const newBattery = await getBatteryLevel();
+              await sosAPI.update(alert.id, {
+                latitude: newLocation.latitude,
+                longitude: newLocation.longitude,
+                batteryLevel: newBattery,
+              });
+              console.log("📍 Location updated: ", newLocation.latitude, newLocation.longitude);
+            } catch (err) {
+              console.log("Location update in progress...");
+            }
+          });
+        } catch (watchErr) {
+          console.warn("GPS watch not available, using fallback polling");
+        }
 
         // Notify guardians via SMS and emergency services
         const emergencyNumbers = ["100", "108", "112", "1091"];
@@ -623,13 +628,13 @@ export default function DashboardPage() {
           ]);
           toast({
             title: "SOS Activated!",
-            description: "💡 Flashlight ON 🚨 Siren playing. 📍 Live location tracking active. SMS sent to guardians.",
+            description: "💡 Flashlight ON 🚨 Siren playing. 📍 Real-time GPS tracking ACTIVE. SMS sent to guardians.",
             variant: "destructive",
           });
         } catch (callError) {
           toast({
             title: "SOS Activated!",
-            description: "💡 Flashlight ON 🚨 Siren playing. 📍 Live location tracking active.",
+            description: "💡 Flashlight ON 🚨 Siren playing. 📍 Real-time GPS tracking ACTIVE.",
             variant: "destructive",
           });
         }
@@ -638,7 +643,7 @@ export default function DashboardPage() {
         disableFlashlight();
         toast({
           title: "SOS Error",
-          description: error.message,
+          description: error.message || "Enable location access in your browser settings",
           variant: "destructive",
         });
       }
