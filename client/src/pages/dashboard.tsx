@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth-context";
 import { useTranslation } from "@/lib/useTranslation";
@@ -530,12 +530,16 @@ export default function DashboardPage() {
   const [guardians, setGuardians] = useState<Guardian[]>([]);
   const [isSOSActive, setIsSOSActive] = useState(false);
   const [isFlashlightOn, setIsFlashlightOn] = useState(false);
+  const locationUpdateIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     loadDashboardData();
 
     return () => {
       cleanupAudioContext();
+      if (locationUpdateIntervalRef.current) {
+        clearInterval(locationUpdateIntervalRef.current);
+      }
     };
   }, []);
 
@@ -559,6 +563,10 @@ export default function DashboardPage() {
         stopSOSSiren();
         disableFlashlight();
         setIsFlashlightOn(false);
+        if (locationUpdateIntervalRef.current) {
+          clearInterval(locationUpdateIntervalRef.current);
+          locationUpdateIntervalRef.current = null;
+        }
         await sosAPI.update(activeAlert.id, { status: "resolved", resolvedAt: new Date() });
         setIsSOSActive(false);
         setActiveAlert(null);
@@ -591,6 +599,21 @@ export default function DashboardPage() {
         enableFlashlight();
         setIsFlashlightOn(true);
 
+        // Start continuous location updates every 5 seconds
+        locationUpdateIntervalRef.current = setInterval(async () => {
+          try {
+            const newLocation = await getCurrentLocation();
+            const newBattery = await getBatteryLevel();
+            await sosAPI.update(alert.id, {
+              latitude: newLocation.latitude,
+              longitude: newLocation.longitude,
+              batteryLevel: newBattery,
+            });
+          } catch (err) {
+            console.log("Location update in progress...");
+          }
+        }, 5000);
+
         // Notify guardians via SMS and emergency services
         const emergencyNumbers = ["100", "108", "112", "1091"];
         try {
@@ -600,13 +623,13 @@ export default function DashboardPage() {
           ]);
           toast({
             title: "SOS Activated!",
-            description: "💡 Flashlight ON 🚨 Siren playing. SMS sent to guardians & emergency services called.",
+            description: "💡 Flashlight ON 🚨 Siren playing. 📍 Live location tracking active. SMS sent to guardians.",
             variant: "destructive",
           });
         } catch (callError) {
           toast({
             title: "SOS Activated!",
-            description: "💡 Flashlight ON 🚨 Siren playing. Emergency alert sent to guardians.",
+            description: "💡 Flashlight ON 🚨 Siren playing. 📍 Live location tracking active.",
             variant: "destructive",
           });
         }
