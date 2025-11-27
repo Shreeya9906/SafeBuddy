@@ -1246,7 +1246,7 @@ function generateMyBuddyResponse(message: string, context?: string): {
   const lowerMessage = message.toLowerCase();
   
   const emergencyKeywords = ["emergency", "help", "danger", "scared", "hurt", "pain", "bleeding", "attack", "follow", "lost"];
-  const medicalKeywords = ["sick", "fever", "headache", "dizzy", "breathing", "chest", "allergy", "medicine", "doctor", "nausea", "vomit", "cough", "cold", "flu", "constipation", "diarrhea", "stomach", "belly", "digestion", "bowel", "poop", "pee", "urine", "anaphylaxis", "choking", "frostbite", "heat exhaustion", "heat stroke", "nosebleed", "nose bleed", "seizure", "shock", "unconscious", "unconsciousness", "hypovolemic", "laceration", "poisoning", "scrape", "abdominal thrust", "bleeding", "cardiogenic", "infant choking", "unconscious choking", "sling", "drug", "ear emergency"];
+  const medicalKeywords = ["sick", "fever", "headache", "dizzy", "breathing", "chest", "allergy", "medicine", "doctor", "nausea", "vomit", "cough", "cold", "flu", "constipation", "diarrhea", "stomach", "belly", "digestion", "bowel", "poop", "pee", "urine", "anaphylaxis", "choking", "frostbite", "heat exhaustion", "heat stroke", "nosebleed", "nose bleed", "seizure", "shock", "unconscious", "unconsciousness", "hypovolemic", "laceration", "poisoning", "scrape", "abdominal thrust", "bleeding", "cardiogenic", "infant choking", "unconscious choking", "sling", "drug", "ear emergency", "period", "periods", "menstruation", "cramps", "menstrual", "menses", "rash", "rashes"];
   const emotionalKeywords = ["sad", "anxious", "worried", "afraid", "lonely", "stress", "panic", "depressed", "angry", "frustrated", "upset"];
   const contactKeywords = ["contact", "call", "reach", "phone", "guardian", "parent", "mom", "dad"];
 
