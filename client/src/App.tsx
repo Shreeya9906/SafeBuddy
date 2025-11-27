@@ -20,7 +20,6 @@ import WeatherPage from "@/pages/weather";
 import FallDetectionPage from "@/pages/fall-detection";
 import AdultMonitoringPage from "@/pages/adult-monitoring";
 import DisasterAlertsPage from "@/pages/disaster-alerts";
-import TrackPeoplePage from "@/pages/track-people";
 import NotFound from "@/pages/not-found";
 
 function InnerRouter() {
@@ -63,14 +62,6 @@ function InnerRouter() {
         <ProtectedRoute>
           <AppLayout>
             <MapPage />
-          </AppLayout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/track-people">
-        <ProtectedRoute>
-          <AppLayout>
-            <TrackPeoplePage />
           </AppLayout>
         </ProtectedRoute>
       </Route>
