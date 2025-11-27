@@ -108,6 +108,18 @@ export const emergencyAPI = {
   
   notifyGuardians: (sosId: string) =>
     fetchAPI(`/sos/${sosId}/notify-guardians`, { method: "POST" }),
+
+  triggerGuardianAlert: (userId: string, reason?: string) =>
+    fetchAPI(`/emergency-alerts/${userId}`, {
+      method: "POST",
+      body: JSON.stringify({ reason }),
+    }),
+
+  getEmergencyAlerts: (): Promise<any[]> =>
+    fetchAPI("/emergency-alerts"),
+
+  resolveEmergencyAlert: (alertId: string) =>
+    fetchAPI(`/emergency-alerts/${alertId}/resolve`, { method: "PATCH" }),
 };
 
 export const trackingAPI = {

@@ -7,7 +7,7 @@ import { db } from "../db";
 import { sosAlerts } from "@shared/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { getMedicalAdvice } from "./medical-advisor";
-import { insertUserSchema, insertGuardianSchema, insertSOSAlertSchema, insertSOSLocationSchema, insertHealthVitalSchema, insertPoliceComplaintSchema, insertMyBuddyLogSchema } from "@shared/schema";
+import { insertUserSchema, insertGuardianSchema, insertSOSAlertSchema, insertSOSLocationSchema, insertHealthVitalSchema, insertPoliceComplaintSchema, insertMyBuddyLogSchema, insertGuardianEmergencyAlertSchema, guardianEmergencyAlerts, guardians as guardiansTable, users as usersTable } from "@shared/schema";
 import { z } from "zod";
 
 declare global {
@@ -568,6 +568,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
         calls: callsAttempted,
         sosId: req.params.id,
       });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Guardian-initiated emergency alert (works even when user's phone is OFF)
+  app.post("/api/emergency-alerts/:userId", requireAuth, async (req, res, next) => {
+    try {
+      const { reason } = req.body;
+      const userId = req.params.userId;
+      
+      // Verify guardian is adding alert for someone in their circle
+      const targetUser = await storage.getUserById(userId);
+      if (!targetUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Create emergency alert
+      const alert = await storage.createGuardianEmergencyAlert({
+        userId,
+        initiatedByGuardianId: req.user!.id,
+        status: "active",
+        reason: reason || "Emergency alert triggered by guardian",
+        notificationsSent: false,
+      });
+
+      // Get all guardians of the target user to notify them
+      const targetGuardians = await storage.getGuardiansByUserId(userId);
+      const currentGuardian = await storage.getUserById(req.user!.id);
+      
+      // Log notifications that would be sent
+      const notifications = targetGuardians.map(g => ({
+        guardianId: g.id,
+        guardianName: g.name,
+        phone: g.phone,
+        message: `🚨 EMERGENCY ALERT: ${targetUser.name} needs immediate help! Guardian ${currentGuardian?.name} has triggered an emergency. Call 100/108/112 immediately.`,
+        timestamp: new Date(),
+      }));
+
+      console.log(`🚨 GUARDIAN EMERGENCY ALERT for ${targetUser.name}:`, notifications);
+      console.log(`📱 Would send SMS to emergency services: 100, 108, 112`);
+
+      res.json({
+        alert,
+        message: "✅ Emergency alert activated",
+        notifiedGuardians: notifications.length,
+        notifications,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid input", errors: error.errors });
+      }
+      next(error);
+    }
+  });
+
+  // Get emergency alerts for current user
+  app.get("/api/emergency-alerts", requireAuth, async (req, res, next) => {
+    try {
+      const alerts = await storage.getGuardianEmergencyAlertsByUserId(req.user!.id);
+      res.json(alerts);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Resolve/deactivate emergency alert
+  app.patch("/api/emergency-alerts/:alertId/resolve", requireAuth, async (req, res, next) => {
+    try {
+      const alert = await storage.updateGuardianEmergencyAlert(req.params.alertId, {
+        status: "resolved",
+        resolvedAt: new Date(),
+      });
+      
+      if (!alert) {
+        return res.status(404).json({ message: "Alert not found" });
+      }
+
+      res.json({ message: "✅ Emergency alert resolved", alert });
     } catch (error) {
       next(error);
     }

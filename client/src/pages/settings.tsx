@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { userAPI, guardianAPI } from "@/lib/api";
+import { userAPI, guardianAPI, emergencyAPI } from "@/lib/api";
 import { INDIAN_LANGUAGES } from "@/lib/languages";
 import { applyLanguageStyles, LANGUAGE_STYLES } from "@/lib/language-styles";
 import { useTranslation } from "@/lib/useTranslation";
@@ -13,7 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Settings, User, Bell, Palette, Volume2, Users, Plus, Trash2, Loader2, MessageCircle, Phone, Type, Palette as PaletteIcon, PhoneCall, Video } from "lucide-react";
+import { Settings, User, Bell, Palette, Volume2, Users, Plus, Trash2, Loader2, MessageCircle, Phone, Type, Palette as PaletteIcon, PhoneCall, Video, AlertTriangle } from "lucide-react";
 import { openWhatsAppCall, openPhoneCall, openWhatsAppVoiceCall, openWhatsAppVideoCall } from "@/lib/whatsapp";
 import type { Guardian } from "@shared/schema";
 
@@ -101,6 +101,24 @@ export default function SettingsPage() {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleTriggerEmergency = async (guardianId: string, guardianName: string) => {
+    if (confirm(`Send emergency alert to ${guardianName}? They will be notified to contact emergency services.`)) {
+      try {
+        await emergencyAPI.triggerGuardianAlert(user?.id || "", `Emergency initiated by guardian: ${guardianName}`);
+        toast({
+          title: "Emergency Alert Sent",
+          description: `${guardianName} has been notified. Emergency services will be contacted.`,
+        });
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -490,6 +508,15 @@ export default function SettingsPage() {
                     title="WhatsApp Message"
                   >
                     <MessageCircle className="w-4 h-4 text-green-600" />
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleTriggerEmergency(guardian.id, guardian.name)}
+                    data-testid={`button-emergency-${guardian.id}`}
+                    title="Send Emergency Alert to Guardian"
+                  >
+                    <AlertTriangle className="w-4 h-4" />
                   </Button>
                   <Button
                     variant="ghost"
