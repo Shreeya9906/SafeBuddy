@@ -250,6 +250,35 @@ export default function TrackPeoplePage() {
         <p className="text-lg text-muted-foreground">Track people in real-time on map</p>
       </div>
 
+      {/* Quick Setup Guide */}
+      <Card className="border-2 border-blue-300 bg-blue-50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-blue-900">
+            💡 How to Add People for Tracking
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm">
+          <div>
+            <p className="font-semibold text-blue-800">✅ Currently Trackable:</p>
+            <p className="text-blue-700">📱 6369894714 - Chennai Institute of Technology</p>
+          </div>
+          <div>
+            <p className="font-semibold text-blue-800">🆕 To Add More People:</p>
+            <p className="text-blue-700 bg-white p-2 rounded font-mono text-xs overflow-auto">
+              1. Open browser console (F12)<br/>
+              2. Copy-paste the setup command<br/>
+              3. Check the green data card below<br/>
+              4. Search their phone number in map
+            </p>
+          </div>
+          <div className="bg-white p-2 rounded text-xs">
+            <code className="text-blue-700">
+              fetch("/api/track/setup-test-location",{'{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone:"9999999999",name:"Your Name",latitude:13.0827,longitude:80.2707,address:"Location"})}').then(r=&gt;r.json()).then(d=&gt;console.log(d))
+            </code>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Cyclone/Weather Alert */}
       {cycloneAlert && (
         <Alert className="border-2 border-red-500 bg-red-50 dark:bg-red-950/50">
