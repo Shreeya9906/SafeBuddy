@@ -223,6 +223,57 @@ export default function TrackPeoplePage() {
     performSearch(phoneNumber);
   };
 
+  const handleAddPerson = async () => {
+    if (!addPersonPhone.trim() || !addPersonName.trim()) {
+      toast({ title: "Error", description: "Please fill phone and name", variant: "destructive" });
+      return;
+    }
+
+    setIsAddingPerson(true);
+    try {
+      const selectedCity = indianCities.find(c => c.name === addPersonCity);
+      if (!selectedCity) {
+        toast({ title: "Error", description: "City not found", variant: "destructive" });
+        setIsAddingPerson(false);
+        return;
+      }
+
+      const response = await fetch("/api/track/setup-test-location", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: addPersonPhone,
+          name: addPersonName,
+          latitude: selectedCity.lat,
+          longitude: selectedCity.lon,
+          address: selectedCity.name,
+        }),
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        toast({ title: "✅ Success", description: `${addPersonName} added at ${addPersonCity}!` });
+        setAddPersonPhone("");
+        setAddPersonName("");
+        setAddPersonCity("Chennai");
+        
+        // Auto-search for this person
+        setTimeout(() => {
+          setPhoneNumber(addPersonPhone);
+          performSearch(addPersonPhone);
+        }, 300);
+      } else {
+        const data = await response.json();
+        toast({ title: "Error", description: data.message || "Failed to add", variant: "destructive" });
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast({ title: "Error", description: "Failed to add person", variant: "destructive" });
+    } finally {
+      setIsAddingPerson(false);
+    }
+  };
+
   // Get weather emoji based on conditions
   const getWeatherEmoji = () => {
     if (!weatherData) return "🌍";
@@ -258,6 +309,48 @@ export default function TrackPeoplePage() {
         <p className="text-lg text-muted-foreground">Track people in real-time on map</p>
       </div>
 
+      {/* Add Person to Track */}
+      <Card className="border-2 border-green-400 bg-green-50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-green-900">
+            <Plus className="w-5 h-5" />
+            Add Person to Track
+          </CardTitle>
+          <CardDescription>Enter phone, name, and select a city to start tracking</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <Input 
+              placeholder="Phone (9XXXXXXXXXX)" 
+              value={addPersonPhone} 
+              onChange={(e) => setAddPersonPhone(e.target.value)}
+              data-testid="input-add-phone"
+            />
+            <Input 
+              placeholder="Name" 
+              value={addPersonName} 
+              onChange={(e) => setAddPersonName(e.target.value)}
+              data-testid="input-add-name"
+            />
+          </div>
+          <select 
+            value={addPersonCity} 
+            onChange={(e) => setAddPersonCity(e.target.value)}
+            className="w-full p-2 border border-green-300 rounded bg-white"
+            data-testid="select-city"
+          >
+            {indianCities.map(city => <option key={city.name} value={city.name}>{city.name}</option>)}
+          </select>
+          <Button 
+            onClick={handleAddPerson} 
+            disabled={isAddingPerson} 
+            className="w-full bg-green-600 hover:bg-green-700"
+            data-testid="button-add-person"
+          >
+            {isAddingPerson ? "Adding..." : "➕ Add & Track"}
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* Cyclone/Weather Alert */}
       {cycloneAlert && (
