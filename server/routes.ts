@@ -11,7 +11,6 @@ import { insertUserSchema, insertGuardianSchema, insertSOSAlertSchema, insertSOS
 import { z } from "zod";
 import { getFirebaseMessaging } from "./firebase-config";
 import { deviceTokens } from "@shared/schema";
-import { sendSOSSMS } from "./fast2sms";
 
 declare global {
   namespace Express {
@@ -546,46 +545,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/sos/:id/send-sms", requireAuth, async (req, res, next) => {
-    try {
-      const sosAlert = await storage.getSOSById(req.params.id);
-      
-      if (!sosAlert || sosAlert.userId !== req.user!.id) {
-        return res.status(404).json({ message: "SOS alert not found" });
-      }
-
-      const user = await storage.getUserById(req.user!.id);
-      const guardians = await storage.getGuardiansByUserId(req.user!.id);
-
-      const locationUrl = `https://maps.google.com/?q=${sosAlert.latitude},${sosAlert.longitude}`;
-      const battery = sosAlert.batteryLevel || 100;
-      const timestamp = new Date().toLocaleString();
-
-      const smsData = guardians.map(guardian => ({
-        phone: guardian.phone,
-        name: guardian.name,
-        message: `🚨 EMERGENCY! ${user?.name} needs IMMEDIATE help! 🚨
-📍 Location: ${locationUrl}
-📱 Name: ${user?.name}
-🔋 Battery: ${battery}%
-⏰ Time: ${timestamp}
-📞 Call: 100/108/112/1091
-⚠️ SOS Activated!`,
-      }));
-
-      console.log(`📤 SMS data prepared for ${guardians.length} guardians:`, smsData);
-
-      res.json({ 
-        message: "✅ SMS notifications prepared for guardians",
-        smsCount: smsData.length,
-        smsData,
-        sosId: req.params.id,
-      });
-    } catch (error) {
-      next(error);
-    }
-  });
-
   app.post("/api/sos/:id/notify-guardians", requireAuth, async (req, res, next) => {
     try {
       const sosAlert = await storage.getSOSById(req.params.id);
@@ -601,6 +560,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const battery = sosAlert.batteryLevel || 100;
 
       // Send Firebase push notifications to all guardians
+      console.log(`🚀 Sending Firebase push notifications to ${guardians.length} guardians...`);
       const notificationResult = await sendEmergencyNotificationViaFirebase(
         guardians,
         "🚨 EMERGENCY SOS ALERT!",
@@ -617,34 +577,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       );
 
-      // SEND REAL SMS VIA FAST2SMS API
-      const guardianPhones = guardians.map(g => g.phone);
-      let smsSent = 0;
-      let smsFailed = 0;
-      let smsError = "";
-
-      if (guardianPhones.length > 0) {
-        console.log(`📤 Sending SOS SMS to ${guardianPhones.length} guardians...`);
-        const smsResult = await sendSOSSMS(
-          guardianPhones,
-          user?.name || "User",
-          sosAlert.latitude,
-          sosAlert.longitude,
-          battery
-        );
-        smsSent = smsResult.sent;
-        smsFailed = smsResult.failed;
-        smsError = smsResult.error || "";
-        console.log(`📱 SMS Result: Sent=${smsSent}, Failed=${smsFailed}`);
-      }
+      console.log(`✅ Firebase notifications result: ${notificationResult.sent} sent, ${notificationResult.failed} failed`);
 
       res.json({ 
-        message: "✅ Guardians notified via Firebase + Fast2SMS",
+        message: "✅ Guardians notified via Firebase Push Notifications",
         notificationsSent: notificationResult.sent,
         notificationsFailed: notificationResult.failed,
-        smsSent,
-        smsFailed,
-        smsError: smsError || null,
+        details: notificationResult.details,
         sosId: req.params.id,
         totalGuardians: guardians.length,
       });
