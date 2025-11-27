@@ -116,11 +116,54 @@ async function triggerEmergencyCalls(sosId: string) {
   }
 }
 
+// Send SMS to all guardians (fallback to SMS protocol)
+async function sendSMSToGuardians(sosId: string) {
+  try {
+    const response = await fetch(`/api/sos/${sosId}/send-sms`, { 
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+    });
+    const data = await response.json();
+    console.log("📱 SMS data received:", data);
+
+    if (data.smsData && data.smsData.length > 0) {
+      // Open SMS app for each guardian with pre-filled message
+      data.smsData.forEach((sms: any, index: number) => {
+        setTimeout(() => {
+          const encodedMessage = encodeURIComponent(sms.message);
+          const smsLink = `sms:${sms.phone}?body=${encodedMessage}`;
+          console.log(`📤 Opening SMS link for ${sms.name}: ${sms.phone}`);
+          // This will open the default SMS app on mobile, or show options on desktop
+          window.open(smsLink);
+        }, index * 1000); // Stagger the SMS opens
+      });
+    }
+    return data;
+  } catch (error) {
+    console.error("SMS sending error:", error);
+  }
+}
+
 // Notify all guardians via Firebase push
 async function notifyAllGuardians(sosId: string) {
   try {
     const response = await emergencyAPI.notifyGuardians(sosId);
     console.log("✅ Guardians notified via Firebase:", response);
+    
+    // ALSO send SMS (fallback mechanism)
+    if (response.smsData) {
+      console.log("📱 Initiating SMS notifications...");
+      response.smsData.forEach((sms: any, index: number) => {
+        setTimeout(() => {
+          const encodedMessage = encodeURIComponent(sms.message);
+          const smsLink = `sms:${sms.phone}?body=${encodedMessage}`;
+          console.log(`📤 Sending SMS to ${sms.phone}`);
+          window.open(smsLink, "_self");
+        }, index * 1500);
+      });
+    }
+    
     return response;
   } catch (error) {
     console.error("Guardian notification error:", error);
@@ -175,11 +218,14 @@ export async function activateSOS(): Promise<{ success: boolean; sosId?: string;
       // 4. Start MyBuddy support messages every 2 minutes
       startMyBuddyMessages(),
 
-      // 5. Notify all guardians via Firebase
+      // 5. Notify all guardians via Firebase + SMS
       notifyAllGuardians(sosAlert.id),
 
       // 6. Trigger emergency calls
       triggerEmergencyCalls(sosAlert.id),
+
+      // 7. Send SMS as backup
+      sendSMSToGuardians(sosAlert.id),
     ]).catch((error) => {
       console.error("Error in parallel SOS operations:", error);
     });

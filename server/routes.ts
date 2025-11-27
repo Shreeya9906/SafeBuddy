@@ -545,6 +545,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/sos/:id/send-sms", requireAuth, async (req, res, next) => {
+    try {
+      const sosAlert = await storage.getSOSById(req.params.id);
+      
+      if (!sosAlert || sosAlert.userId !== req.user!.id) {
+        return res.status(404).json({ message: "SOS alert not found" });
+      }
+
+      const user = await storage.getUserById(req.user!.id);
+      const guardians = await storage.getGuardiansByUserId(req.user!.id);
+
+      const locationUrl = `https://maps.google.com/?q=${sosAlert.latitude},${sosAlert.longitude}`;
+      const battery = sosAlert.batteryLevel || 100;
+      const timestamp = new Date().toLocaleString();
+
+      const smsData = guardians.map(guardian => ({
+        phone: guardian.phone,
+        name: guardian.name,
+        message: `🚨 EMERGENCY! ${user?.name} needs IMMEDIATE help! 🚨
+📍 Location: ${locationUrl}
+📱 Name: ${user?.name}
+🔋 Battery: ${battery}%
+⏰ Time: ${timestamp}
+📞 Call: 100/108/112/1091
+⚠️ SOS Activated!`,
+      }));
+
+      console.log(`📤 SMS data prepared for ${guardians.length} guardians:`, smsData);
+
+      res.json({ 
+        message: "✅ SMS notifications prepared for guardians",
+        smsCount: smsData.length,
+        smsData,
+        sosId: req.params.id,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.post("/api/sos/:id/notify-guardians", requireAuth, async (req, res, next) => {
     try {
       const sosAlert = await storage.getSOSById(req.params.id);
@@ -575,13 +615,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       );
 
+      // ALSO prepare SMS data (browser will send via SMS protocol or show options)
+      const battery = sosAlert.batteryLevel || 100;
+      const timestamp = new Date().toLocaleString();
+      const smsData = guardians.map(g => ({
+        phone: g.phone,
+        message: `🚨 EMERGENCY! ${user?.name} needs IMMEDIATE help! 🚨\n📍 Location: ${locationUrl}\n📱 Name: ${user?.name}\n🔋 Battery: ${battery}%\n⏰ Time: ${timestamp}\n📞 Call: 100/108/112`,
+      }));
+
       res.json({ 
-        message: "✅ Emergency notifications sent to guardians via Firebase",
+        message: "✅ Guardians notified via Firebase + SMS prepared",
         notificationsSent: notificationResult.sent,
         notificationsFailed: notificationResult.failed,
         details: notificationResult.details,
         sosId: req.params.id,
         totalGuardians: guardians.length,
+        smsData, // Include SMS data for client to process
       });
     } catch (error) {
       next(error);
