@@ -33,6 +33,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     refreshUser();
+    
+    // Register device token on app load
+    const registerToken = async () => {
+      try {
+        const { getFirebaseToken } = await import('./firebase-messaging');
+        const token = await getFirebaseToken();
+        if (token && user) {
+          await fetch('/api/device-tokens', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              fcmToken: token,
+              deviceName: navigator.userAgent
+            })
+          });
+        }
+      } catch (error) {
+        console.warn('Firebase token registration:', error);
+      }
+    };
+    
+    registerToken();
   }, []);
 
   useEffect(() => {
@@ -44,6 +66,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     const { user } = await authAPI.login(email, password);
     setUser(user);
+    
+    // Register device token for push notifications
+    try {
+      const { getFirebaseToken } = await import('./firebase-messaging');
+      const token = await getFirebaseToken();
+      if (token) {
+        await fetch('/api/device-tokens', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            fcmToken: token,
+            deviceName: navigator.userAgent
+          })
+        });
+      }
+    } catch (error) {
+      console.warn('Firebase token registration skipped:', error);
+    }
   };
 
   const logout = async () => {
