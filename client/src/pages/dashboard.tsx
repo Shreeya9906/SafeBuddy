@@ -5,7 +5,7 @@ import { useTranslation } from "@/lib/useTranslation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { sosAPI, guardianAPI, emergencyAPI, childrenAPI } from "@/lib/api";
+import { sosAPI, guardianAPI, emergencyAPI, childrenAPI, trackingAPI } from "@/lib/api";
 import { getCurrentLocation, getBatteryLevel } from "@/lib/geolocation";
 import { indianCities } from "@/data/indian-cities";
 import { useToast } from "@/hooks/use-toast";
@@ -154,7 +154,7 @@ function ChildDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSTo
         <CardContent className="relative z-10">
           {guardians.length > 0 ? (
             <div className="space-y-3">
-              {guardians.map((g: Guardian | any, idx: number) => (
+              {guardians.map((g: any, idx: number) => (
                 <div key={g.id} className={`p-4 bg-gradient-to-r rounded-2xl border border-white/30 shadow-md ${
                   idx % 3 === 0 ? 'from-pink-500/40 to-purple-500/40' :
                   idx % 3 === 1 ? 'from-yellow-500/40 to-orange-500/40' :
@@ -596,6 +596,22 @@ export default function DashboardPage() {
       }
     };
   }, []);
+
+  // REAL-TIME continuous location tracking - sends to server every 2 seconds
+  useEffect(() => {
+    if (!user) return;
+
+    const locationInterval = setInterval(async () => {
+      try {
+        await trackingAPI.updateLiveLocation(manualLocation.lat, manualLocation.lon, manualLocation.city);
+        console.log("📍 Live location updated to server:", manualLocation.lat, manualLocation.lon);
+      } catch (err) {
+        console.log("Location sync in progress...");
+      }
+    }, 2000); // Send every 2 seconds
+
+    return () => clearInterval(locationInterval);
+  }, [manualLocation, user]);
 
   const loadDashboardData = async () => {
     try {

@@ -109,3 +109,11 @@ export const emergencyAPI = {
   notifyGuardians: (sosId: string) =>
     fetchAPI(`/sos/${sosId}/notify-guardians`, { method: "POST" }),
 };
+
+export const trackingAPI = {
+  updateLiveLocation: (latitude: number, longitude: number, address?: string) =>
+    fetchAPI("/track/set-location", { 
+      method: "POST", 
+      body: JSON.stringify({ latitude, longitude, address })
+    }),
+};

@@ -5,7 +5,7 @@ import { setupAuth, hashPassword } from "./auth";
 import { storage } from "./storage";
 import { db } from "../db";
 import { sosAlerts } from "@shared/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { getMedicalAdvice } from "./medical-advisor";
 import { insertUserSchema, insertGuardianSchema, insertSOSAlertSchema, insertSOSLocationSchema, insertHealthVitalSchema, insertPoliceComplaintSchema, insertMyBuddyLogSchema } from "@shared/schema";
 import { z } from "zod";
@@ -573,7 +573,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Set location for current user (for testing tracking)
+  // Update live location for current user (REAL-TIME continuous tracking)
   app.post("/api/track/set-location", requireAuth, async (req, res, next) => {
     try {
       const { latitude, longitude, address } = req.body;
@@ -582,24 +582,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Latitude and longitude required" });
       }
 
-      // Create a location record in sosAlerts table so tracking can find it
-      const sosAlert = await storage.createSOSAlert({
-        userId: req.user!.id,
-        triggerMethod: "manual_location_set",
-        latitude: parseFloat(latitude),
-        longitude: parseFloat(longitude),
-        address: address || "Manual Location",
-        batteryLevel: 100,
-      });
+      // Get or create ONE live location record per user
+      const [existingSOS] = await db
+        .select()
+        .from(sosAlerts)
+        .where(and(eq(sosAlerts.userId, req.user!.id), eq(sosAlerts.triggerMethod, "live_tracking")))
+        .orderBy(desc(sosAlerts.createdAt))
+        .limit(1);
 
-      res.json({ 
-        message: "Location saved successfully", 
-        location: {
-          latitude: sosAlert.latitude,
-          longitude: sosAlert.longitude,
-          address: sosAlert.address
-        }
-      });
+      if (existingSOS) {
+        // UPDATE existing location (not create new)
+        const updatedSOS = await storage.updateSOSAlert(existingSOS.id, {
+          latitude: parseFloat(latitude),
+          longitude: parseFloat(longitude),
+          address: address || "Live Location",
+        });
+
+        res.json({ 
+          message: "✅ Location updated in real-time",
+          location: {
+            latitude: updatedSOS?.latitude,
+            longitude: updatedSOS?.longitude,
+            address: updatedSOS?.address,
+            timestamp: new Date()
+          }
+        });
+      } else {
+        // Create first location record
+        const sosAlert = await storage.createSOSAlert({
+          userId: req.user!.id,
+          triggerMethod: "live_tracking",
+          latitude: parseFloat(latitude),
+          longitude: parseFloat(longitude),
+          address: address || "Live Location",
+          batteryLevel: 100,
+        });
+
+        res.json({ 
+          message: "✅ Location tracking started",
+          location: {
+            latitude: sosAlert.latitude,
+            longitude: sosAlert.longitude,
+            address: sosAlert.address,
+            timestamp: sosAlert.createdAt
+          }
+        });
+      }
     } catch (error) {
       next(error);
     }
