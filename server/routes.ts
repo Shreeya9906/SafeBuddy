@@ -9,6 +9,7 @@ import { eq, desc, and } from "drizzle-orm";
 import { getMedicalAdvice } from "./medical-advisor";
 import { insertUserSchema, insertGuardianSchema, insertSOSAlertSchema, insertSOSLocationSchema, insertHealthVitalSchema, insertPoliceComplaintSchema, insertMyBuddyLogSchema, insertGuardianEmergencyAlertSchema, guardianEmergencyAlerts, guardians as guardiansTable, users as usersTable } from "@shared/schema";
 import { z } from "zod";
+import twilio from "twilio";
 
 declare global {
   namespace Express {
@@ -16,9 +17,33 @@ declare global {
       id: string;
       email: string;
       name: string;
+      phone?: string;
       profileMode: string;
       language: string;
     }
+  }
+}
+
+// Initialize Twilio client
+const twilioClient = twilio(
+  process.env.TWILIO_ACCOUNT_SID,
+  process.env.TWILIO_AUTH_TOKEN
+);
+
+async function sendSMS(phoneNumber: string, message: string): Promise<void> {
+  if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_PHONE_NUMBER) {
+    console.warn("Twilio credentials not configured, SMS not sent");
+    return;
+  }
+  
+  try {
+    await twilioClient.messages.create({
+      body: message,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      to: phoneNumber,
+    });
+  } catch (error) {
+    console.error("Error sending SMS:", error);
   }
 }
 
@@ -786,30 +811,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userPhone = user.phone || "unknown";
       const liveTrackingUrl = `${process.env.VITE_API_BASE || 'http://localhost:5000'}/track?phone=${userPhone}`;
       
-      const notificationData = {
-        userId: user.id,
-        userName: user.name,
-        userPhone: userPhone,
-        latitude: sosAlert.latitude,
-        longitude: sosAlert.longitude,
-        address: sosAlert.address,
-        timestamp: new Date(),
-        liveTrackingUrl,
-        guardians: guardians.map(g => ({
-          id: g.id,
-          name: g.name,
-          phone: g.phone,
-          email: g.email
-        }))
-      };
-
+      const smsMessage = `🚨 EMERGENCY SOS ALERT 🚨\n${user.name} needs help!\nLocation: ${sosAlert.address || `${sosAlert.latitude}, ${sosAlert.longitude}`}\nLive Tracking: ${liveTrackingUrl}\nTime: ${new Date().toLocaleString()}`;
+      
+      // Send SMS to all guardians
+      const smsSendPromises = guardians.map(guardian => 
+        sendSMS(guardian.phone, smsMessage).catch(err => {
+          console.error(`Failed to send SMS to ${guardian.phone}:`, err);
+        })
+      );
+      
+      await Promise.all(smsSendPromises);
+      
       // Mark notifications as sent
       await storage.updateSOSAlert(sosAlertId, { notificationsSent: true });
       
       res.json({ 
         message: "Guardians notified successfully",
-        notificationData,
-        guardianCount: guardians.length
+        guardianCount: guardians.length,
+        timestamp: new Date()
       });
     } catch (error) {
       next(error);
@@ -820,6 +839,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/weather/notify-alert", requireAuth, async (req, res, next) => {
     try {
       const { alertType, severity, title, description, instructions } = req.body;
+      const user = req.user!;
       
       if (!alertType) {
         return res.status(400).json({ message: "Alert type required" });
@@ -832,8 +852,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         title,
         description,
         instructions: instructions || [],
-        isActive: true
+        source: "user_alert"
       });
+
+      // Send SMS to user about weather alert
+      const weatherMessage = `⚠️ WEATHER ALERT: ${title}\nType: ${alertType}\nSeverity: ${severity}\nDetails: ${description}`;
+      if (user.phone) {
+        await sendSMS(user.phone, weatherMessage).catch(err => {
+          console.error("Failed to send weather alert SMS:", err);
+        });
+      }
 
       res.json({
         message: "Weather alert notification sent",
