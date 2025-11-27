@@ -458,6 +458,30 @@ export default function TrackPeoplePage() {
         </div>
       )}
 
+      {/* Tracked Person Info */}
+      {trackedPeople.length > 0 && (
+        <Card className="border-2 border-green-300 bg-green-50">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              📊 Live Tracking Data
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {trackedPeople.map((person) => (
+              <div key={person.id} className="space-y-2 p-3 bg-white rounded border border-green-200">
+                <p><strong>Name:</strong> {person.name}</p>
+                <p><strong>Phone:</strong> {person.phone}</p>
+                <p><strong>Latitude:</strong> {person.latitude}</p>
+                <p><strong>Longitude:</strong> {person.longitude}</p>
+                <p><strong>Address:</strong> {person.address || "No address"}</p>
+                <p><strong>Time:</strong> {new Date(person.timestamp).toLocaleTimeString()}</p>
+                <p className="text-xs text-gray-500">ID: {person.id}</p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Search Card */}
       <Card className="border-2 border-green-200">
         <CardHeader>
