@@ -19,6 +19,8 @@ import {
   type InsertMyBuddyLog,
   type ParentChildLink,
   type InsertParentChildLink,
+  type MedicineReminder,
+  type InsertMedicineReminder,
   users,
   guardians,
   sosAlerts,
@@ -28,6 +30,7 @@ import {
   weatherAlerts,
   mybuddyLogs,
   parentChildLinks,
+  medicineReminders,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -64,6 +67,11 @@ export interface IStorage {
   
   getChildrenByParentId(parentId: string): Promise<User[]>;
   createParentChildLink(link: InsertParentChildLink): Promise<ParentChildLink>;
+
+  getMedicineRemindersByUserId(userId: string): Promise<MedicineReminder[]>;
+  createMedicineReminder(reminder: InsertMedicineReminder): Promise<MedicineReminder>;
+  updateMedicineReminder(id: string, reminder: Partial<InsertMedicineReminder>): Promise<MedicineReminder | undefined>;
+  deleteMedicineReminder(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -243,6 +251,24 @@ export class DatabaseStorage implements IStorage {
   async createParentChildLink(link: InsertParentChildLink): Promise<ParentChildLink> {
     const [newLink] = await db.insert(parentChildLinks).values(link).returning();
     return newLink;
+  }
+
+  async getMedicineRemindersByUserId(userId: string): Promise<MedicineReminder[]> {
+    return await db.select().from(medicineReminders).where(eq(medicineReminders.userId, userId));
+  }
+
+  async createMedicineReminder(reminder: InsertMedicineReminder): Promise<MedicineReminder> {
+    const [newReminder] = await db.insert(medicineReminders).values(reminder).returning();
+    return newReminder;
+  }
+
+  async updateMedicineReminder(id: string, reminder: Partial<InsertMedicineReminder>): Promise<MedicineReminder | undefined> {
+    const [updated] = await db.update(medicineReminders).set(reminder).where(eq(medicineReminders.id, id)).returning();
+    return updated;
+  }
+
+  async deleteMedicineReminder(id: string): Promise<void> {
+    await db.delete(medicineReminders).where(eq(medicineReminders.id, id));
   }
 }
 

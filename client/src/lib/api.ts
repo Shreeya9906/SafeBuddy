@@ -117,3 +117,16 @@ export const trackingAPI = {
       body: JSON.stringify({ latitude, longitude, address })
     }),
 };
+
+export const medicineAPI = {
+  getAll: (): Promise<any[]> => fetchAPI("/medicine/reminders"),
+  
+  create: (data: { medicineName: string; dosage: string; frequency: string; reminderTimes: string[]; instructions?: string }) =>
+    fetchAPI("/medicine/reminders", { method: "POST", body: JSON.stringify(data) }),
+  
+  update: (id: string, data: any) =>
+    fetchAPI(`/medicine/reminders/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  
+  delete: (id: string) =>
+    fetchAPI(`/medicine/reminders/${id}`, { method: "DELETE" }),
+};

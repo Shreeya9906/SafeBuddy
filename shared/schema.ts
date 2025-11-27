@@ -232,3 +232,23 @@ export const insertLocationHistorySchema = createInsertSchema(locationHistory).o
 
 export type InsertLocationHistory = z.infer<typeof insertLocationHistorySchema>;
 export type LocationHistory = typeof locationHistory.$inferSelect;
+
+export const medicineReminders = pgTable("medicine_reminders", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  medicineName: text("medicine_name").notNull(),
+  dosage: text("dosage").notNull(),
+  frequency: text("frequency").notNull(),
+  reminderTimes: text("reminder_times").array().notNull(),
+  instructions: text("instructions"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertMedicineReminderSchema = createInsertSchema(medicineReminders).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertMedicineReminder = z.infer<typeof insertMedicineReminderSchema>;
+export type MedicineReminder = typeof medicineReminders.$inferSelect;
