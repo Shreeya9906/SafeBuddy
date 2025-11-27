@@ -627,16 +627,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
             process.env.TWILIO_AUTH_TOKEN
           );
 
-          // Create TwiML for voice message
-          const twiml = `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Say voice="alice" language="en-IN">Emergency Alert. ${user?.name} needs immediate help. Location link: ${locationUrl}. Emergency services dispatch initiated.</Say>
-  <Play>https://api.twilio.com/Twilio.wav</Play>
-</Response>`;
+          // Make the call with TwiML
+          const VoiceResponse = require('twilio').twiml.VoiceResponse;
+          const response = new VoiceResponse();
+          response.say(
+            { voice: 'alice', language: 'en-IN' },
+            `Emergency Alert. ${user?.name} needs immediate help. Location: ${locationUrl}. Emergency services have been alerted.`
+          );
 
           // Make the call
           const call = await twilioClient.calls.create({
-            url: 'data:text/xml,' + encodeURIComponent(twiml),
+            twiml: response.toString(),
             to: formattedNumber,
             from: fromNumber,
           });
