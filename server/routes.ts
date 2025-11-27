@@ -24,12 +24,7 @@ declare global {
   }
 }
 
-// Initialize Twilio client
-const twilioClient = twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
-);
-
+// Send SMS using Twilio
 async function sendSMS(phoneNumber: string, message: string): Promise<void> {
   if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_PHONE_NUMBER) {
     console.warn("Twilio credentials not configured, SMS not sent");
@@ -37,11 +32,18 @@ async function sendSMS(phoneNumber: string, message: string): Promise<void> {
   }
   
   try {
+    // Initialize Twilio client only when needed
+    const twilioClient = twilio(
+      process.env.TWILIO_ACCOUNT_SID,
+      process.env.TWILIO_AUTH_TOKEN
+    );
+    
     await twilioClient.messages.create({
       body: message,
       from: process.env.TWILIO_PHONE_NUMBER,
       to: phoneNumber,
     });
+    console.log(`SMS sent to ${phoneNumber}`);
   } catch (error) {
     console.error("Error sending SMS:", error);
   }
