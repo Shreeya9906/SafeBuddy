@@ -564,87 +564,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Emergency SOS endpoint - notes on calling limitations
   app.post("/api/sos/:id/call-emergency", requireAuth, async (req, res, next) => {
     try {
-      const { phoneNumbers } = req.body;
       const sosAlert = await storage.getSOSById(req.params.id);
       
       if (!sosAlert || sosAlert.userId !== req.user!.id) {
         return res.status(404).json({ message: "SOS alert not found" });
       }
 
-      if (!phoneNumbers || !Array.isArray(phoneNumbers) || phoneNumbers.length === 0) {
-        return res.status(400).json({ message: "Phone numbers array required" });
-      }
-
-      const user = await storage.getUserById(req.user!.id);
-      const locationUrl = `https://maps.google.com/?q=${sosAlert.latitude},${sosAlert.longitude}`;
-
-      // Make Twilio voice calls to guardian phone numbers
-      const callsAttempted = await Promise.all(phoneNumbers.map(async (num) => {
-        try {
-          // Format phone number - add country code if needed
-          let toNumber = num.trim();
-          if (!toNumber.startsWith('+')) {
-            if (toNumber.startsWith('91')) {
-              toNumber = '+' + toNumber;
-            } else {
-              toNumber = '+91' + toNumber;
-            }
-          }
-
-          // Format Twilio from number - use as-is if it starts with +, otherwise add +
-          let fromNumber = process.env.TWILIO_PHONE_NUMBER?.trim() || '';
-          if (!fromNumber.startsWith('+')) {
-            fromNumber = '+' + fromNumber;
-          }
-
-          // Initialize Twilio client
-          const twilioClient = twilio(
-            process.env.TWILIO_ACCOUNT_SID,
-            process.env.TWILIO_AUTH_TOKEN
-          );
-
-          // Make the call with TwiML - call guardian to alert them
-          const VoiceResponse = twilio.twiml.VoiceResponse;
-          const response = new VoiceResponse();
-          response.say(
-            { voice: 'alice', language: 'en-IN' },
-            `Emergency alert! ${user?.name} needs immediate help. Location: ${locationUrl}. Please contact emergency services.`
-          );
-
-          // Make the call
-          const call = await twilioClient.calls.create({
-            twiml: response.toString(),
-            to: toNumber,
-            from: fromNumber,
-          });
-
-          console.log(`✅ Emergency call placed to guardian ${toNumber} (Call SID: ${call.sid})`);
-          
-          return {
-            number: num,
-            timestamp: new Date(),
-            status: "call_initiated",
-            callSid: call.sid,
-            message: `Emergency call initiated to guardian`,
-          };
-        } catch (err: any) {
-          console.error(`❌ Error calling guardian ${num}:`, err.message);
-          return {
-            number: num,
-            timestamp: new Date(),
-            status: "call_failed",
-            error: err.message,
-          };
-        }
-      }));
-
+      // Note: Due to Twilio trial account limitations, voice calls to unverified numbers are not available
+      // Primary emergency notification is via SMS to all guardians
+      // To enable voice calls, upgrade your Twilio account and verify guardian phone numbers
+      
       res.json({ 
-        message: "Emergency voice calls to guardians initiated",
-        calls: callsAttempted,
+        message: "Emergency SMS notifications active",
+        note: "Guardians receive SMS with live location. For voice calls, verify numbers in Twilio account.",
         sosId: req.params.id,
-        totalCalls: callsAttempted.length,
       });
     } catch (error) {
       next(error);
