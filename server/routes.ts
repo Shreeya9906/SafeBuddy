@@ -3,6 +3,9 @@ import { createServer, type Server } from "http";
 import passport from "passport";
 import { setupAuth, hashPassword } from "./auth";
 import { storage } from "./storage";
+import { db } from "../db";
+import { sosAlerts } from "@shared/schema";
+import { eq, desc } from "drizzle-orm";
 import { getMedicalAdvice } from "./medical-advisor";
 import { insertUserSchema, insertGuardianSchema, insertSOSAlertSchema, insertSOSLocationSchema, insertHealthVitalSchema, insertPoliceComplaintSchema, insertMyBuddyLogSchema } from "@shared/schema";
 import { z } from "zod";
@@ -750,8 +753,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Get latest SOS alert with location
-      const sos = await storage.getActiveSOSByUserId(user.id);
+      // Get MOST RECENT location record (not just active ones)
+      const [sos] = await db
+        .select()
+        .from(sosAlerts)
+        .where(eq(sosAlerts.userId, user.id))
+        .orderBy(desc(sosAlerts.createdAt))
+        .limit(1);
       
       if (!sos) {
         return res.status(404).json({ message: "No location data available" });
