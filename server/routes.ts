@@ -24,9 +24,9 @@ declare global {
   }
 }
 
-// Send SMS using Twilio
+// Send SMS using Twilio Messaging Service
 async function sendSMS(phoneNumber: string, message: string): Promise<void> {
-  if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_PHONE_NUMBER) {
+  if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_MESSAGING_SERVICE_SID) {
     console.warn("⚠️ Twilio credentials not configured, SMS not sent");
     return;
   }
@@ -43,34 +43,16 @@ async function sendSMS(phoneNumber: string, message: string): Promise<void> {
       }
     }
     
-    // Format Twilio phone number similarly
-    let fromNumber = process.env.TWILIO_PHONE_NUMBER.trim();
-    if (!fromNumber.startsWith('+')) {
-      if (fromNumber.startsWith('91')) {
-        fromNumber = '+' + fromNumber;
-      } else {
-        fromNumber = '+91' + fromNumber;
-      }
-    }
+    // Initialize Twilio client
+    const twilioClient = twilio(
+      process.env.TWILIO_ACCOUNT_SID,
+      process.env.TWILIO_AUTH_TOKEN
+    );
     
-    // Initialize Twilio client - handle both Account SID and API Key authentication
-    let twilioClient: any;
-    const accountSid = process.env.TWILIO_ACCOUNT_SID;
-    const authToken = process.env.TWILIO_AUTH_TOKEN;
-    
-    // If using API Key (not Account SID starting with AC), need to provide account SID separately
-    if (accountSid && accountSid.startsWith('AC')) {
-      // Standard authentication with Account SID
-      twilioClient = twilio(accountSid, authToken);
-    } else {
-      // API Key authentication - extract account SID from environment or use the provided one
-      const actualAccountSid = process.env.TWILIO_ACCOUNT_SID || '';
-      twilioClient = twilio(actualAccountSid, authToken);
-    }
-    
+    // Use Messaging Service SID for sending SMS (no "from" number needed)
     const result = await twilioClient.messages.create({
       body: message,
-      from: fromNumber,
+      messagingServiceSid: process.env.TWILIO_MESSAGING_SERVICE_SID,
       to: formattedNumber,
     });
     

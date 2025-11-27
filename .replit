@@ -41,3 +41,8 @@ waitForPort = 5000
 
 [agent]
 mockupState = "FULLSTACK"
+
+[userenv]
+
+[userenv.shared]
+TWILIO_MESSAGING_SERVICE_SID = "MG6d0c624a393c23a72e31e9cb657dc4b9"
