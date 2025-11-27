@@ -598,22 +598,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUserById(req.user!.id);
       const locationUrl = `https://maps.google.com/?q=${sosAlert.latitude},${sosAlert.longitude}`;
 
-      // Note: Emergency short codes (100, 108, 112) cannot receive SMS via Twilio
-      // In production, would use Twilio Voice API to make actual calls
-      // For now, log that emergency services would be contacted
-      const callsAttempted = phoneNumbers.map((num) => {
-        console.log(`📞 Emergency alert triggered for ${num} - User Location: ${locationUrl}`);
-        
-        return {
-          number: num,
-          timestamp: new Date(),
-          status: "alert_triggered",
-          message: `Emergency alert for ${user?.name} at ${locationUrl}`,
-        };
-      });
+      // Make Twilio voice calls to emergency numbers
+      const callsAttempted = await Promise.all(phoneNumbers.map(async (num) => {
+        try {
+          // Format phone number
+          let formattedNumber = num.trim();
+          if (!formattedNumber.startsWith('+')) {
+            if (formattedNumber.startsWith('91')) {
+              formattedNumber = '+' + formattedNumber;
+            } else {
+              formattedNumber = '+91' + formattedNumber;
+            }
+          }
+
+          // Format Twilio from number
+          let fromNumber = process.env.TWILIO_PHONE_NUMBER?.trim() || '';
+          if (!fromNumber.startsWith('+')) {
+            if (fromNumber.startsWith('91')) {
+              fromNumber = '+' + fromNumber;
+            } else {
+              fromNumber = '+91' + fromNumber;
+            }
+          }
+
+          // Initialize Twilio client
+          const twilioClient = twilio(
+            process.env.TWILIO_ACCOUNT_SID,
+            process.env.TWILIO_AUTH_TOKEN
+          );
+
+          // Create TwiML for voice message
+          const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Say voice="alice" language="en-IN">Emergency Alert. ${user?.name} needs immediate help. Location link: ${locationUrl}. Emergency services dispatch initiated.</Say>
+  <Play>https://api.twilio.com/Twilio.wav</Play>
+</Response>`;
+
+          // Make the call
+          const call = await twilioClient.calls.create({
+            url: 'data:text/xml,' + encodeURIComponent(twiml),
+            to: formattedNumber,
+            from: fromNumber,
+          });
+
+          console.log(`✅ Emergency call initiated to ${formattedNumber} (Call SID: ${call.sid})`);
+          
+          return {
+            number: num,
+            timestamp: new Date(),
+            status: "call_initiated",
+            callSid: call.sid,
+            message: `Emergency call initiated for ${user?.name}`,
+          };
+        } catch (err: any) {
+          console.error(`❌ Error calling ${num}:`, err.message);
+          return {
+            number: num,
+            timestamp: new Date(),
+            status: "call_failed",
+            error: err.message,
+          };
+        }
+      }));
 
       res.json({ 
-        message: "Emergency alerts triggered - Emergency services should be called manually",
+        message: "Emergency voice calls initiated",
         calls: callsAttempted,
         sosId: req.params.id,
       });
