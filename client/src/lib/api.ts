@@ -1,4 +1,4 @@
-import type { User, Guardian, SOSAlert, SOSLocation, HealthVital, PoliceComplaint, WeatherAlert, MyBuddyLog } from "@shared/schema";
+import type { User, Guardian, SOSAlert, SOSLocation, HealthVital, HealthAlert, PoliceComplaint, WeatherAlert, MyBuddyLog } from "@shared/schema";
 
 const API_BASE = "/api";
 
@@ -67,6 +67,9 @@ export const healthAPI = {
   
   addVital: (data: Partial<HealthVital>) =>
     fetchAPI("/health/vitals", { method: "POST", body: JSON.stringify(data) }),
+  
+  getAlerts: (limit?: number): Promise<HealthAlert[]> =>
+    fetchAPI(`/health/alerts${limit ? `?limit=${limit}` : ""}`),
 };
 
 export const complaintAPI = {

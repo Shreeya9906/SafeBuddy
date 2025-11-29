@@ -7,7 +7,7 @@ import { db } from "../db";
 import { sosAlerts } from "@shared/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { getMedicalAdvice } from "./medical-advisor";
-import { insertUserSchema, insertGuardianSchema, insertSOSAlertSchema, insertSOSLocationSchema, insertHealthVitalSchema, insertPoliceComplaintSchema, insertMyBuddyLogSchema, insertGuardianEmergencyAlertSchema, guardianEmergencyAlerts, guardians as guardiansTable, users as usersTable } from "@shared/schema";
+import { insertUserSchema, insertGuardianSchema, insertSOSAlertSchema, insertSOSLocationSchema, insertHealthVitalSchema, insertHealthAlertSchema, insertPoliceComplaintSchema, insertMyBuddyLogSchema, insertGuardianEmergencyAlertSchema, guardianEmergencyAlerts, guardians as guardiansTable, users as usersTable } from "@shared/schema";
 import { z } from "zod";
 import { getFirebaseMessaging } from "./firebase-config";
 import { sendEmergencySMS, sendFallDetectionSMS } from "./twilio-sms";
@@ -293,6 +293,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/health/alerts", requireAuth, async (req, res, next) => {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+      const alerts = await storage.getHealthAlertsByUserId(req.user!.id, limit);
+      res.json(alerts);
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.post("/api/health/vitals", requireAuth, async (req, res, next) => {
     try {
       const validatedData = insertHealthVitalSchema.parse({
@@ -301,7 +311,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const vital = await storage.createHealthVital(validatedData);
-      res.json(vital);
+      
+      // Check for abnormal values
+      const abnormalMetrics: string[] = [];
+      let alertMessage = "⚠️ Abnormal health reading detected:\n\n";
+      
+      if (validatedData.heartRate) {
+        if (validatedData.heartRate < 60 || validatedData.heartRate > 100) {
+          abnormalMetrics.push(`Heart Rate: ${validatedData.heartRate} bpm`);
+          alertMessage += `• Heart Rate: ${validatedData.heartRate} bpm (Normal: 60-100)\n`;
+        }
+      }
+      
+      if (validatedData.bloodPressureSystolic) {
+        if (validatedData.bloodPressureSystolic > 140 || validatedData.bloodPressureSystolic < 90) {
+          abnormalMetrics.push(`BP Systolic: ${validatedData.bloodPressureSystolic}`);
+          alertMessage += `• BP Systolic: ${validatedData.bloodPressureSystolic} mmHg (Normal: 90-140)\n`;
+        }
+      }
+      
+      if (validatedData.bloodPressureDiastolic) {
+        if (validatedData.bloodPressureDiastolic > 90 || validatedData.bloodPressureDiastolic < 60) {
+          abnormalMetrics.push(`BP Diastolic: ${validatedData.bloodPressureDiastolic}`);
+          alertMessage += `• BP Diastolic: ${validatedData.bloodPressureDiastolic} mmHg (Normal: 60-90)\n`;
+        }
+      }
+      
+      if (validatedData.oxygenSaturation) {
+        if (validatedData.oxygenSaturation < 95) {
+          abnormalMetrics.push(`SpO2: ${validatedData.oxygenSaturation}%`);
+          alertMessage += `• Oxygen Saturation: ${validatedData.oxygenSaturation}% (Normal: 95-100%)\n`;
+        }
+      }
+      
+      if (validatedData.temperature) {
+        if (validatedData.temperature < 36 || validatedData.temperature > 38.5) {
+          abnormalMetrics.push(`Temp: ${validatedData.temperature}°C`);
+          alertMessage += `• Temperature: ${validatedData.temperature}°C (Normal: 36.5-37.5°C)\n`;
+        }
+      }
+      
+      // If abnormal values found, create alert and notify guardians
+      if (abnormalMetrics.length > 0) {
+        const healthAlert = await storage.createHealthAlert({
+          userId: req.user!.id,
+          vitalId: vital.id,
+          abnormalMetrics,
+          alertMessage,
+          guardianNotificationsSent: false,
+        });
+        
+        // Get guardians and send SMS notification
+        const guardians = await storage.getGuardiansByUserId(req.user!.id);
+        const user = await storage.getUserById(req.user!.id);
+        
+        if (guardians.length > 0 && user) {
+          const timestamp = new Date().toLocaleTimeString();
+          const smsMessage = `🚨 HEALTH ALERT - ${user.name}\n${alertMessage}\nTime: ${timestamp}\nPlease check on them if possible.`;
+          
+          for (const guardian of guardians) {
+            try {
+              await sendEmergencySMS(guardian.phone, smsMessage);
+              console.log(`✅ Health alert SMS sent to ${guardian.name}`);
+            } catch (error) {
+              console.error(`❌ Failed to send health alert SMS to ${guardian.name}:`, error);
+            }
+          }
+          
+          // Mark as notified
+          await storage.updateHealthAlert(healthAlert.id, {
+            guardianNotificationsSent: true,
+          });
+        }
+        
+        // Return vital with alert info
+        return res.json({ vital, healthAlert, abnormalMetrics });
+      }
+      
+      res.json({ vital });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid input", errors: error.errors });

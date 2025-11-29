@@ -288,3 +288,22 @@ export const insertDeviceTokenSchema = createInsertSchema(deviceTokens).omit({
 
 export type InsertDeviceToken = z.infer<typeof insertDeviceTokenSchema>;
 export type DeviceToken = typeof deviceTokens.$inferSelect;
+
+export const healthAlerts = pgTable("health_alerts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  vitalId: varchar("vital_id").notNull().references(() => healthVitals.id, { onDelete: "cascade" }),
+  abnormalMetrics: text("abnormal_metrics").array().notNull(),
+  alertMessage: text("alert_message").notNull(),
+  guardianNotificationsSent: boolean("guardian_notifications_sent").default(false),
+  acknowledged: boolean("acknowledged").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertHealthAlertSchema = createInsertSchema(healthAlerts).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertHealthAlert = z.infer<typeof insertHealthAlertSchema>;
+export type HealthAlert = typeof healthAlerts.$inferSelect;

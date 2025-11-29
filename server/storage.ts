@@ -23,6 +23,8 @@ import {
   type InsertMedicineReminder,
   type GuardianEmergencyAlert,
   type InsertGuardianEmergencyAlert,
+  type HealthAlert,
+  type InsertHealthAlert,
   users,
   guardians,
   sosAlerts,
@@ -34,6 +36,7 @@ import {
   parentChildLinks,
   medicineReminders,
   guardianEmergencyAlerts,
+  healthAlerts,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -57,6 +60,10 @@ export interface IStorage {
   
   getHealthVitalsByUserId(userId: string, limit?: number): Promise<HealthVital[]>;
   createHealthVital(vital: InsertHealthVital): Promise<HealthVital>;
+  
+  getHealthAlertsByUserId(userId: string, limit?: number): Promise<HealthAlert[]>;
+  createHealthAlert(alert: InsertHealthAlert): Promise<HealthAlert>;
+  updateHealthAlert(id: string, alert: Partial<InsertHealthAlert>): Promise<HealthAlert | undefined>;
   
   getPoliceComplaintsByUserId(userId: string): Promise<PoliceComplaint[]>;
   createPoliceComplaint(complaint: InsertPoliceComplaint): Promise<PoliceComplaint>;
@@ -294,6 +301,25 @@ export class DatabaseStorage implements IStorage {
       .set(updateData)
       .where(eq(guardianEmergencyAlerts.id, id))
       .returning();
+    return alert;
+  }
+
+  async getHealthAlertsByUserId(userId: string, limit: number = 50): Promise<HealthAlert[]> {
+    return await db
+      .select()
+      .from(healthAlerts)
+      .where(eq(healthAlerts.userId, userId))
+      .orderBy(desc(healthAlerts.createdAt))
+      .limit(limit);
+  }
+
+  async createHealthAlert(alert: InsertHealthAlert): Promise<HealthAlert> {
+    const [newAlert] = await db.insert(healthAlerts).values(alert).returning();
+    return newAlert;
+  }
+
+  async updateHealthAlert(id: string, updateData: Partial<InsertHealthAlert>): Promise<HealthAlert | undefined> {
+    const [alert] = await db.update(healthAlerts).set(updateData).where(eq(healthAlerts.id, id)).returning();
     return alert;
   }
 }

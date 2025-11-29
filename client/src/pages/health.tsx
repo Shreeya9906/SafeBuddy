@@ -6,13 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Activity, Heart, Thermometer, Plus, TrendingUp } from "lucide-react";
-import type { HealthVital } from "@shared/schema";
+import { Activity, Heart, Thermometer, Plus, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
+import type { HealthVital, HealthAlert } from "@shared/schema";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 export default function HealthPage() {
   const { toast } = useToast();
   const [vitals, setVitals] = useState<HealthVital[]>([]);
+  const [alerts, setAlerts] = useState<HealthAlert[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newVital, setNewVital] = useState({
     heartRate: "",
@@ -24,7 +25,17 @@ export default function HealthPage() {
 
   useEffect(() => {
     loadVitals();
+    loadAlerts();
   }, []);
+
+  const loadAlerts = async () => {
+    try {
+      const data = await healthAPI.getAlerts(20);
+      setAlerts(data);
+    } catch (error: any) {
+      console.error("Error loading health alerts:", error);
+    }
+  };
 
   const loadVitals = async () => {
     try {
@@ -51,6 +62,7 @@ export default function HealthPage() {
       });
       
       await loadVitals();
+      await loadAlerts();
       setIsAddDialogOpen(false);
       setNewVital({
         heartRate: "",
@@ -249,6 +261,44 @@ export default function HealthPage() {
           </div>
         </CardContent>
       </Card>
+
+      {alerts.length > 0 && (
+        <Card className="border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-900">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-red-900 dark:text-red-100">
+              <AlertTriangle className="w-5 h-5" />
+              Health Alerts
+            </CardTitle>
+            <CardDescription className="text-red-800 dark:text-red-200">Abnormal readings detected and reported to guardians</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {alerts.map((alert) => (
+              <div key={alert.id} className="p-3 bg-white dark:bg-red-950/50 rounded-lg border border-red-200 dark:border-red-800">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      {alert.guardianNotificationsSent ? (
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <AlertTriangle className="w-4 h-4 text-red-600" />
+                      )}
+                      <p className="font-semibold text-red-900 dark:text-red-100">
+                        {new Date(alert.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="text-sm text-red-800 dark:text-red-200 whitespace-pre-wrap">
+                      {alert.alertMessage}
+                    </div>
+                    {alert.guardianNotificationsSent && (
+                      <p className="text-xs text-green-700 dark:text-green-300 mt-2">✅ Guardians notified via SMS</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {vitals.length > 0 && (
         <Card>
