@@ -1340,9 +1340,9 @@ function generateMyBuddyResponse(message: string, context?: string, language: st
 } {
   const lowerMessage = message.toLowerCase();
   
-  const emergencyKeywords = ["emergency", "help", "danger", "scared", "hurt", "pain", "bleeding", "attack", "follow", "lost"];
-  const medicalKeywords = ["sick", "fever", "headache", "dizzy", "breathing", "chest", "allergy", "medicine", "doctor", "nausea", "vomit", "cough", "cold", "flu", "constipation", "diarrhea", "stomach", "belly", "digestion", "bowel", "poop", "pee", "urine", "anaphylaxis", "choking", "frostbite", "heat exhaustion", "heat stroke", "nosebleed", "nose bleed", "seizure", "shock", "unconscious", "unconsciousness", "hypovolemic", "laceration", "poisoning", "scrape", "abdominal thrust", "bleeding", "cardiogenic", "infant choking", "unconscious choking", "sling", "drug", "ear emergency", "period", "periods", "menstruation", "cramps", "menstrual", "menses", "rash", "rashes"];
-  const emotionalKeywords = ["sad", "anxious", "worried", "afraid", "lonely", "stress", "panic", "depressed", "angry", "frustrated", "upset"];
+  const emergencyKeywords = ["emergency", "help", "danger", "scared", "hurt", "pain", "bleeding", "attack", "follow", "lost", "earthquake", "flood", "fire", "cyclone", "disaster", "trapped", "injured"];
+  const medicalKeywords = ["sick", "fever", "headache", "dizzy", "breathing", "chest", "allergy", "medicine", "doctor", "nausea", "vomit", "cough", "cold", "flu", "constipation", "diarrhea", "stomach", "belly", "digestion", "bowel", "poop", "pee", "urine", "anaphylaxis", "choking", "frostbite", "heat exhaustion", "heat stroke", "nosebleed", "nose bleed", "seizure", "shock", "unconscious", "unconsciousness", "hypovolemic", "laceration", "poisoning", "scrape", "abdominal thrust", "bleeding", "cardiogenic", "infant choking", "unconscious choking", "sling", "drug", "ear emergency", "period", "periods", "menstruation", "cramps", "menstrual", "menses", "rash", "rashes", "earthquake", "flood", "fire", "collapse", "crush", "debris", "cyclone", "landslide", "ash", "chemical"];
+  const emotionalKeywords = ["sad", "anxious", "worried", "afraid", "lonely", "stress", "panic", "depressed", "angry", "frustrated", "upset", "scared", "frightened", "terrified"];
   const contactKeywords = ["contact", "call", "reach", "phone", "guardian", "parent", "mom", "dad"];
 
   const isEmergency = emergencyKeywords.some(k => lowerMessage.includes(k));
@@ -1685,6 +1685,35 @@ function generateMyBuddyResponse(message: string, context?: string, language: st
     }
     
     suggestions = ["Contact Guardian", "Call Medical Helpline (108)", "Record Symptoms", "I feel better"];
+  } else if (isEmergency && (lowerMessage.includes("earthquake") || lowerMessage.includes("flood") || lowerMessage.includes("fire") || lowerMessage.includes("cyclone") || lowerMessage.includes("disaster"))) {
+    sentiment = "urgent";
+    keywords = ["disaster", "emergency"];
+    action = "provide_disaster_help";
+    
+    if (lowerMessage.includes("earthquake")) {
+      response = "🚨 **EARTHQUAKE EMERGENCY RESPONSE** 🚨\n\n**IF EARTHQUAKE IS HAPPENING NOW**:\n1. **DROP, COVER, HOLD ON**:\n   • DROP to hands and knees immediately\n   • COVER head/neck with hands or under sturdy table\n   • HOLD ON until shaking stops\n2. **WHERE TO BE**:\n   • Indoors: Under sturdy table or against interior wall\n   • Outdoors: Away from buildings, trees, power lines\n   • In car: Pull over, stay inside with seatbelt on\n3. **DO NOT**:\n   • Try to run outside during shaking\n   • Use elevators\n   • Stand in doorways (not safe)\n4. **After shaking stops**:\n   • Check for injuries\n   • Inspect building for damage\n   • Turn off gas if smell present\n   • Use 112 only for emergencies\n   • Stay away from damaged areas\n5. **Aftershocks**:\n   • More earthquakes may follow\n   • Use same DROP, COVER, HOLD ON technique\n\n**For injured**: Call 108 medical emergency";
+      firstAidSteps = ["DROP to hands and knees", "COVER head and neck", "HOLD ON until shaking stops", "Stay away from windows/mirrors", "Check for injuries", "Turn off gas if smell present", "Call 112 only for life-threatening emergencies"];
+      suggestions = ["I'm safe", "Someone is injured", "Building damaged", "Activate SOS"];
+    } else if (lowerMessage.includes("flood")) {
+      response = "🌊 **FLOOD EMERGENCY RESPONSE** 🌊\n\n**IMMEDIATE ACTIONS**:\n1. **If in flood zone**:\n   • Move to higher ground IMMEDIATELY\n   • Do NOT try to drive through flooded areas\n   • Do NOT touch flooded water (disease risk)\n2. **If trapped**:\n   • Go to roof or highest point\n   • Signal for help with flashlight or cloth\n   • Call 112 for rescue\n3. **In vehicle**:\n   • NEVER drive through flooded roads\n   • Turn around and use alternate route\n   • 6 inches of moving water can sweep car away\n4. **At home**:\n   • Move to upper floors\n   • Gather important documents\n   • Take emergency kit if time allows\n5. **After flood**:\n   • Don't return home until authorities say it's safe\n   • Avoid floodwater (contaminated)\n   • Watch for weakened buildings/bridges\n6. **Health risks**:\n   • Floodwater carries bacteria, chemicals\n   • Wash thoroughly if exposed\n   • Seek medical help for infections\n\n**Prevention**: Know evacuation routes before disasters";
+      firstAidSteps = ["Move to higher ground immediately", "Do NOT try driving through flood", "Signal for rescue if trapped", "Go to roof if in building", "Avoid floodwater contact", "Call 112 for evacuation help"];
+      suggestions = ["I'm in safe place", "Need rescue", "Someone is injured", "Activate SOS"];
+    } else if (lowerMessage.includes("fire")) {
+      response = "🔥 **FIRE EMERGENCY RESPONSE** 🔥\n\n**IF FIRE IS IN YOUR BUILDING**:\n1. **EVACUATE IMMEDIATELY**:\n   • Don't wait to gather belongings\n   • Leave everything behind except people\n   • Evacuate quickly but don't panic\n2. **Escape route**:\n   • Use nearest staircase (NEVER elevators)\n   • Feel door before opening (hot = fire behind)\n   • If room fills with smoke, stay low (crawl)\n   • Move along wall to find exit\n3. **If trapped**:\n   • Close door to slow fire\n   • Block vents/gaps with wet cloth\n   • Open window to signal (don't jump)\n   • Call 112 for rescue\n   • Await rescue on window\n4. **If clothes catch fire**:\n   • STOP - don't run\n   • DROP to ground\n   • ROLL to extinguish flames\n5. **Meeting point**:\n   • Agree with family on safe meeting spot\n   • Check all rooms before leaving\n   • Never re-enter burning building\n6. **Call emergency**:\n   • Call 112 once you're safe\n   • Give location and number of people\n\n**Prevention**: Know 2 exits from every room";
+      firstAidSteps = ["Evacuate immediately", "Use stairs (never elevator)", "Feel doors before opening", "Stay low if smoke present", "Never re-enter building", "Call 112 once safe"];
+      suggestions = ["I've evacuated safely", "Someone is still inside", "I'm trapped", "Activate SOS"];
+    } else if (lowerMessage.includes("cyclone") || lowerMessage.includes("hurricane") || lowerMessage.includes("tornado")) {
+      response = "🌪️ **CYCLONE/TORNADO EMERGENCY** 🌪️\n\n**BEFORE CYCLONE ARRIVES**:\n1. **Prepare home**:\n   • Close all windows and doors\n   • Secure outdoor items (can become projectiles)\n   • Fill bathtub with water\n   • Get emergency kit ready\n2. **Know safe shelter**:\n   • Interior room (no windows)\n   • Basement is safest\n   • Small interior bathroom/closet\n   • Interior hallway on lowest floor\n3. **Gather supplies**:\n   • Water and food\n   • First aid kit\n   • Medications\n   • Flashlights and batteries\n   • Phone chargers\n\n**WHEN CYCLONE HITS**:\n1. **Go to shelter**:\n   • Move to safe room BEFORE winds start\n   • Take pets with you\n   • Bring children and elderly\n2. **In the shelter**:\n   • Stay away from windows\n   • Keep interior doors closed\n   • Use mattresses/blankets for protection\n   • Cover yourself if debris comes through\n3. **Do NOT**:\n   • Look outside\n   • Open windows\n   • Go outside during storm\n   • Use elevators\n\n**IF OUTSIDE** (no shelter):\n   • Lie flat in ditch or depression\n   • Cover head with hands\n   • Stay away from trees and buildings\n   • NEVER try driving away\n\n**AFTER CYCLONE**:\n   • Stay indoors until all-clear\n   • Check for injuries\n   • Check for gas leaks\n   • Take photos for insurance\n   • Call 112 if trapped or injured";
+      firstAidSteps = ["Move to interior room", "Close all doors/windows", "Gather emergency kit", "Turn off utilities if safe", "Never go outside during storm", "Call 112 if in danger"];
+      suggestions = ["I'm in safe shelter", "I'm trapped", "Someone is injured", "Activate SOS"];
+    } else if (lowerMessage.includes("landslide")) {
+      response = "🏔️ **LANDSLIDE EMERGENCY** 🏔️\n\n**WARNING SIGNS**:\n• Unusual sounds from hillside\n• Ground cracks\n• Water flowing from slopes\n• Trees/poles tilting\n• Fence misaligned\n\n**IMMEDIATE ACTION**:\n1. **If near landslide**:\n   • Move away from slope IMMEDIATELY\n   • Don't stay below slope\n   • Climb if possible\n2. **If in vehicle**:\n   • Turn around and leave area\n   • Don't stop to assess\n   • Use alternate route\n3. **If trapped**:\n   • Don't try climbing over debris\n   • Move upslope if possible\n   • Call 112 for rescue\n4. **Stay in safe location**:\n   • Don't return until officials clear area\n   • More slides can follow\n   • Wait for all-clear signal\n\n**RESCUE OPERATIONS**:\n• Don't attempt self-rescue\n• Wait for rescue teams\n• Signal with light/sound\n• Mark location if possible\n• Stay calm, help will come";
+      firstAidSteps = ["Move away from slope immediately", "Don't stay below hillside", "Climb to higher ground", "Call 112 for rescue", "Don't attempt self-rescue"];
+      suggestions = ["I'm in safe place", "Need rescue", "I'm injured", "Activate SOS"];
+    } else {
+      response = "I understand this is a disaster situation. Your safety is the priority. Please:\n\n1. **Move to safety** - Find the nearest safe shelter\n2. **Call emergency** - Use 112 for immediate help\n3. **Activate SOS** - I can notify your guardians\n4. **Stay calm** - Help is available\n\nWhat's your current situation?";
+      suggestions = ["I'm safe", "Need help", "Someone injured", "Activate SOS"];
+    }
   } else if (isEmotional) {
     sentiment = "supportive";
     keywords = emotionalKeywords.filter(k => lowerMessage.includes(k));
@@ -1693,14 +1722,53 @@ function generateMyBuddyResponse(message: string, context?: string, language: st
     // Provide specific emotional support based on feeling
     let emotionalSupport = "I hear you, and your feelings are completely valid. ";
     
-    if (lowerMessage.includes("anxiety") || lowerMessage.includes("anxious") || lowerMessage.includes("panic")) {
-      emotionalSupport += "When you're feeling anxious, it can feel overwhelming. Try this grounding technique: Name 5 things you can see, 4 you can touch, 3 you can hear, 2 you can smell, and 1 you can taste. This helps calm your mind. Would it help to talk to someone you trust?";
-    } else if (lowerMessage.includes("sad") || lowerMessage.includes("lonely")) {
-      emotionalSupport += "It's okay to feel sad sometimes. Remember that these feelings are temporary and you're not alone. Connecting with loved ones, going outside, or doing something you enjoy can help. Your guardian cares about you.";
+    // Child-specific emotional support
+    const isChild = false; // Would be set based on profile
+    
+    if (lowerMessage.includes("scared") || lowerMessage.includes("frightened") || lowerMessage.includes("terrified")) {
+      if (isChild) {
+        emotionalSupport = "😟 I can see you're scared, and that's okay. Being scared is normal sometimes. Let's take some deep breaths together:\n\n1. **Breathe in slowly** through your nose for 4 counts\n2. **Hold** for 4 counts  \n3. **Breathe out slowly** through your mouth for 4 counts\n4. **Repeat** 5 times\n\nYou're not alone. I'm here with you. 💙\n\n**Things that might help**:\n• Call your guardian or parent\n• Stay in a safe, well-lit place\n• Think of something happy\n• Listen to your favorite music\n• Play with a pet if you have one\n• Draw or write your feelings\n\nRemember: Fear is temporary. You are brave and strong.";
+        suggestions = ["Call guardian", "Breathing exercises", "I feel better", "Activation SOS"];
+      } else {
+        emotionalSupport += "Being scared is a natural response. Please remember:\n\n1. **You are safe** - Take precautions but don't let fear paralyze you\n2. **Reach out** - Talk to someone you trust\n3. **Breathing exercise** - Calm your nervous system\n4. **Take action** - Do something to regain control\n5. **It will pass** - Fear is temporary\n\nWould you like breathing techniques or want to call someone?";
+        suggestions = ["Breathing exercise", "Call guardian", "Tell me more", "Activate SOS"];
+      }
+    } else if (lowerMessage.includes("lonely")) {
+      if (isChild) {
+        emotionalSupport = "💙 Feeling lonely is something many people experience, and it's okay to feel that way. But I want you to know - **you're not alone**.\n\n**Let's do something together**:\n1. **Talk about it** - What makes you feel lonely?\n2. **Reach out** - Call a friend, family member, or your guardian\n3. **Join activities** - Do something fun with others\n4. **Remember** - Loneliness doesn't last forever\n\n**Some ideas**:\n• Invite a friend to play\n• Join a club or group\n• Spend time with family\n• Play games online with friends\n• Help someone (it feels good!)\n• Talk to your school counselor\n\nYou deserve to feel connected and loved. 💖";
+        suggestions = ["Call friend", "Call parent", "Join activity", "Talk more"];
+      } else {
+        emotionalSupport += "Loneliness can feel overwhelming, but it's important to remember that you're connected to others. Consider:\n\n1. **Reach out** - Text or call someone you care about\n2. **Join communities** - Find groups with shared interests\n3. **Volunteer** - Help others and feel connected\n4. **Social activities** - Take a class or join a club\n5. **Professional help** - Consider talking to a counselor\n\nYou matter, and people care about you.";
+        suggestions = ["Call someone", "Find community", "Professional help", "Tell me more"];
+      }
+    } else if (lowerMessage.includes("anxiety") || lowerMessage.includes("anxious") || lowerMessage.includes("panic")) {
+      if (isChild) {
+        emotionalSupport = "😌 Feeling worried or anxious is something lots of kids feel, and that's completely normal! But I want to help you feel better.\n\n**Quick calming exercise** (takes 2 minutes):\n1. **Box breathing**: Breathe in for 4 counts, hold for 4, out for 4, hold for 4\n2. **Progressive muscle relaxation**: Squeeze and release each muscle group\n3. **Grounding**: Notice 5 things you see, 4 you touch, 3 you hear, 2 you smell, 1 you taste\n\n**Things that help**:\n• Talk to your parent/guardian\n• Play with a friend or pet\n• Do something you enjoy\n• Move your body (dance, play, run)\n• Draw or write your feelings\n• Listen to calming music\n\n**Remember**: These worried feelings will pass. You are brave! 💪";
+        suggestions = ["Breathing exercise", "Call parent", "Do activity", "I feel better"];
+      } else {
+        emotionalSupport += "Anxiety can feel paralyzing, but these techniques help:\n\n**Immediate relief**:\n• Box breathing (4-4-4-4 pattern)\n• Grounding technique: 5-4-3-2-1 sensory awareness\n• Progressive muscle relaxation\n• Cold water on face (activates calm response)\n\n**Longer term**:\n• Regular exercise\n• Limit caffeine and alcohol\n• Meditation or mindfulness\n• Talk to a professional\n\nYou're not alone in this.";
+      }
+    } else if (lowerMessage.includes("sad")) {
+      if (isChild) {
+        emotionalSupport = "😢 Feeling sad is something everyone experiences, and it's okay to feel that way. But I'm here to help you through it.\n\n**Let's feel better together**:\n• **Talk about it** - Tell your parent/guardian or a trusted adult\n• **Do something fun** - Play a game, watch your favorite show, go outside\n• **Move your body** - Play, dance, run in the park\n• **Help others** - Making someone else smile helps you smile\n• **Creative expression** - Draw, write, sing, dance\n• **Connect** - Spend time with friends and family\n\n**Remember**: Sadness doesn't last forever. Things get better. 💙";
+        suggestions = ["Call parent", "Do fun activity", "Draw/write", "I'm feeling better"];
+      } else {
+        emotionalSupport += "Sadness is part of being human. Reach out to someone you trust, engage in activities you enjoy, get outside, and remember that these feelings are temporary. Your support system is there for you.";
+      }
     } else if (lowerMessage.includes("stress") || lowerMessage.includes("frustrated")) {
-      emotionalSupport += "Stress is a normal part of life. Try taking a break, doing some light exercise, or practicing mindfulness. Break your tasks into smaller, manageable steps. You've got this!";
+      if (isChild) {
+        emotionalSupport = "😤 Feeling stressed or frustrated happens to everyone, including kids! But there are things that can help.\n\n**De-stress activities**:\n• **Take a break** - Step away from what's stressing you\n• **Go outside** - Play, run, ride a bike\n• **Deep breathing** - Breathe in slowly, breathe out slowly\n• **Talk to someone** - Tell your parent or teacher\n• **Creative outlet** - Draw, paint, write, sing\n• **Physical activity** - Movement helps release stress\n• **Be kind to yourself** - You're doing your best!\n\n**Remember**: Stress is temporary. You can handle this! 💪";
+        suggestions = ["Take break", "Go outside", "Talk to parent", "Breathing exercise"];
+      } else {
+        emotionalSupport += "Stress is manageable. Take breaks, exercise, break tasks into smaller steps, practice mindfulness, and talk to someone. You're capable of handling more than you think.";
+      }
     } else if (lowerMessage.includes("angry") || lowerMessage.includes("upset")) {
-      emotionalSupport += "It's okay to feel angry, but let's channel it positively. Try taking a walk, writing down your feelings, or talking to someone you trust. Deep breathing can help calm your mind.";
+      if (isChild) {
+        emotionalSupport = "😠 It's completely normal to feel angry or upset. These feelings are okay! Let's help you feel better.\n\n**Cool down techniques**:\n• **Count to 10** - Slowly count before you react\n• **Take deep breaths** - In through nose, out through mouth\n• **Physical release** - Punch a pillow, run, do push-ups\n• **Space** - Take time away from what's upsetting you\n• **Talk about it** - Tell a trusted adult why you're angry\n• **Creative outlet** - Draw, write, play music\n• **Movement** - Ride a bike, play sports, dance\n\n**Remember**: It's okay to feel angry, but we need to handle it in healthy ways. You're learning and growing! 💙";
+        suggestions = ["Count breaths", "Physical activity", "Talk to parent", "I feel better"];
+      } else {
+        emotionalSupport += "Anger is valid. Channel it constructively: exercise, write, talk it through, take space, or engage in a hobby. Don't act when emotions are high.";
+      }
     } else {
       emotionalSupport += "Remember, you're stronger than you think. Taking things one step at a time and leaning on your support system can make a big difference.";
     }
