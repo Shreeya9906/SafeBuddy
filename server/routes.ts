@@ -571,7 +571,7 @@ Please use this reference ID when following up on this complaint.
 
   app.post("/api/mybuddy/chat", requireAuth, async (req, res, next) => {
     try {
-      const { message, context, language = "en_IN" } = req.body;
+      const { message, context, language = "en_IN", latitude, longitude, batteryLevel } = req.body;
       
       const response = generateMyBuddyResponse(message, context, language);
       
@@ -587,7 +587,56 @@ Please use this reference ID when following up on this complaint.
       });
 
       const log = await storage.createMyBuddyLog(validatedData);
-      res.json({ ...log, suggestions: response.suggestions });
+      
+      // Check if user said "activate sos" - trigger SOS automatically
+      if (message.toLowerCase().includes("activate") && message.toLowerCase().includes("sos")) {
+        console.log("🚨 SOS activation triggered via MyBuddy");
+        
+        // Create SOS alert
+        const sosAlert = await storage.createSOSAlert({
+          userId: req.user!.id,
+          triggerMethod: "voice_command_mybuddy",
+          latitude: latitude || 0,
+          longitude: longitude || 0,
+          address: context?.address || "Location from MyBuddy SOS",
+          batteryLevel: batteryLevel || 100,
+        });
+        
+        // Notify guardians
+        try {
+          const guardians = await storage.getGuardiansByUserId(req.user!.id);
+          const user = await storage.getUserById(req.user!.id);
+          
+          if (guardians.length > 0) {
+            const locationUrl = `https://maps.google.com/?q=${latitude || 0},${longitude || 0}`;
+            
+            // Send Firebase push notifications
+            await sendEmergencyNotificationViaFirebase(
+              guardians,
+              "🚨 EMERGENCY SOS ALERT!",
+              `${user?.name} activated SOS via MyBuddy - NEEDS IMMEDIATE HELP!`,
+              {
+                sosId: sosAlert.id,
+                userName: user?.name || "User",
+                latitude: (latitude || 0).toString(),
+                longitude: (longitude || 0).toString(),
+                locationUrl,
+                address: sosAlert.address,
+                battery: (batteryLevel || 100).toString(),
+                timestamp: new Date().toISOString(),
+              }
+            );
+            
+            console.log(`✅ SOS notifications sent to ${guardians.length} guardians`);
+          }
+        } catch (notifyError) {
+          console.error("Error notifying guardians:", notifyError);
+        }
+        
+        response.action = "sos_activated";
+      }
+      
+      res.json({ ...log, suggestions: response.suggestions, action: response.action });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid input", errors: error.errors });

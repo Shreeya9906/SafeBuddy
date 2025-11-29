@@ -73,7 +73,41 @@ export default function MyBuddyPage() {
     setIsLoading(true);
 
     try {
-      const response = await mybuddyAPI.chat(messageText, undefined, user?.language || "en_IN");
+      // Get current location and battery for SOS activation via MyBuddy
+      let latitude, longitude, batteryLevel;
+      try {
+        const location = await getCurrentLocation();
+        latitude = location.latitude;
+        longitude = location.longitude;
+      } catch (e) {
+        console.log("Could not get location");
+      }
+      
+      try {
+        const battery = await getBatteryLevel();
+        batteryLevel = battery;
+      } catch (e) {
+        console.log("Could not get battery level");
+      }
+
+      const response = await mybuddyAPI.chat(messageText, undefined, user?.language || "en_IN", latitude, longitude, batteryLevel);
+      
+      // If SOS was activated, show alert
+      if (response.action === "sos_activated") {
+        toast({
+          title: "🚨 SOS ACTIVATED!",
+          description: "Emergency notifications sent to your guardians",
+          variant: "default",
+        });
+        setSOSActive(true);
+        // Play siren
+        try {
+          await playSOSSiren();
+          await enableFlashlight();
+        } catch (e) {
+          console.error("Could not activate siren/flashlight:", e);
+        }
+      }
       
       setMessages((prev) => {
         const newMessages = [...prev];
