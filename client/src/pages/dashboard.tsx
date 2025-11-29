@@ -650,7 +650,9 @@ export default function DashboardPage() {
         guardianAPI.getAll(),
       ]);
       setActiveAlert(alert);
-      setIsSOSActive(!!alert && alert.status === "active");
+      // DO NOT auto-activate old SOS alerts from database
+      // SOS should only be active if user manually activates it in THIS session
+      setIsSOSActive(false);
       setGuardians(guardianList);
     } catch (error) {
       console.error("Error loading dashboard:", error);
