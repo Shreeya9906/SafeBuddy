@@ -34,6 +34,8 @@ export default function LiveLocationPage() {
   const startTracking = async () => {
     setIsLoading(true);
     try {
+      console.log("🚀 Starting GPS tracking from your phone...");
+      
       // Get initial location
       const initialLocation = await getCurrentLocation();
       const locationData: LiveLocationData = {
@@ -41,6 +43,7 @@ export default function LiveLocationPage() {
         longitude: initialLocation.longitude,
         accuracy: initialLocation.accuracy || 0,
         timestamp: new Date(),
+        source: "gps",
       };
       
       setLocation(locationData);
@@ -58,25 +61,36 @@ export default function LiveLocationPage() {
               timestamp: new Date(),
               speed: position.coords.speed || undefined,
               heading: position.coords.heading || undefined,
+              source: "gps",
             };
             
             setLocation(newLocation);
             setLocations(prev => [...prev, newLocation]);
             
-            console.log("📍 Location updated:", newLocation);
+            console.log("📍 GPS location updated:", {
+              lat: newLocation.latitude,
+              lon: newLocation.longitude,
+              accuracy: `±${newLocation.accuracy.toFixed(0)}m`
+            });
           },
           (error) => {
-            console.error("Geolocation error:", error);
+            console.error("❌ GPS error:", error);
+            let errorMsg = error.message;
+            if (error.code === 1) {
+              errorMsg = "GPS permission denied. Please enable location in your phone settings.";
+            } else if (error.code === 2) {
+              errorMsg = "GPS is not available. Enable Location Services on your phone.";
+            }
             toast({
-              title: "Location Error",
-              description: error.message,
+              title: "GPS Error",
+              description: errorMsg,
               variant: "destructive",
             });
           },
           {
-            enableHighAccuracy: true,
-            maximumAge: 0,
-            timeout: 5000,
+            enableHighAccuracy: true,  // Request actual GPS, not IP-based
+            maximumAge: 0,             // Get fresh location every time
+            timeout: 10000,
           }
         );
         
@@ -84,13 +98,14 @@ export default function LiveLocationPage() {
       }
 
       toast({
-        title: "✅ Live Tracking Started",
-        description: "Real-time location tracking is now active",
+        title: "✅ GPS Tracking Started",
+        description: "Using your phone's GPS for accurate location",
       });
     } catch (error: any) {
+      console.error("❌ Tracking error:", error);
       toast({
-        title: "Error",
-        description: error.message,
+        title: "GPS Error",
+        description: error.message || "Could not access GPS. Please check your phone's location settings.",
         variant: "destructive",
       });
     } finally {

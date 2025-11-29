@@ -9,27 +9,40 @@ export interface LocationData {
 export function getCurrentLocation(): Promise<LocationData> {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
-      reject(new Error("Geolocation is not supported by your browser"));
+      reject(new Error("GPS not supported. Please use a mobile device or enable location in browser settings."));
       return;
     }
 
+    console.log("📍 Requesting high-accuracy GPS from your phone...");
+    
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        const accuracy = position.coords.accuracy || 0;
+        console.log(`✅ GPS location received: ${position.coords.latitude}, ${position.coords.longitude} (accuracy: ±${accuracy.toFixed(0)}m)`);
         resolve({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
-          accuracy: position.coords.accuracy,
+          accuracy: accuracy,
           altitude: position.coords.altitude,
           speed: position.coords.speed,
         });
       },
       (error) => {
-        reject(new Error(`Location error: ${error.message}`));
+        let errorMsg = error.message;
+        if (error.code === 1) {
+          errorMsg = "Location permission denied. Please enable GPS in your phone settings and grant permission to this app.";
+        } else if (error.code === 2) {
+          errorMsg = "Location service unavailable. Please enable GPS/Location Services on your phone.";
+        } else if (error.code === 3) {
+          errorMsg = "Location request timed out. Please move to an area with better GPS signal.";
+        }
+        console.error(`❌ GPS Error: ${errorMsg}`);
+        reject(new Error(errorMsg));
       },
       {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
+        enableHighAccuracy: true,  // Request GPS (not just IP-based)
+        timeout: 15000,            // Wait 15 seconds for GPS
+        maximumAge: 0,             // Don't use cached location
       }
     );
   });
