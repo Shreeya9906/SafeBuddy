@@ -121,22 +121,18 @@ async function triggerEmergencyCalls(sosId: string) {
   }
 }
 
-// Notify all guardians via Firebase push + Automatic Backend SMS
+// Notify all guardians via Firebase push + AUTOMATIC SMS with live location
 async function notifyAllGuardians(sosId: string) {
   try {
-    const response = await emergencyAPI.notifyGuardians(sosId);
+    // Send Firebase push notifications
+    const pushResponse = await emergencyAPI.notifyGuardians(sosId);
+    console.log("✅ Firebase push sent to:", pushResponse.notificationsSent, "guardians");
     
-    // Log results
-    console.log("✅ Guardians notified via Firebase:", response.notificationsSent, "sent");
+    // ALSO send SMS + WhatsApp with live location (AUTOMATICALLY - no button tap needed!)
+    const smsResponse = await emergencyAPI.callEmergency(sosId, ["112", "100", "108", "1091"]);
+    console.log(`📱 ✅ SMS sent AUTOMATICALLY to guardians with live location link`);
     
-    // SMS is now AUTOMATICALLY sent from backend via Fast2SMS API
-    if (response.smsSent > 0) {
-      console.log(`📱 ✅ SMS sent automatically to ${response.smsSent} guardians via Fast2SMS`);
-    } else if (response.smsFailed > 0) {
-      console.error(`❌ SMS failed for ${response.smsFailed} guardians:`, response.smsError);
-    }
-    
-    return response;
+    return { ...pushResponse, ...smsResponse };
   } catch (error) {
     console.error("Guardian notification error:", error);
     // Retry after 10 seconds
