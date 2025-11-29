@@ -73,7 +73,7 @@ export default function MyBuddyPage() {
     setIsLoading(true);
 
     try {
-      const response = await mybuddyAPI.chat(messageText);
+      const response = await mybuddyAPI.chat(messageText, undefined, user?.language || "en_IN");
       
       setMessages((prev) => {
         const newMessages = [...prev];

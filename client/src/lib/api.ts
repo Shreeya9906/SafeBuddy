@@ -93,8 +93,8 @@ export const mybuddyAPI = {
   getLogs: (limit?: number): Promise<MyBuddyLog[]> => 
     fetchAPI(`/mybuddy/logs${limit ? `?limit=${limit}` : ""}`),
   
-  chat: (message: string, context?: string): Promise<MyBuddyLog & { suggestions: string[] }> =>
-    fetchAPI("/mybuddy/chat", { method: "POST", body: JSON.stringify({ message, context }) }),
+  chat: (message: string, context?: string, language?: string): Promise<MyBuddyLog & { suggestions: string[] }> =>
+    fetchAPI("/mybuddy/chat", { method: "POST", body: JSON.stringify({ message, context, language }) }),
 };
 
 export const childrenAPI = {

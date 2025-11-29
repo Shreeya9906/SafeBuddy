@@ -571,9 +571,9 @@ Please use this reference ID when following up on this complaint.
 
   app.post("/api/mybuddy/chat", requireAuth, async (req, res, next) => {
     try {
-      const { message, context } = req.body;
+      const { message, context, language = "en_IN" } = req.body;
       
-      const response = generateMyBuddyResponse(message, context);
+      const response = generateMyBuddyResponse(message, context, language);
       
       const validatedData = insertMyBuddyLogSchema.parse({
         userId: req.user!.id,
@@ -1330,7 +1330,7 @@ Please use this reference ID when following up on this complaint.
   return httpServer;
 }
 
-function generateMyBuddyResponse(message: string, context?: string): {
+function generateMyBuddyResponse(message: string, context?: string, language: string = "en_IN"): {
   text: string;
   sentiment: string;
   keywords: string[];
