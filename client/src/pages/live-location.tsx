@@ -13,6 +13,12 @@ interface LiveLocationData {
   timestamp: Date;
   speed?: number;
   heading?: number;
+  source?: string;
+}
+
+interface ManualLocationInput {
+  latitude: string;
+  longitude: string;
 }
 
 export default function LiveLocationPage() {
@@ -22,6 +28,8 @@ export default function LiveLocationPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [watchId, setWatchId] = useState<number | null>(null);
   const [locations, setLocations] = useState<LiveLocationData[]>([]);
+  const [showManualInput, setShowManualInput] = useState(false);
+  const [manualInput, setManualInput] = useState<ManualLocationInput>({ latitude: "", longitude: "" });
 
   const startTracking = async () => {
     setIsLoading(true);
@@ -100,6 +108,46 @@ export default function LiveLocationPage() {
       title: "⏹️ Tracking Stopped",
       description: "Location tracking has been stopped",
     });
+  };
+
+  const setManualLocation = () => {
+    try {
+      const lat = parseFloat(manualInput.latitude);
+      const lon = parseFloat(manualInput.longitude);
+
+      if (isNaN(lat) || isNaN(lon)) {
+        toast({
+          title: "Invalid Input",
+          description: "Please enter valid latitude and longitude numbers",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const manualLocation: LiveLocationData = {
+        latitude: lat,
+        longitude: lon,
+        accuracy: 10,
+        timestamp: new Date(),
+        source: "manual",
+      };
+
+      setLocation(manualLocation);
+      setLocations([manualLocation]);
+      setShowManualInput(false);
+      setManualInput({ latitude: "", longitude: "" });
+
+      toast({
+        title: "✅ Location Set",
+        description: `Location set to ${lat}, ${lon}`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const copyLocationLink = () => {
@@ -210,6 +258,50 @@ export default function LiveLocationPage() {
         </CardContent>
       </Card>
 
+      {/* Manual Location Input */}
+      {showManualInput && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Set Manual Location (For Testing)</CardTitle>
+            <CardDescription>Enter exact latitude and longitude</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium">Latitude</label>
+                <input
+                  type="text"
+                  placeholder="e.g., 13.0827"
+                  value={manualInput.latitude}
+                  onChange={(e) => setManualInput({ ...manualInput, latitude: e.target.value })}
+                  className="w-full px-3 py-2 border rounded mt-1"
+                  data-testid="input-latitude"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Longitude</label>
+                <input
+                  type="text"
+                  placeholder="e.g., 80.2707"
+                  value={manualInput.longitude}
+                  onChange={(e) => setManualInput({ ...manualInput, longitude: e.target.value })}
+                  className="w-full px-3 py-2 border rounded mt-1"
+                  data-testid="input-longitude"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Button onClick={setManualLocation} className="bg-blue-600 hover:bg-blue-700" data-testid="button-set-location">
+                ✓ Set Location
+              </Button>
+              <Button onClick={() => setShowManualInput(false)} variant="outline" data-testid="button-cancel-manual">
+                Cancel
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Control Buttons */}
       <div className="grid grid-cols-2 gap-4">
         <Button
@@ -232,6 +324,18 @@ export default function LiveLocationPage() {
         </Button>
 
         <Button
+          onClick={() => setShowManualInput(!showManualInput)}
+          variant="outline"
+          size="lg"
+          data-testid="button-manual-location"
+        >
+          ✏️ Manual Location
+        </Button>
+      </div>
+
+      {/* Copy and Share Buttons */}
+      <div className="grid grid-cols-2 gap-4">
+        <Button
           onClick={copyLocationLink}
           disabled={!location}
           variant="outline"
@@ -241,30 +345,30 @@ export default function LiveLocationPage() {
           <Copy className="mr-2 w-4 h-4" />
           Copy Link
         </Button>
+
+        <Button
+          onClick={shareLocation}
+          disabled={!location}
+          variant="outline"
+          size="lg"
+          data-testid="button-share-location"
+        >
+          <Share2 className="mr-2 w-4 h-4" />
+          Share Location
+        </Button>
       </div>
 
-      {/* Share Options */}
+      {/* SMS Option */}
       {location && (
-        <div className="grid grid-cols-2 gap-4">
-          <Button
-            onClick={shareLocation}
-            variant="outline"
-            size="lg"
-            data-testid="button-share-location"
-          >
-            <Share2 className="mr-2 w-4 h-4" />
-            Share Location
-          </Button>
-
-          <Button
-            onClick={sendLocationViaSMS}
-            variant="outline"
-            size="lg"
-            data-testid="button-send-sms"
-          >
-            📱 Send via SMS
-          </Button>
-        </div>
+        <Button
+          onClick={sendLocationViaSMS}
+          variant="outline"
+          size="lg"
+          className="w-full"
+          data-testid="button-send-sms"
+        >
+          📱 Send via SMS
+        </Button>
       )}
 
       {/* Location History */}
