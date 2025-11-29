@@ -10,6 +10,7 @@ import { getMedicalAdvice } from "./medical-advisor";
 import { insertUserSchema, insertGuardianSchema, insertSOSAlertSchema, insertSOSLocationSchema, insertHealthVitalSchema, insertPoliceComplaintSchema, insertMyBuddyLogSchema, insertGuardianEmergencyAlertSchema, guardianEmergencyAlerts, guardians as guardiansTable, users as usersTable } from "@shared/schema";
 import { z } from "zod";
 import { getFirebaseMessaging } from "./firebase-config";
+import { sendEmergencySMS, sendFallDetectionSMS } from "./twilio-sms";
 import { deviceTokens } from "@shared/schema";
 
 declare global {
@@ -661,7 +662,7 @@ Please use this reference ID when following up on this complaint.
     }
   });
 
-  // Send emergency push notifications via Firebase
+  // Send emergency push notifications via Firebase + SMS
   app.post("/api/sos/:id/call-emergency", requireAuth, async (req, res, next) => {
     try {
       const sosAlert = await storage.getSOSById(req.params.id);
@@ -708,10 +709,10 @@ Please use this reference ID when following up on this complaint.
               });
 
               console.log(`✅ Push notification sent to device: ${token.deviceName || token.fcmToken.substring(0, 20)}`);
-              notificationResults.push({ device: token.deviceName || "Device", status: "sent" });
+              notificationResults.push({ device: token.deviceName || "Device", status: "sent", type: "push" });
             } catch (err: any) {
               console.error(`❌ Push to ${token.deviceName}:`, err.message);
-              notificationResults.push({ device: token.deviceName || "Device", status: "failed", error: err.message });
+              notificationResults.push({ device: token.deviceName || "Device", status: "failed", type: "push", error: err.message });
             }
           }
         } catch (err: any) {
@@ -721,8 +722,33 @@ Please use this reference ID when following up on this complaint.
         console.log("ℹ️ Firebase Messaging not available - ensure FIREBASE_SERVICE_ACCOUNT is set");
       }
 
+      // Send SMS to all guardians
+      try {
+        const guardians = await storage.getGuardiansByUserId(req.user!.id);
+        console.log(`📱 Sending SMS to ${guardians.length} guardians...`);
+        
+        for (const guardian of guardians) {
+          if (guardian.phone) {
+            const smsSent = await sendEmergencySMS(
+              guardian.phone,
+              user?.name || "User",
+              sosAlert.latitude,
+              sosAlert.longitude
+            );
+            notificationResults.push({
+              guardian: guardian.name,
+              phone: guardian.phone,
+              status: smsSent ? "sent" : "failed",
+              type: "sms"
+            });
+          }
+        }
+      } catch (err: any) {
+        console.error("Error sending SMS:", err.message);
+      }
+
       res.json({ 
-        message: "Emergency SOS activated - Firebase notifications sent",
+        message: "Emergency SOS activated - Notifications sent via Firebase & SMS",
         firebaseEnabled: !!messaging,
         notificationsSent: notificationResults.length,
         details: notificationResults,
