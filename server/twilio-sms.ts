@@ -1,64 +1,52 @@
-// Twilio SMS integration - see blueprint for Twilio connector setup
+// Twilio SMS integration
 import twilio from 'twilio';
 
 let twilioClient: any = null;
 let twilioPhoneNumber: string | null = null;
 
-async function getCredentials() {
-  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
-  const xReplitToken = process.env.REPL_IDENTITY 
-    ? 'repl ' + process.env.REPL_IDENTITY 
-    : process.env.WEB_REPL_RENEWAL 
-    ? 'depl ' + process.env.WEB_REPL_RENEWAL 
-    : null;
+export async function getTwilioClient() {
+  if (twilioClient) return twilioClient;
 
-  if (!xReplitToken) {
-    console.log("⚠️ No Replit token found - Twilio SMS disabled");
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  const phoneNumber = process.env.TWILIO_PHONE_NUMBER;
+
+  if (!accountSid || !authToken || !phoneNumber) {
+    console.error("❌ Missing Twilio credentials in environment variables:");
+    console.error("   TWILIO_ACCOUNT_SID:", accountSid ? "✓" : "❌");
+    console.error("   TWILIO_AUTH_TOKEN:", authToken ? "✓" : "❌");
+    console.error("   TWILIO_PHONE_NUMBER:", phoneNumber ? "✓" : "❌");
     return null;
   }
 
   try {
-    const response = await fetch(
-      'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=twilio',
-      {
-        headers: {
-          'Accept': 'application/json',
-          'X_REPLIT_TOKEN': xReplitToken
-        }
-      }
-    );
-
-    const data = await response.json();
-    const connectionSettings = data.items?.[0];
-
-    if (!connectionSettings?.settings?.account_sid || !connectionSettings?.settings?.api_key || !connectionSettings?.settings?.api_key_secret) {
-      console.log("⚠️ Twilio credentials incomplete");
-      return null;
-    }
-
-    return {
-      accountSid: connectionSettings.settings.account_sid,
-      apiKey: connectionSettings.settings.api_key,
-      apiKeySecret: connectionSettings.settings.api_key_secret,
-      phoneNumber: connectionSettings.settings.phone_number
-    };
+    twilioClient = twilio(accountSid, authToken);
+    twilioPhoneNumber = phoneNumber;
+    console.log("✅ Twilio SMS service initialized with account:", accountSid.substring(0, 5) + "...");
+    return twilioClient;
   } catch (error: any) {
-    console.error("❌ Error fetching Twilio credentials:", error.message);
+    console.error("❌ Error initializing Twilio:", error.message);
     return null;
   }
 }
 
-export async function getTwilioClient() {
-  if (twilioClient) return twilioClient;
-
-  const creds = await getCredentials();
-  if (!creds) return null;
-
-  twilioClient = twilio(creds.apiKey, creds.apiKeySecret, { accountSid: creds.accountSid });
-  twilioPhoneNumber = creds.phoneNumber;
-
-  console.log("✅ Twilio SMS service initialized");
-  return twilioClient;
+function formatPhoneNumber(phone: string): string {
+  // Remove all non-digit characters
+  const cleaned = phone.replace(/\D/g, '');
+  
+  // If it starts with 91 or is 10-12 digits, assume Indian number
+  if (cleaned.startsWith('91') || (cleaned.length >= 10 && cleaned.length <= 12)) {
+    // Remove leading 91 if present and add it back
+    const withoutCountry = cleaned.startsWith('91') ? cleaned.substring(2) : cleaned;
+    return `+91${withoutCountry.slice(-10)}`;
+  }
+  
+  // Otherwise assume it's already formatted or needs +91
+  if (!cleaned.startsWith('91')) {
+    return `+91${cleaned.slice(-10)}`;
+  }
+  
+  return `+${cleaned}`;
 }
 
 export async function sendEmergencySMS(
@@ -74,16 +62,19 @@ export async function sendEmergencySMS(
       return false;
     }
 
+    const formattedPhone = formatPhoneNumber(phoneNumber);
     const locationUrl = `https://maps.google.com/?q=${latitude},${longitude}`;
     const message = `🚨 EMERGENCY ALERT!\n${userName} needs IMMEDIATE help!\n📍 Location: ${locationUrl}\n⏰ Time: ${new Date().toLocaleString()}`;
 
+    console.log(`📱 Sending SMS to ${formattedPhone} (from ${phoneNumber})...`);
+    
     await client.messages.create({
       body: message,
       from: twilioPhoneNumber,
-      to: phoneNumber
+      to: formattedPhone
     });
 
-    console.log(`✅ SMS sent to ${phoneNumber}`);
+    console.log(`✅ SMS sent to ${formattedPhone}`);
     return true;
   } catch (error: any) {
     console.error(`❌ SMS sending failed to ${phoneNumber}:`, error.message);
@@ -104,6 +95,7 @@ export async function sendFallDetectionSMS(
       return false;
     }
 
+    const formattedPhone = formatPhoneNumber(phoneNumber);
     let message = `⚠️ FALL DETECTION ALERT!\n${userName} may have fallen.\nImmediate assistance needed!`;
     
     if (latitude && longitude) {
@@ -111,13 +103,15 @@ export async function sendFallDetectionSMS(
       message += `\n📍 Location: ${locationUrl}`;
     }
 
+    console.log(`📱 Sending fall detection SMS to ${formattedPhone}...`);
+
     await client.messages.create({
       body: message,
       from: twilioPhoneNumber,
-      to: phoneNumber
+      to: formattedPhone
     });
 
-    console.log(`✅ Fall detection SMS sent to ${phoneNumber}`);
+    console.log(`✅ Fall detection SMS sent to ${formattedPhone}`);
     return true;
   } catch (error: any) {
     console.error(`❌ Fall detection SMS failed to ${phoneNumber}:`, error.message);
