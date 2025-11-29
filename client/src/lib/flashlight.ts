@@ -3,34 +3,36 @@ let torchTrack: MediaStreamTrack | null = null;
 
 export async function enableFlashlight() {
   try {
-    // Get the camera stream with torch
-    const constraints = {
-      video: {
-        facingMode: "environment",
-      },
-    } as any;
+    console.log("💡 Enabling flashlight...");
+    
+    // First, show the screen flash immediately (works on all devices)
+    flashScreen(true);
+    
+    // Then try to enable device torch if available
+    try {
+      const constraints = {
+        video: {
+          facingMode: "environment",
+        },
+      } as any;
 
-    torchStream = await navigator.mediaDevices.getUserMedia(constraints);
-    torchTrack = torchStream.getVideoTracks()[0];
+      torchStream = await navigator.mediaDevices.getUserMedia(constraints);
+      torchTrack = torchStream.getVideoTracks()[0];
 
-    if (!torchTrack) {
-      throw new Error("No video track found");
+      if (torchTrack) {
+        // Try to enable torch on device
+        await (torchTrack as any).applyConstraints({
+          advanced: [{ torch: true }],
+        });
+        console.log("✅ Device flashlight (torch) enabled");
+      }
+    } catch (torchError) {
+      console.log("ℹ️ Device torch not available, using screen flash");
     }
-
-    // Try to enable torch
-    const settings = torchTrack.getSettings();
-    if ("torch" in settings) {
-      await (torchTrack as any).applyConstraints({
-        advanced: [{ torch: true }],
-      });
-      return true;
-    } else {
-      // Fallback: Flash the screen using HTML5 Canvas
-      flashScreen(true);
-      return true;
-    }
+    
+    return true;
   } catch (error) {
-    console.error("Flashlight error:", error);
+    console.error("❌ Flashlight error:", error);
     // Fallback to screen flash
     flashScreen(true);
     return true;
@@ -65,35 +67,49 @@ function flashScreen(enable: boolean) {
     if (!flashElement) {
       flashElement = document.createElement("div");
       flashElement.id = "screen-flash";
+      
+      // Create intense white flash - maximum brightness
       flashElement.style.cssText = `
         position: fixed;
         top: 0;
         left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: white;
-        opacity: 0.8;
-        z-index: 9999;
+        width: 100vw;
+        height: 100vh;
+        background-color: #ffffff;
+        opacity: 1;
+        z-index: 99999;
         pointer-events: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       `;
+      
+      // Add white background behind everything
+      flashElement.innerHTML = '<div style="width: 100%; height: 100%; background: white;"></div>';
       document.body.appendChild(flashElement);
+      
+      console.log("💡 Screen flash activated (white overlay)");
 
-      // Pulse effect
-      const keyframes = `
-        @keyframes flash-pulse {
-          0% { opacity: 0.8; }
-          50% { opacity: 0.6; }
-          100% { opacity: 0.8; }
-        }
-      `;
-      const style = document.createElement("style");
-      style.textContent = keyframes;
-      document.head.appendChild(style);
+      // Create and inject intense pulsing animation
+      let styleElement = document.getElementById("flash-pulse-style");
+      if (!styleElement) {
+        styleElement = document.createElement("style");
+        styleElement.id = "flash-pulse-style";
+        styleElement.textContent = `
+          @keyframes emergency-flash {
+            0%, 100% { opacity: 1 !important; }
+            50% { opacity: 0.3 !important; }
+          }
+        `;
+        document.head.appendChild(styleElement);
+      }
 
-      flashElement.style.animation = "flash-pulse 0.5s infinite";
+      // Apply intense pulsing animation
+      flashElement.style.animation = "emergency-flash 0.3s infinite";
     }
   } else {
     if (flashElement) {
+      console.log("💡 Screen flash deactivated");
       flashElement.remove();
     }
   }
