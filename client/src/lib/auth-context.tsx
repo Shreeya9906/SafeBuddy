@@ -22,7 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { user } = await authAPI.getMe();
       setUser(user);
       if (user?.language) {
-        applyLanguageStyles(user.language, user.backgroundColor);
+        applyLanguageStyles(user.language, user.backgroundColor ?? undefined);
       }
     } catch (error) {
       setUser(null);
@@ -59,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (user?.language) {
-      applyLanguageStyles(user.language, user.backgroundColor);
+      applyLanguageStyles(user.language, user.backgroundColor ?? undefined);
     }
   }, [user?.language, user?.backgroundColor]);
 
