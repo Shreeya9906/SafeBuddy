@@ -72,15 +72,18 @@ function ChildDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSTo
         
         <Button
           onClick={handleFlashlightToggle}
+          disabled={isSOSActive}
           className={`h-48 rounded-3xl text-xl font-bold flex flex-col items-center justify-center gap-2 shadow-lg transform transition hover:scale-105 active:scale-95 relative overflow-hidden group border-2 ${
-            isFlashlightOn 
+            isSOSActive
+              ? 'bg-gray-400 border-gray-500 text-gray-600 cursor-not-allowed opacity-60'
+              : isFlashlightOn 
               ? 'bg-gradient-to-br from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 border-yellow-600' 
               : 'bg-gradient-to-br from-yellow-300 to-yellow-400 hover:from-yellow-400 hover:to-yellow-500 border-yellow-500'
           }`}
           data-testid="button-flashlight-toggle"
         >
-          <span style={{fontSize: '56px'}}>{isFlashlightOn ? '💡' : '🔦'}</span>
-          <span className="font-bold text-lg">{isFlashlightOn ? 'ON' : 'LIGHT'}</span>
+          <span style={{fontSize: '56px'}}>{isFlashlightOn || isSOSActive ? '💡' : '🔦'}</span>
+          <span className="font-bold text-lg">{isSOSActive ? 'LOCKED' : isFlashlightOn ? 'ON' : 'LIGHT'}</span>
         </Button>
       </div>
 
