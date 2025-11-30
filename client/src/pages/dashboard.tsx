@@ -533,7 +533,7 @@ function ElderDashboard({ user, guardians, activeAlert, isSOSActive, handleSOSTo
         <CardContent>
           <div className="space-y-3">
             {guardians.length > 0 ? (
-              guardians.map((g) => (
+              guardians.map((g: Guardian) => (
                 <div key={g.id} className="p-3 bg-white dark:bg-gray-800 rounded border">
                   <p className="font-bold text-lg">{g.name}</p>
                   <p className="text-primary font-mono">{g.phone}</p>
