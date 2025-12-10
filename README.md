@@ -1,16 +1,15 @@
 # SafeBuddy Guardian+ 🛡️
 
-**A complete multilingual emergency safety app with real-time SOS alerts, live location tracking, guardian notifications via WhatsApp/SMS/Push, and an AI chatbot assistant.**
+**A complete emergency safety app with real-time SOS alerts, live location tracking, guardian notifications via WhatsApp/SMS/Push, and an AI chatbot assistant.**
 
-SafeBuddy Guardian+ is a full‑stack personal safety application for Indian users. It lets anyone trigger instant SOS alerts, share live GPS location with trusted guardians, notify multiple contacts via WhatsApp/SMS/push notifications, and chat with **MyBuddy** – a multilingual AI safety assistant supporting 6 Indian languages (English, Hindi, Tamil, Telugu, Kannada, Malayalam).
+SafeBuddy Guardian+ is a full‑stack personal safety application for Indian users. It lets anyone trigger instant SOS alerts, share live GPS location with trusted guardians, notify multiple contacts via WhatsApp/SMS/push notifications, and chat with **MyBuddy** – an AI safety assistant chatbot in English.
 
 **Key Features:**
 - 🆘 **Instant SOS** with siren sound & flashlight activation
 - 📍 **Live Location Sharing** with real-time GPS streaming & address reversal
 - 📱 **Multi-Channel Guardian Alerts** – WhatsApp calls, direct phone calls, SMS, push notifications (3-layer redundancy)
-- 🤖 **MyBuddy AI Assistant** – Multilingual chatbot with smart autocorrect & intent detection
+- 🤖 **MyBuddy AI Assistant** – English chatbot with smart autocorrect & intent detection
 - 👥 **Guardian Management** – Add/edit trusted contacts with instant one-click emergency calling
-- 🌍 **6 Language Support** – Automatic language detection (en_IN, hi_IN, ta_IN, te_IN, kn_IN, ml_IN)
 - 📡 **Firebase Cloud Messaging** – Real-time push notifications to all guardian devices
 - 🔐 **Secure Authentication** – Passport.js sessions with encrypted credentials
 - 📊 **Health Vitals Tracking** – Optional pulse/SpO2 monitoring (future expansion)
@@ -142,20 +141,16 @@ npm run db:studio    # Open Drizzle Studio for DB inspection
 **Code Location:** `client/src/pages/mybuddy.tsx` (lines 225-263)
 
 ### 🤖 MyBuddy AI Assistant
-**Multilingual emergency chatbot** with:
+**English emergency chatbot** with:
 - **Intent Detection:** Automatically recognizes "call guardian" or "emergency" keywords
 - **Smart Autocorrect:** Levenshtein distance algorithm for typo correction (exact matches only)
-- **6 Language Support:** Auto-detects user's language preference
 - **Emergency Escalation:** Triggers SOS if user types "call mom", "call dad", "call guardian", etc.
 - **Conversation Memory:** Maintains chat history within session
 
-**Example Interactions:**
+**Example Interaction:**
 ```
-User (English): "I need to call my mom"
+User: "I need to call my mom"
 MyBuddy: "🚨 Alerting your guardians immediately! Mom, Dad, and Neighbors notified!"
-
-User (Hindi): "मुझे अपने पिता को कॉल करना है"
-MyBuddy: "मैं तुरंत अपने अभिभावकों को सचेत कर रहा हूं!"
 ```
 
 **Code Location:** `server/routes.ts` (lines 720-793)
@@ -473,7 +468,7 @@ For issues, questions, or feature requests:
 
 ## Roadmap
 
-- ✅ Multi-language support (6 languages)
+- ✅ English-only chatbot support
 - ✅ WhatsApp integration for emergency calls
 - ✅ SMS notifications via Twilio
 - ✅ Live location sharing with real-time updates
@@ -483,7 +478,6 @@ For issues, questions, or feature requests:
 - 🔄 Voice command activation
 - 🔄 Community safety network (nearby users)
 - 🔄 Police/Hospital integration
-- 🔄 Multi-language voice support (TTS/STT)
 
 ---
 
