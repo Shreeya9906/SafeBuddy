@@ -5,6 +5,10 @@ server/public
 vite.config.ts.*
 *.tar.gz
 
+# Sensitive attached assets
+attached_assets/
+generated_images/
+
 # Environment variables
 .env
 .env.local
