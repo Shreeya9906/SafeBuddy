@@ -80,11 +80,14 @@ export default async function runApp(
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
+  const listenOptions: any = { port, host: "0.0.0.0" };
+  // On Windows, `reusePort` is not supported and causes ENOTSUP errors.
+  // Only set it on platforms that support it (non-Windows).
+  if (process.platform !== 'win32') {
+    listenOptions.reusePort = true;
+  }
+
+  server.listen(listenOptions, () => {
     log(`serving on port ${port}`);
   });
 }
