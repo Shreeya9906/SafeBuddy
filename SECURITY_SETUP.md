@@ -1,171 +1,207 @@
-# 🔐 Security Setup Guide
+# 🔒 Security Setup Guide
 
-## Before Running This App
-
-**IMPORTANT:** Never use credentials from any public repository, including this one. Always generate your own fresh credentials for each environment.
+**IMPORTANT:** Never commit API keys, Firebase credentials, or secrets to Git. This guide shows how to configure them safely.
 
 ---
 
-## Step 1: Set Up Firebase Project
+## Firebase & Google Cloud Setup
 
-1. Go to [Firebase Console](https://console.firebase.google.com)
-2. Create a new project or select an existing one
-3. Enable these services:
-   - **Cloud Messaging (FCM)** – for push notifications
-   - **Realtime Database** – for location streaming
-   - **Cloud Storage** – for media uploads
+### Step 1: Get Your Credentials
 
-### Get Server-Side Credentials (Backend)
-1. Go to **Settings → Service Accounts**
-2. Click **Generate New Private Key**
-3. Copy the JSON content
-4. Add to your `.env`:
-   ```
-   FIREBASE_PRIVATE_KEY=<paste entire JSON here as single line>
-   FIREBASE_PROJECT_ID=<from JSON>
-   FIREBASE_CLIENT_EMAIL=<from JSON>
-   ```
+1. Go to [Google Cloud Console](https://console.cloud.google.com)
+2. Select your SafeBuddy project
+3. Navigate to **APIs & Services** → **Credentials**
 
-### Get Client-Side Credentials (Frontend)
-1. Go to **Settings → Your apps → Web app**
-2. Copy the Firebase config object
-3. Add to your `.env`:
-   ```
-   VITE_FIREBASE_PROJECT_ID=projectId
-   VITE_FIREBASE_AUTH_DOMAIN=authDomain
-   VITE_FIREBASE_STORAGE_BUCKET=storageBucket
-   VITE_FIREBASE_MESSAGING_SENDER_ID=messagingSenderId
-   VITE_FIREBASE_APP_ID=appId
-   ```
+#### Create/Retrieve API Keys
 
-### Create a Fresh API Key (Important!)
-1. Go to **Google Cloud Console → APIs & Services → Credentials**
-2. Click **Create Credentials → API Key**
-3. **Immediately restrict it:**
-   - **API Restrictions:** Select only "Cloud Messaging API", "Maps SDK", and any other APIs your app uses
-   - **Application Restrictions:** Set to "HTTP referrers (web sites)"
-   - **Allowed referrers:** Add your production domain (e.g., `https://yourdomain.com/*`)
-4. Copy the key and add to `.env`:
-   ```
-   VITE_FIREBASE_API_KEY=<your-new-restricted-key>
-   ```
+**For Frontend (Firebase Client Config):**
+- Create a new **API Key** (not OAuth, not Service Account)
+- Name it: `SafeBuddy Frontend Key`
+- Click the key to edit and add **Restrictions**:
+  - **API restrictions**: Enable only these:
+    - Firebase
+    - Google Maps Platform (if using maps)
+    - Weather API (if using OpenWeather)
+  - **Application restrictions**: 
+    - Type: `HTTP referrers`
+    - Values: `https://yourdomain.com/*` (or localhost for dev)
+
+**Copy these 6 values** (you'll need them for Step 2):
+```
+API_KEY = AIzaSy...xxxxx
+AUTH_DOMAIN = safebuddy-guardian.firebaseapp.com
+PROJECT_ID = safebuddy-guardian
+STORAGE_BUCKET = safebuddy-guardian.appspot.com
+MESSAGING_SENDER_ID = 1234567890
+APP_ID = 1:1234567890:web:xxxxx
+```
 
 ---
 
-## Step 2: Set Up Twilio (Optional - for SMS)
+## Local Development Setup
 
-1. Create a [Twilio Account](https://www.twilio.com)
-2. Get your Account SID and Auth Token
-3. Buy a phone number for SMS
-4. Add to `.env`:
-   ```
-   TWILIO_ACCOUNT_SID=<your-sid>
-   TWILIO_AUTH_TOKEN=<your-token>
-   TWILIO_PHONE_NUMBER=+1234567890
-   ```
+### Step 2: Create `.env` file (Never commit this!)
 
----
+1. In project root, create `.env` file:
+```bash
+# Copy .env.example as template
+cp .env.example .env
+```
 
-## Step 3: Set Up Database
+2. Open `.env` and paste your credentials:
+```env
+# Database
+DATABASE_URL=postgres://user:password@host:5432/safebuddy
 
-1. Create a PostgreSQL database (use [Neon](https://neon.tech) for serverless)
-2. Add to `.env`:
-   ```
-   DATABASE_URL=postgres://user:password@host:5432/safebuddy
-   ```
+# Session
+SESSION_SECRET=your-random-secret-key-here-min-32-chars
 
----
+# Firebase (paste from Step 1)
+VITE_FIREBASE_API_KEY=AIzaSy...xxxxx
+VITE_FIREBASE_AUTH_DOMAIN=safebuddy-guardian.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=safebuddy-guardian
+VITE_FIREBASE_STORAGE_BUCKET=safebuddy-guardian.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=106082998919040703679
+VITE_FIREBASE_APP_ID=1:106082998919040703679:web:xxxxx
 
-## Step 4: Environment Variables
+# Firebase Server (from service account JSON - paste one line)
+FIREBASE_SERVICE_ACCOUNT={"type":"service_account","project_id":"safebuddy-guardian",...}
 
-1. Copy `.env.example` to `.env`:
-   ```bash
-   cp .env.example .env
-   ```
+# Twilio (optional SMS)
+TWILIO_ACCOUNT_SID=ACxxxxxxxx
+TWILIO_AUTH_TOKEN=your_auth_token
+TWILIO_PHONE_NUMBER=+1234567890
 
-2. Fill in all values from steps 1-3
+# OpenWeather (optional)
+OPENWEATHER_API_KEY=your_api_key
+VITE_OPENWEATHER_API_KEY=your_api_key
 
-3. Add a strong session secret:
-   ```
-   SESSION_SECRET=<generate-a-random-32-char-string>
-   ```
+# Application
+PORT=5000
+NODE_ENV=development
+```
 
----
+3. **Important**: `.env` is already in `.gitignore` — verify it won't be committed:
+```bash
+git status  # Should NOT show .env
+```
 
-## Step 5: Run the App
-
+4. Start the app:
 ```bash
 npm install
 npm run dev
 ```
 
-Then open http://localhost:5000
-
 ---
 
-## Deploying to Production
+## Production Deployment
 
 ### Render / Railway / Vercel
-1. **Never commit `.env` to git**
-2. Use the platform's environment dashboard to set variables:
-   - `FIREBASE_PROJECT_ID`
-   - `FIREBASE_PRIVATE_KEY` (as full JSON on one line)
-   - `FIREBASE_CLIENT_EMAIL`
-   - `VITE_FIREBASE_API_KEY` (your restricted key)
-   - `VITE_FIREBASE_PROJECT_ID`
-   - `VITE_FIREBASE_AUTH_DOMAIN`
-   - `VITE_FIREBASE_STORAGE_BUCKET`
-   - `VITE_FIREBASE_MESSAGING_SENDER_ID`
-   - `VITE_FIREBASE_APP_ID`
-   - `TWILIO_ACCOUNT_SID`
-   - `TWILIO_AUTH_TOKEN`
-   - `TWILIO_PHONE_NUMBER`
-   - `DATABASE_URL`
-   - `SESSION_SECRET`
 
-3. Deploy using platform's build command: `npm run build && npm start`
+**Do NOT paste `.env` file content directly!**
 
----
+Instead, use your hosting platform's **Environment Variables** dashboard:
 
-## Security Best Practices
+#### For Render:
+1. Dashboard → Your Service → **Environment**
+2. Add each variable individually:
+   - Key: `VITE_FIREBASE_API_KEY`
+   - Value: `AIzaSy...xxxxx`
+3. Repeat for all variables
+4. Click **Save** and redeploy
 
-✅ **Do:**
-- Generate fresh credentials for each environment (dev, staging, production)
-- Restrict API keys by referrer and API type
-- Use strong, unique `SESSION_SECRET` per environment
-- Enable Firebase security rules to protect your data
-- Monitor API usage and costs regularly
-- Rotate keys quarterly
+#### For Railway:
+1. Project → **Variables**
+2. Add each variable same way as Render
+3. Deploy
 
-❌ **Don't:**
-- Commit `.env` files to git (use `.env.example` template instead)
-- Use the same credentials across environments
-- Share Firebase private keys or Twilio tokens
-- Copy credentials from public repos or tutorials
-- Leave API keys unrestricted (anyone can abuse them and you pay the bill)
+#### For Vercel:
+1. Project → **Settings** → **Environment Variables**
+2. Add variables same way
+3. Redeploy
 
 ---
 
-## Troubleshooting
+## Security Checklist
 
-### Push Notifications Not Working
-- Verify `FIREBASE_PROJECT_ID` matches your Firebase project
-- Check `VITE_FIREBASE_API_KEY` is set correctly
-- Ensure FCM is enabled in Firebase Console
-- Browser must grant notification permission
-
-### SMS Not Sending
-- Verify Twilio credentials are correct
-- Check Twilio account has enough balance
-- Ensure `TWILIO_PHONE_NUMBER` is active and verified
-
-### Database Connection Failed
-- Verify `DATABASE_URL` is accessible from your server
-- Check PostgreSQL is running (if local)
-- Ensure firewall allows connections
+- [ ] `.env` file is in `.gitignore` (verify with `git status`)
+- [ ] No `.env` or credentials committed to Git
+- [ ] API Key has **API restrictions** (not all APIs enabled)
+- [ ] API Key has **HTTP referrer restrictions** (not unrestricted)
+- [ ] Firebase Service Account is **never logged** (check server logs)
+- [ ] Twilio credentials are **environment variables only**
+- [ ] `.env.example` has NO real credentials (only placeholders)
+- [ ] Hosting platform's Environment Variables are configured
+- [ ] Database password is strong (min 32 chars, mix of uppercase, numbers, symbols)
+- [ ] `SESSION_SECRET` is random & strong (min 32 chars)
+- [ ] GitHub repo is set to **Private** (if sensitive)
+- [ ] GitHub secret scanning enabled (Settings → Security → Secret scanning)
+- [ ] No credentials in README, docs, or code comments
 
 ---
 
-**Last Updated:** December 10, 2025
+## If Credentials Are Leaked
 
-For questions or issues, open a GitHub issue: https://github.com/Shreeya9906/SafeBuddy/issues
+**IMMEDIATE ACTION:**
+
+1. **Revoke the old key immediately** (Google Cloud Console → delete the key)
+2. **Create a new key** with the same restrictions
+3. **Update** all environment variables (local `.env` and hosting platforms)
+4. **Redeploy** the app
+5. **Monitor** Google Cloud billing for suspicious activity
+6. **Rewrite git history** if the key was committed:
+   ```bash
+   git filter-branch -f --index-filter \
+     'git rm -r --cached --ignore-unmatch .env' \
+     --prune-empty -- --all
+   git push origin main -f
+   ```
+
+---
+
+## File Structure (What Gets Committed)
+
+```
+SafeBuddy/
+├── .env                    ❌ NEVER commit (in .gitignore)
+├── .env.example            ✅ Safe to commit (no real values)
+├── .gitignore              ✅ Includes .env, *.json credentials
+├── README.md               ✅ Safe to commit
+├── SECURITY_SETUP.md       ✅ This file (instructions only)
+├── server/
+│   ├── firebase-config.ts  ✅ Safe (reads from env vars)
+│   └── twilio-sms.ts       ✅ Safe (reads from env vars)
+└── client/
+    ├── src/lib/firebase-messaging.ts  ✅ Safe (uses VITE_* env vars)
+    └── ...
+```
+
+---
+
+## Testing Credentials Are Loaded
+
+Run this to verify environment variables are loaded:
+
+```bash
+# Development
+npm run dev
+
+# Check logs for:
+# ✅ Firebase Messaging initialized
+# ✅ SMS notifications ready
+# ✅ Database connected
+```
+
+If you see errors like `FIREBASE_SERVICE_ACCOUNT is required`, it means `.env` is missing or incomplete.
+
+---
+
+## Questions?
+
+If credentials don't work:
+1. Verify `.env` file exists in project root
+2. Verify syntax (no extra quotes or spaces)
+3. Restart the dev server: `npm run dev`
+4. Check that values match exactly (copy-paste from console, not manual typing)
+5. For Render/Railway, wait 2-3 minutes after changing env vars for redeploy
+
